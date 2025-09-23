@@ -24,12 +24,42 @@
     <ClCompile Include="MainFrame.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="ToolboxPanel.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="ToolboxModel.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="CanvasPanel.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="PropertyPanel.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="3rd\json\jsoncpp.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="MainMenuBar.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="MainFrame.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="ToolboxPanel.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="ToolboxModel.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="CanvasPanel.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="PropertyPanel.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="3rd\json\json.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

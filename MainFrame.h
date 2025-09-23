@@ -1,10 +1,13 @@
 #pragma once
 #include <wx/wx.h>
+#include <wx/aui/aui.h>
+#include "PropertyPanel.h"
 
 class MainFrame : public wxFrame
 {
 public:
     MainFrame();
+    ~MainFrame();
     /* File 菜单业务接口 */
     void DoFileNew();
     void DoFileOpen(const wxString& path = {});
@@ -67,5 +70,8 @@ public:
     void DoHelpLibraryRef();
     void DoHelpAbout();
 private:
+    wxAuiManager m_auiMgr;
+    PropertyPanel* m_propPanel = nullptr;
+    void OnToolboxElement(wxCommandEvent& evt);
     wxDECLARE_EVENT_TABLE();
 };

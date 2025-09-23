@@ -1,20 +1,75 @@
 #include "MainFrame.h"
 #include "MainMenuBar.h"
+#include "CanvasPanel.h"
+#include "PropertyPanel.h"
 #include <wx/msgdlg.h>
+#include "ToolboxPanel.h"   // 你的侧边栏
+#include <wx/aui/aui.h>
 
 wxBEGIN_EVENT_TABLE(MainFrame, wxFrame)
 EVT_MENU(wxID_ABOUT, MainFrame::OnAbout)
 EVT_MENU(wxID_EXIT, MainFrame::OnQuit)
+EVT_MENU(wxID_HIGHEST + 900, MainFrame::OnToolboxElement)
 wxEND_EVENT_TABLE()
+
 
 MainFrame::MainFrame()
     : wxFrame(nullptr, wxID_ANY, "MyLogisim")
 {
+    /* 菜单 & 状态栏 */
     SetMenuBar(new MainMenuBar(this));
     CreateStatusBar(1);
     SetStatusText("Ready");
-    SetTitle("Untitled");                 // 窗口标题
+    SetTitle("Untitled");
     static_cast<MainMenuBar*>(GetMenuBar())->SetCurrentDocInWindowList("Untitled");
+
+    /* 把窗口交给 AUI 管理（必须最先） */
+    m_auiMgr.SetManagedWindow(this);
+
+    /* 创建中央画布（先空白占位） */
+    CanvasPanel* canvas = new CanvasPanel(this);
+    canvas->SetBackgroundColour(*wxWHITE);
+
+    /* 创建侧边栏 + 属性表（上下叠放） */
+    wxPanel* sidePanel = new wxPanel(this);  // 外壳
+    wxBoxSizer* sideSizer = new wxBoxSizer(wxVERTICAL);
+
+    ToolboxPanel* toolbox = new ToolboxPanel(sidePanel);  // 父窗口是 sidePanel
+    sideSizer->Add(toolbox, 1, wxEXPAND);    // 上：工具树（可拉伸）
+
+    m_propPanel = new PropertyPanel(sidePanel);  // 父窗口是 sidePanel
+    sideSizer->Add(m_propPanel, 0, wxEXPAND);    // 下：属性表（先固定高）
+
+    sidePanel->SetSizer(sideSizer);
+
+    /* 把整个侧边区作为一个 AUI Pane 停靠 */
+    m_auiMgr.AddPane(sidePanel, wxAuiPaneInfo()
+        .Name("side")               // 统一名字
+        .Caption("Toolbox & Properties")
+        .Left()
+        .Layer(1)
+        .Position(1)
+        .CloseButton(false)
+        .BestSize(280, 700)        // 总高度留给两部分
+        .MinSize(200, 400)
+        .FloatingSize(280, 700)
+        .Gripper(true)
+        .PaneBorder(false));
+
+    /* 画布保持原样 */
+    m_auiMgr.AddPane(canvas, wxAuiPaneInfo()
+        .Name("canvas")
+        .CenterPane()
+        .CloseButton(false)
+        .MinSize(400, 300));
+
+    /* 一次性提交 */
+    m_auiMgr.Update();
+}
+
+MainFrame::~MainFrame()
+{
+    m_auiMgr.UnInit();   // 必须手动反初始化
 }
 
 void MainFrame::DoFileNew() { wxMessageBox("DoFileNew"); }
@@ -112,4 +167,9 @@ void MainFrame::DoHelpAbout()
 {
     wxMessageBox(wxString::Format("MyLogisim\n%s", wxVERSION_STRING),
         wxT("About"), wxOK | wxICON_INFORMATION, this);
+}
+
+void MainFrame::OnToolboxElement(wxCommandEvent& evt)
+{
+    m_propPanel->ShowElement(evt.GetString());
 }
