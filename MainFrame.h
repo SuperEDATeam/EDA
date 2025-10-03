@@ -2,6 +2,7 @@
 #include <wx/wx.h>
 #include <wx/aui/aui.h>
 #include "PropertyPanel.h"
+#include "CanvasPanel.h"
 
 class MainFrame : public wxFrame
 {
@@ -72,6 +73,7 @@ public:
 private:
     wxAuiManager m_auiMgr;
     PropertyPanel* m_propPanel = nullptr;
+    CanvasPanel* m_canvas;
     void OnToolboxElement(wxCommandEvent& evt);
     wxDECLARE_EVENT_TABLE();
 };

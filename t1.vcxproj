@@ -20,6 +20,9 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="3rd\json\jsoncpp.cpp" />
+    <ClCompile Include="CanvasDropTarget.cpp" />
+    <ClCompile Include="CanvasElement.cpp" />
+    <ClCompile Include="CanvasModel.cpp" />
     <ClCompile Include="CanvasPanel.cpp" />
     <ClCompile Include="cMain.cpp" />
     <ClCompile Include="MainFrame.cpp" />
@@ -30,9 +33,13 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="3rd\json\json.h" />
+    <ClInclude Include="CanvasDropTarget.h" />
+    <ClInclude Include="CanvasElement.h" />
+    <ClInclude Include="CanvasModel.h" />
     <ClInclude Include="CanvasPanel.h" />
     <ClInclude Include="MainFrame.h" />
     <ClInclude Include="MainMenuBar.h" />
+    <ClInclude Include="my_log.h" />
     <ClInclude Include="PropertyPanel.h" />
     <ClInclude Include="ToolboxModel.h" />
     <ClInclude Include="ToolboxPanel.h" />
@@ -124,6 +131,7 @@
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;WIN32;__WXMSW__;_WINDOWS;NOPCH;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
       <AdditionalIncludeDirectories>C:\wxWidgets-3.2.2.1\include;C:\wxWidgets-3.2.2.1\include\msvc;C:\wxWidgets-3.2.2.1\lib\vc_x64_lib\mswud;$(ProjectDir)3rd;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>

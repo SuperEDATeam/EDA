@@ -1,0 +1,36 @@
+[
+  {
+    "id": "AND",
+    "name": "AND Gate",
+    "anchorPoint": [8, 8],
+    "inputPins": [
+      {"name": "A", "x": 2, "y": 6},
+      {"name": "B", "x": 2, "y": 10}
+    ],
+    "outputPins": [
+      {"name": "Out", "x": 14, "y": 8}
+    ],
+    "shapes": [
+      {"type": "polygon", "points": [[4,4],[4,12],[8,12],[12,8],[8,4]], "color": "#333333"},
+      {"type": "line",    "x1": 2, "y1": 6, "x2": 4, "y2": 6, "color": "#333333"},
+      {"type": "line",    "x1": 2, "y1": 10, "x2": 4, "y2": 10, "color": "#333333"},
+      {"type": "line",    "x1": 12, "y1": 8, "x2": 14, "y2": 8, "color": "#333333"}
+    ]
+  },
+  {
+    "id": "NOT",
+    "name": "NOT Gate",
+    "anchorPoint": [8, 8],
+    "inputPins": [
+      {"name": "In", "x": 2, "y": 8}
+    ],
+    "outputPins": [
+      {"name": "Out", "x": 14, "y": 8}
+    ],
+    "shapes": [
+      {"type": "polygon", "points": [[4,4],[12,8],[4,12]], "color": "#333333"},
+      {"type": "circle",  "x": 12, "y": 8, "r": 2, "color": "#333333"},
+      {"type": "line",    "x1": 4, "y1": 8, "x2": 2, "y2": 8, "color": "#333333"}
+    ]
+  }
+]

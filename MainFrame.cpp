@@ -5,6 +5,11 @@
 #include <wx/msgdlg.h>
 #include "ToolboxPanel.h"   // 你的侧边栏
 #include <wx/aui/aui.h>
+#include "CanvasModel.h"
+#include "my_log.h"
+#include <wx/filename.h> 
+
+extern std::vector<CanvasElement> g_elements;
 
 wxBEGIN_EVENT_TABLE(MainFrame, wxFrame)
 EVT_MENU(wxID_ABOUT, MainFrame::OnAbout)
@@ -16,6 +21,11 @@ wxEND_EVENT_TABLE()
 MainFrame::MainFrame()
     : wxFrame(nullptr, wxID_ANY, "MyLogisim")
 {
+
+    wxString jsonPath = wxFileName(wxGetCwd(), "canvas_elements.json").GetFullPath();
+    MyLog("MainFrame: JSON full path = [%s]\n", jsonPath.ToUTF8().data());
+    g_elements = LoadCanvasElements(jsonPath);
+
     /* 菜单 & 状态栏 */
     SetMenuBar(new MainMenuBar(this));
     CreateStatusBar(1);
@@ -27,8 +37,8 @@ MainFrame::MainFrame()
     m_auiMgr.SetManagedWindow(this);
 
     /* 创建中央画布（先空白占位） */
-    CanvasPanel* canvas = new CanvasPanel(this);
-    canvas->SetBackgroundColour(*wxWHITE);
+    m_canvas = new CanvasPanel(this);
+    m_canvas->SetBackgroundColour(*wxWHITE);
 
     /* 创建侧边栏 + 属性表（上下叠放） */
     wxPanel* sidePanel = new wxPanel(this);  // 外壳
@@ -57,7 +67,7 @@ MainFrame::MainFrame()
         .PaneBorder(false));
 
     /* 画布保持原样 */
-    m_auiMgr.AddPane(canvas, wxAuiPaneInfo()
+    m_auiMgr.AddPane(m_canvas, wxAuiPaneInfo()
         .Name("canvas")
         .CenterPane()
         .CloseButton(false)
@@ -72,13 +82,28 @@ MainFrame::~MainFrame()
     m_auiMgr.UnInit();   // 必须手动反初始化
 }
 
+
+void MainFrame::OnToolboxElement(wxCommandEvent& evt)
+{
+    MyLog("MainFrame: received <%s>\n", evt.GetString().ToUTF8().data());
+
+    wxString name = evt.GetString();
+    auto it = std::find_if(g_elements.begin(), g_elements.end(),
+        [&](const CanvasElement& e) { return e.GetName() == name; });
+    if (it == g_elements.end()) return;
+
+    CanvasElement clone = *it;
+    clone.SetPos(wxPoint(100, 100));   // 先放中央，后续用鼠标坐标
+    m_canvas->AddElement(clone);        
+}
+
 void MainFrame::DoFileNew() { wxMessageBox("DoFileNew"); }
 void MainFrame::DoFileSave() { wxMessageBox("DoFileSave"); }
 void MainFrame::DoFileSaveAs() { wxMessageBox("DoFileSaveAs"); }
 void MainFrame::DoFileOpen(const wxString& path)
 {
     wxString msg = path.IsEmpty()
-        ? wxT("DoFileOpen dialog")
+        ? wxString("DoFileOpen dialog")     // 强制 wxString
         : wxString::Format(wxT("DoFileOpen: %s"), path);
     wxMessageBox(msg, wxT("Info"), wxOK | wxICON_INFORMATION, this);
 }
@@ -169,7 +194,3 @@ void MainFrame::DoHelpAbout()
         wxT("About"), wxOK | wxICON_INFORMATION, this);
 }
 
-void MainFrame::OnToolboxElement(wxCommandEvent& evt)
-{
-    m_propPanel->ShowElement(evt.GetString());
-}

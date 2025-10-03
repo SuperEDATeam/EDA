@@ -298,8 +298,8 @@ void MainMenuBar::RebuildWindowMenu() //这个版本会把window放在simulate�
     m_windowMenu->AppendSeparator();
 
     /* 3. 动态文档列表（初始 Untitled） */
-    AddDocToWindowList(m_curDocTitle.IsEmpty() ? wxT("Untitled") : m_curDocTitle);
-    SetCurrentDocInWindowList(m_curDocTitle.IsEmpty() ? wxT("Untitled") : m_curDocTitle);
+    AddDocToWindowList(m_curDocTitle.IsEmpty() ? wxString("Untitled") : m_curDocTitle);
+    SetCurrentDocInWindowList(m_curDocTitle.IsEmpty() ? wxString("Untitled") : m_curDocTitle);
 
     /* 4. 重新插入菜单栏 */
     Insert(3, m_windowMenu, wxT("&Window"));
