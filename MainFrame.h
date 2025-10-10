@@ -2,9 +2,31 @@
 #include <wx/wx.h>
 #include <wx/aui/aui.h>
 #include "PropertyPanel.h"
-
+#include "3rd/json/json.h"
+#include <wx/file.h>  // 包含wxFile类的定义
+#include <wx/xml/xml.h>
+#include <wx/mstream.h>
 class MainFrame : public wxFrame
 {
+
+
+
+private:
+    // 在这里定义 m_currentFilePath
+    wxString m_currentFilePath;  // 记录当前文件的保存路径（为空表示未保存）
+    bool m_isModified;           // 标记文件是否被修改（配合保存逻辑）
+
+    // 其他私有成员变量...
+private:
+    // 私有辅助方法声明...
+    bool SaveToFile(const wxString& filePath);
+    wxString GenerateFileContent();
+private:
+    void AddLibraryNode(wxXmlNode* parent, const wxString& name, const wxString& desc);
+    void AddWireNode(wxXmlNode* parent, const wxString& from, const wxString& to);
+
+    // ...
+
 public:
     MainFrame();
     ~MainFrame();
