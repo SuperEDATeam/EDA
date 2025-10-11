@@ -6,6 +6,7 @@
 #include "ToolboxPanel.h"   // ��Ĳ����
 #include <wx/aui/aui.h>
 //
+//
 wxBEGIN_EVENT_TABLE(MainFrame, wxFrame)
 EVT_MENU(wxID_ABOUT, MainFrame::OnAbout)
 EVT_MENU(wxID_EXIT, MainFrame::OnQuit)
