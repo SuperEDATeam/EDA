@@ -3,9 +3,9 @@
 #include "CanvasPanel.h"
 #include "PropertyPanel.h"
 #include <wx/msgdlg.h>
-#include "ToolboxPanel.h"   // ÄãµÄ²à±ßÀ¸
+#include "ToolboxPanel.h"   // ï¿½ï¿½Ä²ï¿½ï¿½ï¿½ï¿½
 #include <wx/aui/aui.h>
-
+//
 wxBEGIN_EVENT_TABLE(MainFrame, wxFrame)
 EVT_MENU(wxID_ABOUT, MainFrame::OnAbout)
 EVT_MENU(wxID_EXIT, MainFrame::OnQuit)
@@ -16,76 +16,76 @@ wxEND_EVENT_TABLE()
 MainFrame::MainFrame()
     : wxFrame(nullptr, wxID_ANY, "MyLogisim")
 {
-    /* ²Ëµ¥ & ×´Ì¬À¸ */
+    /* ï¿½Ëµï¿½ & ×´Ì¬ï¿½ï¿½ */
     SetMenuBar(new MainMenuBar(this));
     CreateStatusBar(1);
     SetStatusText("Ready");
     SetTitle("Untitled");
     static_cast<MainMenuBar*>(GetMenuBar())->SetCurrentDocInWindowList("Untitled");
 
-    /* °Ñ´°¿Ú½»¸ø AUI ¹ÜÀí£¨±ØÐë×îÏÈ£© */
+    /* ï¿½Ñ´ï¿½ï¿½Ú½ï¿½ï¿½ï¿½ AUI ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½È£ï¿½ */
     m_auiMgr.SetManagedWindow(this);
 
-    /* ´´½¨ÖÐÑë»­²¼£¨ÏÈ¿Õ°×Õ¼Î»£© */
+    /* ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ë»­ï¿½ï¿½ï¿½ï¿½ï¿½È¿Õ°ï¿½Õ¼Î»ï¿½ï¿½ */
     CanvasPanel* canvas = new CanvasPanel(this);
     canvas->SetBackgroundColour(*wxWHITE);
 
-    /* ´´½¨²à±ßÀ¸ + ÊôÐÔ±í£¨ÉÏÏÂµþ·Å£© */
-    wxPanel* sidePanel = new wxPanel(this);  // Íâ¿Ç
+    /* ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ + ï¿½ï¿½ï¿½Ô±ï¿½ï¿½ï¿½ï¿½Âµï¿½ï¿½Å£ï¿½ */
+    wxPanel* sidePanel = new wxPanel(this);  // ï¿½ï¿½ï¿½
     wxBoxSizer* sideSizer = new wxBoxSizer(wxVERTICAL);
 
-    ToolboxPanel* toolbox = new ToolboxPanel(sidePanel);  // ¸¸´°¿ÚÊÇ sidePanel
-    sideSizer->Add(toolbox, 1, wxEXPAND);    // ÉÏ£º¹¤¾ßÊ÷£¨¿ÉÀ­Éì£©
+    ToolboxPanel* toolbox = new ToolboxPanel(sidePanel);  // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ sidePanel
+    sideSizer->Add(toolbox, 1, wxEXPAND);    // ï¿½Ï£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ì£©
 
-    m_propPanel = new PropertyPanel(sidePanel);  // ¸¸´°¿ÚÊÇ sidePanel
-    sideSizer->Add(m_propPanel, 0, wxEXPAND);    // ÏÂ£ºÊôÐÔ±í£¨ÏÈ¹Ì¶¨¸ß£©
+    m_propPanel = new PropertyPanel(sidePanel);  // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ sidePanel
+    sideSizer->Add(m_propPanel, 0, wxEXPAND);    // ï¿½Â£ï¿½ï¿½ï¿½ï¿½Ô±ï¿½ï¿½È¹Ì¶ï¿½ï¿½ß£ï¿½
 
     sidePanel->SetSizer(sideSizer);
 
-    /* °ÑÕû¸ö²à±ßÇø×÷ÎªÒ»¸ö AUI Pane Í£¿¿ */
+    /* ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ÎªÒ»ï¿½ï¿½ AUI Pane Í£ï¿½ï¿½ */
     m_auiMgr.AddPane(sidePanel, wxAuiPaneInfo()
-        .Name("side")               // Í³Ò»Ãû×Ö
+        .Name("side")               // Í³Ò»ï¿½ï¿½ï¿½ï¿½
         .Caption("Toolbox & Properties")
         .Left()
         .Layer(1)
         .Position(1)
         .CloseButton(false)
-        .BestSize(280, 700)        // ×Ü¸ß¶ÈÁô¸øÁ½²¿·Ö
+        .BestSize(280, 700)        // ï¿½Ü¸ß¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
         .MinSize(200, 400)
         .FloatingSize(280, 700)
         .Gripper(true)
         .PaneBorder(false));
 
-    /* »­²¼±£³ÖÔ­Ñù */
+    /* ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ô­ï¿½ï¿½ */
     m_auiMgr.AddPane(canvas, wxAuiPaneInfo()
         .Name("canvas")
         .CenterPane()
         .CloseButton(false)
         .MinSize(400, 300));
 
-    /* Ò»´ÎÐÔÌá½» */
+    /* Ò»ï¿½ï¿½ï¿½ï¿½ï¿½á½» */
     m_auiMgr.Update();
 }
 
 MainFrame::~MainFrame()
 {
-    m_auiMgr.UnInit();   // ±ØÐëÊÖ¶¯·´³õÊ¼»¯
+    m_auiMgr.UnInit();   // ï¿½ï¿½ï¿½ï¿½ï¿½Ö¶ï¿½ï¿½ï¿½ï¿½ï¿½Ê¼ï¿½ï¿½
 }
 
-//Ä¿Ç°Ö»ÐÞ¸ÄÁËMainframe¡£ÉÏÃæµÄË½ÓÐ±äÁ¿£¬·½·¨£¬ÒÔ¼°jsonÍ·ÎÄ¼þ
-// ÐÞ¸Ä.hÎÄ¼þGenerateFileContent()µÄÉêÃ÷
+//Ä¿Ç°Ö»ï¿½Þ¸ï¿½ï¿½ï¿½Mainframeï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ë½ï¿½Ð±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ô¼ï¿½jsonÍ·ï¿½Ä¼ï¿½
+// ï¿½Þ¸ï¿½.hï¿½Ä¼ï¿½GenerateFileContent()ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 //TODO 9.24
-//Ö»ÊÇ´ò¿ªÒ»¸öÐÂ´°¿Ú£¬²»»á¶ÔÏÖÓÐ´°¿Ú×öÈÎºÎ¸Ä±ä
+//Ö»ï¿½Ç´ï¿½Ò»ï¿½ï¿½ï¿½Â´ï¿½ï¿½Ú£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ÎºÎ¸Ä±ï¿½
 void MainFrame::DoFileNew() {
-    // Ö±½Ó´´½¨Ò»¸öÐÂµÄ¿Õ°×MainFrame´°¿Ú
-    MainFrame* newFrame = new MainFrame();  // ¼ÙÉèMainFrame¹¹Ôìº¯Êý»á³õÊ¼»¯¿Õ°××´Ì¬
+    // Ö±ï¿½Ó´ï¿½ï¿½ï¿½Ò»ï¿½ï¿½ï¿½ÂµÄ¿Õ°ï¿½MainFrameï¿½ï¿½ï¿½ï¿½
+    MainFrame* newFrame = new MainFrame();  // ï¿½ï¿½ï¿½ï¿½MainFrameï¿½ï¿½ï¿½ìº¯ï¿½ï¿½ï¿½ï¿½ï¿½Ê¼ï¿½ï¿½ï¿½Õ°ï¿½×´Ì¬
 
-    // ÏÔÊ¾ÐÂ´°¿Ú£¨¾ÓÖÐÏÔÊ¾£©
+    // ï¿½ï¿½Ê¾ï¿½Â´ï¿½ï¿½Ú£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê¾ï¿½ï¿½
     newFrame->Centre(wxBOTH);
     newFrame->Show(true);
 
-    // £¨¿ÉÑ¡£©Èç¹ûÐèÒª¼ÇÂ¼ËùÓÐ´ò¿ªµÄ´°¿Ú£¬¿ÉÌí¼Óµ½´°¿ÚÁÐ±íÖÐ
-    // m_allFrames.push_back(newFrame);  // ÐèÒªÔÚMainFrameÀàÖÐÉùÃ÷m_allFrames
+    // ï¿½ï¿½ï¿½ï¿½Ñ¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Òªï¿½ï¿½Â¼ï¿½ï¿½ï¿½Ð´ò¿ªµÄ´ï¿½ï¿½Ú£ï¿½ï¿½ï¿½ï¿½ï¿½Óµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð±ï¿½ï¿½ï¿½
+    // m_allFrames.push_back(newFrame);  // ï¿½ï¿½Òªï¿½ï¿½MainFrameï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½m_allFrames
 }
 
 
@@ -96,43 +96,43 @@ void MainFrame::DoFileNew() {
 
 
 
-//±£´æÎÄ¼þµÄÊµÏÖ£¬°üº¬ºóÃæËÄ¸ö·½·¨
+//ï¿½ï¿½ï¿½ï¿½ï¿½Ä¼ï¿½ï¿½ï¿½Êµï¿½Ö£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä¸ï¿½ï¿½ï¿½ï¿½ï¿½
 void MainFrame::DoFileSave() {
-    // 1. Èç¹ûµ±Ç°ÎÄµµÃ»ÓÐÂ·¾¶£¨Î´±£´æ¹ý£©£¬Ôòµ÷ÓÃ"Áí´æÎª"
+    // 1. ï¿½ï¿½ï¿½ï¿½ï¿½Ç°ï¿½Äµï¿½Ã»ï¿½ï¿½Â·ï¿½ï¿½ï¿½ï¿½Î´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½"ï¿½ï¿½ï¿½Îª"
     if (m_currentFilePath.IsEmpty()) {
-        // µ÷ÓÃDoFileSaveAs()´¦ÀíÊ×´Î±£´æ£¨ÐèÊµÏÖ¸Ã·½·¨£©
+        // ï¿½ï¿½ï¿½ï¿½DoFileSaveAs()ï¿½ï¿½ï¿½ï¿½ï¿½×´Î±ï¿½ï¿½æ£¨ï¿½ï¿½Êµï¿½Ö¸Ã·ï¿½ï¿½ï¿½ï¿½ï¿½
         DoFileSaveAs();
         return;
     }
 
-    // 2. ³¢ÊÔ½«µ±Ç°ÎÄµµÄÚÈÝÐ´ÈëÎÄ¼þ
+    // 2. ï¿½ï¿½ï¿½Ô½ï¿½ï¿½ï¿½Ç°ï¿½Äµï¿½ï¿½ï¿½ï¿½ï¿½Ð´ï¿½ï¿½ï¿½Ä¼ï¿½
     bool saveSuccess = SaveToFile(m_currentFilePath);
 
-    // 3. ¸ù¾Ý±£´æ½á¹û¸üÐÂ×´Ì¬
+    // 3. ï¿½ï¿½ï¿½Ý±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½×´Ì¬
     if (saveSuccess) {
-        m_isModified = false;  // ±£´æ³É¹¦£¬±ê¼ÇÎªÎ´ÐÞ¸Ä
-        //UpdateTitle();         // ¸üÐÂ´°¿Ú±êÌâ£¨ÒÆ³ý"*"µÈÐÞ¸Ä±ê¼Ç£©
-        SetStatusText(wxString::Format("ÒÑ±£´æ: %s", m_currentFilePath));
+        m_isModified = false;  // ï¿½ï¿½ï¿½ï¿½É¹ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ÎªÎ´ï¿½Þ¸ï¿½
+        //UpdateTitle();         // ï¿½ï¿½ï¿½Â´ï¿½ï¿½Ú±ï¿½ï¿½â£¨ï¿½Æ³ï¿½"*"ï¿½ï¿½ï¿½Þ¸Ä±ï¿½Ç£ï¿½
+        SetStatusText(wxString::Format("ï¿½Ñ±ï¿½ï¿½ï¿½: %s", m_currentFilePath));
     }
     else {
         wxMessageBox(
-            wxString::Format("±£´æÊ§°Ü: %s", m_currentFilePath),
-            "´íÎó",
+            wxString::Format("ï¿½ï¿½ï¿½ï¿½Ê§ï¿½ï¿½: %s", m_currentFilePath),
+            "ï¿½ï¿½ï¿½ï¿½",
             wxOK | wxICON_ERROR,
             this
         );
     }
 }
 
-// ¸¨Öú·½·¨£º½«µ±Ç°ÎÄµµÄÚÈÝÐ´ÈëÖ¸¶¨Â·¾¶£¨ÐÞ¸ÄÎªXML¸ñÊ½£©
+// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ç°ï¿½Äµï¿½ï¿½ï¿½ï¿½ï¿½Ð´ï¿½ï¿½Ö¸ï¿½ï¿½Â·ï¿½ï¿½ï¿½ï¿½ï¿½Þ¸ï¿½ÎªXMLï¿½ï¿½Ê½ï¿½ï¿½
 bool MainFrame::SaveToFile(const wxString& filePath) {
-    // 1. Éú³ÉXMLÄÚÈÝ
+    // 1. ï¿½ï¿½ï¿½ï¿½XMLï¿½ï¿½ï¿½ï¿½
     wxString xmlContent = GenerateFileContent();
     if (xmlContent.IsEmpty()) {
         return false;
     }
 
-    // 2. ¼ì²éÎÄ¼þÊÇ·ñ´æÔÚ£¬²»´æÔÚÔò´´½¨
+    // 2. ï¿½ï¿½ï¿½ï¿½Ä¼ï¿½ï¿½Ç·ï¿½ï¿½ï¿½Ú£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ò´´½ï¿½
     if (!wxFile::Exists(filePath)) {
         wxFile tempFile;
         if (!tempFile.Open(filePath, wxFile::write)) {
@@ -141,17 +141,17 @@ bool MainFrame::SaveToFile(const wxString& filePath) {
         tempFile.Close();
     }
 
-    // 3. ´ò¿ªÎÄ¼þ²¢Ð´ÈëXMLÄÚÈÝ
+    // 3. ï¿½ï¿½ï¿½Ä¼ï¿½ï¿½ï¿½Ð´ï¿½ï¿½XMLï¿½ï¿½ï¿½ï¿½
     wxFile file;
     if (!file.Open(filePath, wxFile::write)) {
         return false;
     }
 
-    // 4. Ð´Èë²¢¹Ø±ÕÎÄ¼þ
+    // 4. Ð´ï¿½ë²¢ï¿½Ø±ï¿½ï¿½Ä¼ï¿½
     size_t bytesWritten = file.Write(xmlContent);
     file.Close();
 
-    // 5. ÑéÖ¤Ð´Èë½á¹û
+    // 5. ï¿½ï¿½Ö¤Ð´ï¿½ï¿½ï¿½ï¿½
     return bytesWritten == xmlContent.Length();
 }
 
@@ -160,21 +160,21 @@ bool MainFrame::SaveToFile(const wxString& filePath) {
 
 wxString MainFrame::GenerateFileContent()
 {
-    // 1. ´´½¨ÎÄµµ£¬**²»**ÊÖ¹¤Æ´ XML ÉùÃ÷
+    // 1. ï¿½ï¿½ï¿½ï¿½ï¿½Äµï¿½ï¿½ï¿½**ï¿½ï¿½**ï¿½Ö¹ï¿½Æ´ XML ï¿½ï¿½ï¿½ï¿½
     wxXmlDocument doc;
 
-    // 2. Ö±½Ó¹Ò¸ù½Úµã <project>
+    // 2. Ö±ï¿½Ó¹Ò¸ï¿½ï¿½Úµï¿½ <project>
     wxXmlNode* root = new wxXmlNode(wxXML_ELEMENT_NODE, "project");
     root->AddAttribute("source", "2.7.1");
     root->AddAttribute("version", "1.0");
     doc.SetRoot(root);
 
-    // 3. ×¢ÊÍ
+    // 3. ×¢ï¿½ï¿½
     root->AddChild(new wxXmlNode(wxXML_COMMENT_NODE,
         "This file is intended to be loaded by Logisim "
         "(http://www.cburch.com/logisim/)"));
 
-    // 4. Ôª¼þ¿â
+    // 4. Ôªï¿½ï¿½ï¿½ï¿½
     auto AddLib = [&](const wxString& desc, const wxString& name)
         {
             wxXmlNode* lib = new wxXmlNode(wxXML_ELEMENT_NODE, "lib");
@@ -185,25 +185,25 @@ wxString MainFrame::GenerateFileContent()
     AddLib("#Wiring", "0");
     AddLib("#Gates", "1");
 
-    // 5. Ö÷µçÂ·
+    // 5. ï¿½ï¿½ï¿½ï¿½Â·
     wxXmlNode* circuit = new wxXmlNode(wxXML_ELEMENT_NODE, "circuit");
     circuit->AddAttribute("name", "main");
     root->AddChild(circuit);
 
-    // 6. Ê¾Àýµ¼Ïß
+    // 6. Ê¾ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
     wxXmlNode* wire = new wxXmlNode(wxXML_ELEMENT_NODE, "wire");
     wire->AddAttribute("from", "(370,350)");
     wire->AddAttribute("to", "(430,350)");
     circuit->AddChild(wire);
 
-    // 7. ÄÚ´æ¡ú×Ö·û´®£¨Unicode °²È«£©
+    // 7. ï¿½Ú´ï¿½ï¿½ï¿½Ö·ï¿½ï¿½ï¿½ï¿½ï¿½Unicode ï¿½ï¿½È«ï¿½ï¿½
     wxStringOutputStream strStream;
-    doc.Save(strStream, wxXML_DOCUMENT_TYPE_NODE); // ×Ô¶¯´ø XML ÉùÃ÷
+    doc.Save(strStream, wxXML_DOCUMENT_TYPE_NODE); // ï¿½Ô¶ï¿½ï¿½ï¿½ XML ï¿½ï¿½ï¿½ï¿½
     return strStream.GetString();
 }
 
 
-// ¸¨Öú·½·¨£ºÌí¼ÓÔª¼þ¿â½Úµã
+// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ôªï¿½ï¿½ï¿½ï¿½Úµï¿½
 void MainFrame::AddLibraryNode(wxXmlNode* parent, const wxString& name, const wxString& desc) {
     wxXmlNode* lib = new wxXmlNode(wxXML_ELEMENT_NODE, wxT("lib"));
     lib->AddAttribute(wxT("name"), name);
@@ -211,38 +211,38 @@ void MainFrame::AddLibraryNode(wxXmlNode* parent, const wxString& name, const wx
     parent->AddChild(lib);
 }
 
-// ¸¨Öú·½·¨£ºÌí¼Óµ¼Ïß½Úµã
+// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Óµï¿½ï¿½ß½Úµï¿½
 void MainFrame::AddWireNode(wxXmlNode* parent, const wxString& from, const wxString& to) {
     wxXmlNode* wire = new wxXmlNode(wxXML_ELEMENT_NODE, wxT("wire"));
     wire->AddAttribute(wxT("from"), from);
     wire->AddAttribute(wxT("to"), to);
     parent->AddChild(wire);
 }
-// ÐèÅäÌ×ÊµÏÖ"Áí´æÎª"·½·¨£¨´¦ÀíÊ×´Î±£´æ£©
+// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Êµï¿½ï¿½"ï¿½ï¿½ï¿½Îª"ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½×´Î±ï¿½ï¿½æ£©
 void MainFrame::DoFileSaveAs() {
-    // µ¯³öÎÄ¼þÑ¡Ôñ¶Ô»°¿ò
+    // ï¿½ï¿½ï¿½ï¿½ï¿½Ä¼ï¿½Ñ¡ï¿½ï¿½Ô»ï¿½ï¿½ï¿½
     wxFileDialog saveDialog(
         this,
-        "Áí´æÎª",
+        "ï¿½ï¿½ï¿½Îª",
         "",
-        "Untitled.circ",  // Ä¬ÈÏÎÄ¼þÃû
-        "µçÂ·ÎÄ¼þ (*.circ)|*.circ|ËùÓÐÎÄ¼þ (*.*)|*.*",
-        wxFD_SAVE | wxFD_OVERWRITE_PROMPT  // ÌáÊ¾¸²¸ÇÒÑÓÐÎÄ¼þ
+        "Untitled.circ",  // Ä¬ï¿½ï¿½ï¿½Ä¼ï¿½ï¿½ï¿½
+        "ï¿½ï¿½Â·ï¿½Ä¼ï¿½ (*.circ)|*.circ|ï¿½ï¿½ï¿½ï¿½ï¿½Ä¼ï¿½ (*.*)|*.*",
+        wxFD_SAVE | wxFD_OVERWRITE_PROMPT  // ï¿½ï¿½Ê¾ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä¼ï¿½
     );
 
-    // ÓÃ»§È¡ÏûÔò·µ»Ø
+    // ï¿½Ã»ï¿½È¡ï¿½ï¿½ï¿½ò·µ»ï¿½
     if (saveDialog.ShowModal() != wxID_OK) {
         return;
     }
 
-    // »ñÈ¡ÓÃ»§Ñ¡ÔñµÄÂ·¾¶
+    // ï¿½ï¿½È¡ï¿½Ã»ï¿½Ñ¡ï¿½ï¿½ï¿½Â·ï¿½ï¿½
     wxString newPath = saveDialog.GetPath();
     m_currentFilePath = newPath;
 
-    // Ö´ÐÐ±£´æ
+    // Ö´ï¿½Ð±ï¿½ï¿½ï¿½
     DoFileSave();
 
-    // £¨¿ÉÑ¡£©Ìí¼Óµ½×î½üÎÄ¼þÀúÊ·
+    // ï¿½ï¿½ï¿½ï¿½Ñ¡ï¿½ï¿½ï¿½ï¿½Óµï¿½ï¿½ï¿½ï¿½ï¿½Ä¼ï¿½ï¿½ï¿½Ê·
     static_cast<MainMenuBar*>(GetMenuBar())->AddFileToHistory(newPath);
 }
 
@@ -323,7 +323,7 @@ void MainFrame::DoWindowPreferences()
 void MainFrame::DoWindowSwitchToDoc(const wxString& title)
 {
     wxMessageBox("Switch to document: " + title);
-    // ÕæÕýÂß¼­£º°ÑÖ÷¿ò¼ÜÇÐ»»µ½¶ÔÓ¦×Ó´°¿Ú»òÊÓÍ¼
+    // ï¿½ï¿½ï¿½ï¿½ï¿½ß¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð»ï¿½ï¿½ï¿½ï¿½ï¿½Ó¦ï¿½Ó´ï¿½ï¿½Ú»ï¿½ï¿½ï¿½Í¼
 }
 
 void MainFrame::DoHelpTutorial()
