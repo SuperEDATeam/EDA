@@ -8,6 +8,7 @@
 #include "CanvasModel.h"
 #include "my_log.h"
 #include <wx/filename.h> 
+#include <wx/sstream.h>
 
 extern std::vector<CanvasElement> g_elements;
 
@@ -115,9 +116,182 @@ void MainFrame::ClearPendingTool()
     SetStatusText("Ready");
 }
 
-void MainFrame::DoFileNew() { wxMessageBox("DoFileNew"); }
-void MainFrame::DoFileSave() { wxMessageBox("DoFileSave"); }
-void MainFrame::DoFileSaveAs() { wxMessageBox("DoFileSaveAs"); }
+//目前只修改了Mainframe。上面的私有变量，方法，以及json头文件
+// 修改.h文件GenerateFileContent()的申明
+//TODO 9.24
+//只是打开一个新窗口，不会对现有窗口做任何改变
+void MainFrame::DoFileNew() {
+    // 直接创建一个新的空白MainFrame窗口
+    MainFrame* newFrame = new MainFrame();  // 假设MainFrame构造函数会初始化空白状态
+
+    // 显示新窗口（居中显示）
+    newFrame->Centre(wxBOTH);
+    newFrame->Show(true);
+
+    // （可选）如果需要记录所有打开的窗口，可添加到窗口列表中
+    // m_allFrames.push_back(newFrame);  // 需要在MainFrame类中声明m_allFrames
+}
+
+
+
+
+
+
+
+
+
+//保存文件的实现，包含后面四个方法
+void MainFrame::DoFileSave() {
+    // 1. 如果当前文档没有路径（未保存过），则调用"另存为"
+    if (m_currentFilePath.IsEmpty()) {
+        // 调用DoFileSaveAs()处理首次保存（需实现该方法）
+        DoFileSaveAs();
+        return;
+    }
+
+    // 2. 尝试将当前文档内容写入文件
+    bool saveSuccess = SaveToFile(m_currentFilePath);
+
+    // 3. 根据保存结果更新状态
+    if (saveSuccess) {
+        m_isModified = false;  // 保存成功，标记为未修改
+        //UpdateTitle();         // 更新窗口标题（移除"*"等修改标记）
+        SetStatusText(wxString::Format("已保存: %s", m_currentFilePath));
+    }
+    else {
+        wxMessageBox(
+            wxString::Format("保存失败: %s", m_currentFilePath),
+            "错误",
+            wxOK | wxICON_ERROR,
+            this
+        );
+    }
+}
+
+// 辅助方法：将当前文档内容写入指定路径（修改为XML格式）
+bool MainFrame::SaveToFile(const wxString& filePath) {
+    // 1. 生成XML内容
+    wxString xmlContent = GenerateFileContent();
+    if (xmlContent.IsEmpty()) {
+        return false;
+    }
+
+    // 2. 检查文件是否存在，不存在则创建
+    if (!wxFile::Exists(filePath)) {
+        wxFile tempFile;
+        if (!tempFile.Open(filePath, wxFile::write)) {
+            return false;
+        }
+        tempFile.Close();
+    }
+
+    // 3. 打开文件并写入XML内容
+    wxFile file;
+    if (!file.Open(filePath, wxFile::write)) {
+        return false;
+    }
+
+    // 4. 写入并关闭文件
+    size_t bytesWritten = file.Write(xmlContent);
+    file.Close();
+
+    // 5. 验证写入结果
+    return bytesWritten == xmlContent.Length();
+}
+
+
+
+
+wxString MainFrame::GenerateFileContent()
+{
+    // 1. 创建文档，**不**手工拼 XML 声明
+    wxXmlDocument doc;
+
+    // 2. 直接挂根节点 <project>
+    wxXmlNode* root = new wxXmlNode(wxXML_ELEMENT_NODE, "project");
+    root->AddAttribute("source", "2.7.1");
+    root->AddAttribute("version", "1.0");
+    doc.SetRoot(root);
+
+    // 3. 注释
+    root->AddChild(new wxXmlNode(wxXML_COMMENT_NODE,
+        "This file is intended to be loaded by Logisim "
+        "(http://www.cburch.com/logisim/)"));
+
+    // 4. 元件库
+    auto AddLib = [&](const wxString& desc, const wxString& name)
+        {
+            wxXmlNode* lib = new wxXmlNode(wxXML_ELEMENT_NODE, "lib");
+            lib->AddAttribute("desc", desc);
+            lib->AddAttribute("name", name);
+            root->AddChild(lib);
+        };
+    AddLib("#Wiring", "0");
+    AddLib("#Gates", "1");
+
+    // 5. 主电路
+    wxXmlNode* circuit = new wxXmlNode(wxXML_ELEMENT_NODE, "circuit");
+    circuit->AddAttribute("name", "main");
+    root->AddChild(circuit);
+
+    // 6. 示例导线
+    wxXmlNode* wire = new wxXmlNode(wxXML_ELEMENT_NODE, "wire");
+    wire->AddAttribute("from", "(370,350)");
+    wire->AddAttribute("to", "(430,350)");
+    circuit->AddChild(wire);
+
+    // 7. 内存→字符串（Unicode 安全）
+    wxStringOutputStream strStream;
+    doc.Save(strStream, wxXML_DOCUMENT_TYPE_NODE); // 自动带 XML 声明
+    return strStream.GetString();
+}
+
+
+// 辅助方法：添加元件库节点
+void MainFrame::AddLibraryNode(wxXmlNode* parent, const wxString& name, const wxString& desc) {
+    wxXmlNode* lib = new wxXmlNode(wxXML_ELEMENT_NODE, wxT("lib"));
+    lib->AddAttribute(wxT("name"), name);
+    lib->AddAttribute(wxT("desc"), desc);
+    parent->AddChild(lib);
+}
+
+// 辅助方法：添加导线节点
+void MainFrame::AddWireNode(wxXmlNode* parent, const wxString& from, const wxString& to) {
+    wxXmlNode* wire = new wxXmlNode(wxXML_ELEMENT_NODE, wxT("wire"));
+    wire->AddAttribute(wxT("from"), from);
+    wire->AddAttribute(wxT("to"), to);
+    parent->AddChild(wire);
+}
+// 需配套实现"另存为"方法（处理首次保存）
+void MainFrame::DoFileSaveAs() {
+    // 弹出文件选择对话框
+    wxFileDialog saveDialog(
+        this,
+        "另存为",
+        "",
+        "Untitled.circ",  // 默认文件名
+        "电路文件 (*.circ)|*.circ|所有文件 (*.*)|*.*",
+        wxFD_SAVE | wxFD_OVERWRITE_PROMPT  // 提示覆盖已有文件
+    );
+
+    // 用户取消则返回
+    if (saveDialog.ShowModal() != wxID_OK) {
+        return;
+    }
+
+    // 获取用户选择的路径
+    wxString newPath = saveDialog.GetPath();
+    m_currentFilePath = newPath;
+
+    // 执行保存
+    DoFileSave();
+
+    // （可选）添加到最近文件历史
+    static_cast<MainMenuBar*>(GetMenuBar())->AddFileToHistory(newPath);
+}
+
+
+
 void MainFrame::DoFileOpen(const wxString& path)
 {
     wxString msg = path.IsEmpty()
