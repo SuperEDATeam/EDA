@@ -75,6 +75,9 @@ MainFrame::MainFrame()
 
     /* 一次性提交 */
     m_auiMgr.Update();
+
+    m_pendingTool.Clear();
+    UpdateCursor();
 }
 
 MainFrame::~MainFrame()
@@ -83,18 +86,33 @@ MainFrame::~MainFrame()
 }
 
 
+//void MainFrame::OnToolboxElement(wxCommandEvent& evt)
+//{
+//    MyLog("MainFrame: received <%s>\n", evt.GetString().ToUTF8().data());
+//
+//    wxString name = evt.GetString();
+//    auto it = std::find_if(g_elements.begin(), g_elements.end(),
+//        [&](const CanvasElement& e) { return e.GetName() == name; });
+//    if (it == g_elements.end()) return;
+//
+//    CanvasElement clone = *it;
+//    clone.SetPos(wxPoint(100, 100));   // 先放中央，后续用鼠标坐标
+//    m_canvas->AddElement(clone);        
+//}
+
 void MainFrame::OnToolboxElement(wxCommandEvent& evt)
 {
-    MyLog("MainFrame: received <%s>\n", evt.GetString().ToUTF8().data());
+    m_pendingTool = evt.GetString();
+    UpdateCursor();
+    SetStatusText(wxString::Format("Select position to place <%s>", m_pendingTool));
+}
 
-    wxString name = evt.GetString();
-    auto it = std::find_if(g_elements.begin(), g_elements.end(),
-        [&](const CanvasElement& e) { return e.GetName() == name; });
-    if (it == g_elements.end()) return;
-
-    CanvasElement clone = *it;
-    clone.SetPos(wxPoint(100, 100));   // 先放中央，后续用鼠标坐标
-    m_canvas->AddElement(clone);        
+const wxString& MainFrame::GetPendingTool() const { return m_pendingTool; }
+void MainFrame::ClearPendingTool()
+{
+    m_pendingTool.Clear();
+    UpdateCursor();
+    SetStatusText("Ready");
 }
 
 void MainFrame::DoFileNew() { wxMessageBox("DoFileNew"); }
@@ -194,3 +212,10 @@ void MainFrame::DoHelpAbout()
         wxT("About"), wxOK | wxICON_INFORMATION, this);
 }
 
+void MainFrame::UpdateCursor()
+{
+    if (m_pendingTool.IsEmpty())
+        SetCursor(wxCursor(wxCURSOR_ARROW));
+    else
+        SetCursor(wxCursor(wxCURSOR_CROSS));
+}

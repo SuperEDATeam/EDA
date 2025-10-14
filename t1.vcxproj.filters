@@ -45,9 +45,6 @@
     <ClCompile Include="CanvasElement.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="CanvasDropTarget.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="MainMenuBar.h">
@@ -75,9 +72,6 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="CanvasModel.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="CanvasDropTarget.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="my_log.h">

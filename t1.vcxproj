@@ -20,7 +20,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="3rd\json\jsoncpp.cpp" />
-    <ClCompile Include="CanvasDropTarget.cpp" />
     <ClCompile Include="CanvasElement.cpp" />
     <ClCompile Include="CanvasModel.cpp" />
     <ClCompile Include="CanvasPanel.cpp" />
@@ -33,7 +32,6 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="3rd\json\json.h" />
-    <ClInclude Include="CanvasDropTarget.h" />
     <ClInclude Include="CanvasElement.h" />
     <ClInclude Include="CanvasModel.h" />
     <ClInclude Include="CanvasPanel.h" />

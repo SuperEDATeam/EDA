@@ -1,3 +1,4 @@
+#include <wx/defs.h>
 #include "ToolboxPanel.h"
 #include "ToolboxModel.h"
 #include <wx/artprov.h>
@@ -49,8 +50,7 @@ ToolboxPanel::ToolboxPanel(wxWindow* parent)
     // ② 再绑定事件（必须在 new 之后）
     m_tree->Bind(wxEVT_TREE_SEL_CHANGED, &ToolboxPanel::OnSelectionChanged, this);
     m_tree->Bind(wxEVT_LEFT_DOWN, &ToolboxPanel::OnMouseDown, this);
-    m_tree->Bind(wxEVT_TREE_BEGIN_DRAG, &ToolboxPanel::OnBeginDrag, this);
-
+    m_tree->Bind(wxEVT_TREE_ITEM_ACTIVATED, &ToolboxPanel::OnItemActivated, this);
     // ③ 布局/外观（你已有的，但不要再次 new）
     wxBoxSizer* sizer = new wxBoxSizer(wxVERTICAL);
     sizer->Add(m_tree, 1, wxEXPAND | wxALL, 0);
@@ -68,6 +68,12 @@ ToolboxPanel::ToolboxPanel(wxWindow* parent)
     m_tree->SetIndent(20);
 
     Rebuild();
+}
+
+ToolboxPanel::~ToolboxPanel()
+{
+    m_tree->Unbind(wxEVT_TREE_SEL_CHANGED, &ToolboxPanel::OnSelectionChanged, this);
+    m_tree->Unbind(wxEVT_LEFT_DOWN, &ToolboxPanel::OnMouseDown, this);
 }
 
 void ToolboxPanel::Rebuild()
@@ -110,33 +116,14 @@ void ToolboxPanel::OnItemActivated(wxTreeEvent& evt)
 }
 
 
-void ToolboxPanel::OnBeginDrag(wxTreeEvent& evt)
-{
-    wxString name = m_tree->GetItemText(evt.GetItem());
-
-    MyLog("OnBeginDrag: entered, item = <%s>\n", name.ToUTF8().data());
-
-    Json::Value root;
-    root["action"] = "add";
-    root["type"] = name.ToStdString();
-
-    Json::StreamWriterBuilder w;
-    std::string jsonStr = Json::writeString(w, root);   // 无换行
-
-    MyLog("DragStart: JSON = [%s]\n", jsonStr.c_str());
-
-    // 用自定义字节流对象
-    wxCustomDataObject dragData(myFormat);
-    dragData.SetData(jsonStr.size(), jsonStr.data());   // 纯字节
-
-    wxDropSource source(dragData, this);
-    MyLog("StartDrag: about to call DoDragDrop\n");
-    int ret = source.DoDragDrop(wxDragCopy);
-    MyLog("StartDrag: DoDragDrop returned %d\n", ret);
-}
-
 void ToolboxPanel::OnSelectionChanged(wxTreeEvent& evt)
 {
+    if (m_tree->GetItemText(evt.GetItem()).IsEmpty())
+    {
+        // 如果选中的项为空，直接返回
+        return;
+    }
+
     m_itemName = m_tree->GetItemText(evt.GetItem());
     MyLog("Toolbox: selection changed to <%s>\n", m_itemName.ToUTF8().data());
 }
@@ -144,29 +131,6 @@ void ToolboxPanel::OnSelectionChanged(wxTreeEvent& evt)
 void ToolboxPanel::OnMouseDown(wxMouseEvent& evt)
 {
     MyLog("OnMouseDown: entered\n");
-    if (m_tree->GetSelection().IsOk()) {
-        MyLog("Toolbox: single-click + mouse down\n");
-        StartDrag();           // 立即启动拖放
-    }
     evt.Skip();                // 让 wx 继续处理其他鼠标逻辑
 }
 
-void ToolboxPanel::StartDrag()
-{
-    MyLog("StartDrag: entered, name = <%s>\n", m_itemName.ToUTF8().data());
-
-
-
-    Json::Value root;
-    root["action"] = "add";
-    root["type"] = m_itemName.ToStdString();
-
-    Json::StreamWriterBuilder w;
-    std::string jsonStr = Json::writeString(w, root);
-    MyLog("StartDrag: JSON length = %zu bytes\n", jsonStr.size());
-    wxCustomDataObject dragData(wxDataFormat("application/my-canvas-elem"));
-    dragData.SetData(jsonStr.size(), jsonStr.data());
-    MyLog("StartDrag: SetData %zu bytes\n", jsonStr.size());
-    wxDropSource source(dragData, this);
-    source.DoDragDrop(wxDragCopy);
-}

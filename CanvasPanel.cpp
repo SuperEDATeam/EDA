@@ -1,11 +1,13 @@
 #include "CanvasPanel.h"
+#include "MainFrame.h"
 #include <wx/dcbuffer.h>   // 双缓冲
 #include "CanvasElement.h" // 新增
-#include "CanvasDropTarget.h"
 #include "my_log.h"
 
 wxBEGIN_EVENT_TABLE(CanvasPanel, wxPanel)
 EVT_PAINT(CanvasPanel::OnPaint)
+EVT_LEFT_DOWN(CanvasPanel::OnLeftDown)
+EVT_KEY_DOWN(CanvasPanel::OnKeyDown)
 wxEND_EVENT_TABLE()
 
 CanvasPanel::CanvasPanel(wxWindow* parent)
@@ -13,7 +15,6 @@ CanvasPanel::CanvasPanel(wxWindow* parent)
         wxFULL_REPAINT_ON_RESIZE | wxBORDER_NONE)
 {
     SetBackgroundStyle(wxBG_STYLE_PAINT); // 双缓冲必须
-    SetDropTarget(new CanvasDropTarget(this));
     SetBackgroundStyle(wxBG_STYLE_PAINT);
     SetBackgroundColour(*wxYELLOW);
     MyLog("CanvasPanel: drop target set\n");
@@ -47,4 +48,39 @@ void CanvasPanel::OnPaint(wxPaintEvent&)
     for (const auto& elem : m_elements) {
         elem.Draw(dc);   // 调用 CanvasElement::Draw
     }
+}
+
+void CanvasPanel::OnLeftDown(wxMouseEvent& evt)
+{
+    wxPoint pt = evt.GetPosition();
+    MyLog("CanvasPanel: mouse %d,%d\n", pt.x, pt.y);
+
+    MainFrame* mf = wxDynamicCast(GetParent(), MainFrame);
+    if (!mf) return;
+    const wxString& tool = mf->GetPendingTool();
+    if (tool.IsEmpty()) return;          // 普通单击，忽略
+    PlaceElement(tool, evt.GetPosition());
+    mf->ClearPendingTool();              // 一次放置后自动退出“放置模式”
+}
+
+void CanvasPanel::OnKeyDown(wxKeyEvent& evt)
+{
+    if (evt.GetKeyCode() == WXK_ESCAPE)
+    {
+        MainFrame* mf = wxDynamicCast(GetParent(), MainFrame);
+        if (mf) mf->ClearPendingTool();
+    }
+    else
+        evt.Skip();
+}
+
+void CanvasPanel::PlaceElement(const wxString& name, const wxPoint& pos)
+{
+    extern std::vector<CanvasElement> g_elements;
+    auto it = std::find_if(g_elements.begin(), g_elements.end(),
+        [&](const CanvasElement& e) { return e.GetName() == name; });
+    if (it == g_elements.end()) return;
+    CanvasElement clone = *it;
+    clone.SetPos(pos);
+    AddElement(clone);          // 复用你已有的 AddElement/Refresh
 }

@@ -70,10 +70,17 @@ public:
     void DoHelpUserGuide();
     void DoHelpLibraryRef();
     void DoHelpAbout();
+
+    const wxString& GetPendingTool() const;
+    void ClearPendingTool();
 private:
     wxAuiManager m_auiMgr;
     PropertyPanel* m_propPanel = nullptr;
     CanvasPanel* m_canvas;
+
+    wxString m_pendingTool;     // 当前待放置的元件名，空串表示无
+    void UpdateCursor();        // 根据 m_pendingTool 设置十字/常规光标
+
     void OnToolboxElement(wxCommandEvent& evt);
     wxDECLARE_EVENT_TABLE();
 };
