@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AutoImportSettings">
+    <option name="autoReloadType" value="SELECTIVE" />
+  </component>
+  <component name="ChangeListManager">
+    <list default="true" id="bb3ab43e-0898-43cf-a8f2-d4e71c4c4e4d" name="更改" comment="实现了保存元件的功能，保存元件连线暂时还不可以">
+      <change beforePath="$PROJECT_DIR$/CanvasPanel.h" beforeDir="false" afterPath="$PROJECT_DIR$/CanvasPanel.h" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/MainFrame.cpp" beforeDir="false" afterPath="$PROJECT_DIR$/MainFrame.cpp" afterDir="false" />
+    </list>
+    <option name="SHOW_DIALOG" value="false" />
+    <option name="HIGHLIGHT_CONFLICTS" value="true" />
+    <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
+    <option name="LAST_RESOLUTION" value="IGNORE" />
+  </component>
+  <component name="Git.Settings">
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+  </component>
+  <component name="ProblemsViewState">
+    <option name="selectedTabId" value="CurrentFile" />
+  </component>
+  <component name="ProjectColorInfo">{
+  &quot;associatedIndex&quot;: 8
+}</component>
+  <component name="ProjectId" id="342ZsiqAEV99q14cHGwsmVNHcUP" />
+  <component name="ProjectViewState">
+    <option name="hideEmptyMiddlePackages" value="true" />
+    <option name="showLibraryContents" value="true" />
+  </component>
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "last_opened_file_path": "D:/biancheng/vs2022/EDA",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "vue.rearranger.settings.migration": "true"
+  }
+}]]></component>
+  <component name="SharedIndexes">
+    <attachedChunks>
+      <set>
+        <option value="bundled-jdk-9823dce3aa75-fbdcb00ec9e3-intellij.indexing.shared.core-IU-251.23774.435" />
+        <option value="bundled-js-predefined-d6986cc7102b-f27c65a3e318-JavaScript-IU-251.23774.435" />
+      </set>
+    </attachedChunks>
+  </component>
+  <component name="TaskManager">
+    <task active="true" id="Default" summary="默认任务">
+      <changelist id="bb3ab43e-0898-43cf-a8f2-d4e71c4c4e4d" name="更改" comment="" />
+      <created>1760413835535</created>
+      <option name="number" value="Default" />
+      <option name="presentableId" value="Default" />
+      <updated>1760413835535</updated>
+      <workItem from="1760413836910" duration="243000" />
+      <workItem from="1760493574387" duration="51000" />
+      <workItem from="1760518203468" duration="785000" />
+      <workItem from="1760519767734" duration="84000" />
+    </task>
+    <task id="LOCAL-00001" summary="保存电路">
+      <option name="closed" value="true" />
+      <created>1760413979002</created>
+      <option name="number" value="00001" />
+      <option name="presentableId" value="LOCAL-00001" />
+      <option name="project" value="LOCAL" />
+      <updated>1760413979002</updated>
+    </task>
+    <task id="LOCAL-00002" summary="实现了保存元件的功能，保存元件连线暂时还不可以">
+      <option name="closed" value="true" />
+      <created>1760518296786</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1760518296786</updated>
+    </task>
+    <option name="localTasksCounter" value="3" />
+    <servers />
+  </component>
+  <component name="TypeScriptGeneratedFilesManager">
+    <option name="version" value="3" />
+  </component>
+  <component name="VcsManagerConfiguration">
+    <MESSAGE value="保存电路" />
+    <MESSAGE value="实现了保存元件的功能，保存元件连线暂时还不可以" />
+    <option name="LAST_COMMIT_MESSAGE" value="实现了保存元件的功能，保存元件连线暂时还不可以" />
+  </component>
+</project>

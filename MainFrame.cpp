@@ -201,24 +201,23 @@ bool MainFrame::SaveToFile(const wxString& filePath) {
 
 
 
-
 wxString MainFrame::GenerateFileContent()
 {
-    // 1. 创建文档，**不**手工拼 XML 声明
+    // 1. 创建XML文档结构
     wxXmlDocument doc;
 
-    // 2. 直接挂根节点 <project>
+    // 2. 根节点 <project>
     wxXmlNode* root = new wxXmlNode(wxXML_ELEMENT_NODE, "project");
     root->AddAttribute("source", "2.7.1");
     root->AddAttribute("version", "1.0");
     doc.SetRoot(root);
 
-    // 3. 注释
+    // 3. 添加注释
     root->AddChild(new wxXmlNode(wxXML_COMMENT_NODE,
         "This file is intended to be loaded by Logisim "
         "(http://www.cburch.com/logisim/)"));
 
-    // 4. 元件库
+    // 4. 库声明节点（保持基础库引用，确保兼容性）
     auto AddLib = [&](const wxString& desc, const wxString& name)
         {
             wxXmlNode* lib = new wxXmlNode(wxXML_ELEMENT_NODE, "lib");
@@ -229,23 +228,57 @@ wxString MainFrame::GenerateFileContent()
     AddLib("#Wiring", "0");
     AddLib("#Gates", "1");
 
-    // 5. 主电路
+    // 5. 电路主节点
     wxXmlNode* circuit = new wxXmlNode(wxXML_ELEMENT_NODE, "circuit");
     circuit->AddAttribute("name", "main");
     root->AddChild(circuit);
 
-    // 6. 示例导线
-    wxXmlNode* wire = new wxXmlNode(wxXML_ELEMENT_NODE, "wire");
-    wire->AddAttribute("from", "(370,350)");
-    wire->AddAttribute("to", "(430,350)");
-    circuit->AddChild(wire);
+    // 6. 保存画布上的所有元件
+    // 从CanvasPanel获取元件列表（需确保CanvasPanel提供GetElements()接口）
+    const std::vector<CanvasElement>& elements = m_canvas->GetElements();
+    for (const auto& elem : elements)
+    {
+        // 创建元件节点 <component>
+        wxXmlNode* compNode = new wxXmlNode(wxXML_ELEMENT_NODE, "component");
 
-    // 7. 内存→字符串（Unicode 安全）
+        // 保存元件基本信息：名称和位置
+        compNode->AddAttribute("name", elem.GetName());
+        compNode->AddAttribute("x", wxString::Format("%d", elem.GetPos().x));
+        compNode->AddAttribute("y", wxString::Format("%d", elem.GetPos().y));
+
+        // 保存输入引脚信息（可选，根据需要扩展）
+        const std::vector<Pin>& inputPins = elem.GetInputPins();
+        for (size_t i = 0; i < inputPins.size(); ++i)
+        {
+            wxXmlNode* pinNode = new wxXmlNode(wxXML_ELEMENT_NODE, "inputPin");
+            pinNode->AddAttribute("id", wxString::Format("%zu", i));
+            pinNode->AddAttribute("name", inputPins[i].name);
+            pinNode->AddAttribute("x", wxString::Format("%d", inputPins[i].pos.x));
+            pinNode->AddAttribute("y", wxString::Format("%d", inputPins[i].pos.y));
+            compNode->AddChild(pinNode);
+        }
+
+        // 保存输出引脚信息（可选，根据需要扩展）
+        const std::vector<Pin>& outputPins = elem.GetOutputPins();
+        for (size_t i = 0; i < outputPins.size(); ++i)
+        {
+            wxXmlNode* pinNode = new wxXmlNode(wxXML_ELEMENT_NODE, "outputPin");
+            pinNode->AddAttribute("id", wxString::Format("%zu", i));
+            pinNode->AddAttribute("name", outputPins[i].name);
+            pinNode->AddAttribute("x", wxString::Format("%d", outputPins[i].pos.x));
+            pinNode->AddAttribute("y", wxString::Format("%d", outputPins[i].pos.y));
+            compNode->AddChild(pinNode);
+        }
+
+        // 将元件节点添加到电路节点
+        circuit->AddChild(compNode);
+    }
+
+    // 7. 生成XML字符串
     wxStringOutputStream strStream;
-    doc.Save(strStream, wxXML_DOCUMENT_TYPE_NODE); // 自动带 XML 声明
+    doc.Save(strStream, wxXML_DOCUMENT_TYPE_NODE);
     return strStream.GetString();
 }
-
 
 // 辅助方法：添加元件库节点
 void MainFrame::AddLibraryNode(wxXmlNode* parent, const wxString& name, const wxString& desc) {
