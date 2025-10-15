@@ -15,7 +15,6 @@
 #include <wx/arrstr.h>
 
 
-// 你的图标绝对路径（已确认正确，不用改）
 #define ICON_FOLDER wxT("res/icons/")
 
 static void MY_LOG(const wxString& s)

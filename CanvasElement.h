@@ -32,6 +32,8 @@ public:
     const std::vector<struct Pin>& GetInputPins() const { return m_inputPins; }
     const std::vector<struct Pin>& GetOutputPins() const { return m_outputPins; }
 
+    wxRect GetBounds() const; // 添加边界框计算方法
+
 private:
     wxString m_name;
     wxPoint  m_pos;
