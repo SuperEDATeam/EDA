@@ -16,7 +16,7 @@
 
 
 // 你的图标绝对路径（已确认正确，不用改）
-#define ICON_FOLDER wxT("E:/课程/综设/MyLogisim/icons/")
+#define ICON_FOLDER wxT("res/icons/")
 
 static void MY_LOG(const wxString& s)
 {
