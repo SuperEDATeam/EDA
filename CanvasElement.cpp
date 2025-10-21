@@ -12,8 +12,8 @@ CanvasElement::CanvasElement(const wxString& name, const wxPoint& pos)
 
 void CanvasElement::Draw(wxDC& dc) const
 {
-    MyLog("CanvasElement: Draw %s at %d,%d\n",
-        m_name.ToUTF8().data(), m_pos.x, m_pos.y);
+    /*MyLog("CanvasElement: Draw %s at %d,%d\n",
+        m_name.ToUTF8().data(), m_pos.x, m_pos.y);*/
 
     // Í³Ò»Æ½ÒÆ lambda
     auto off = [&](const Point& p)
@@ -73,4 +73,46 @@ void CanvasElement::Draw(wxDC& dc) const
         dc.DrawLine(p, wxPoint(p.x + 8, p.y));
         dc.DrawCircle(wxPoint(p.x + 8, p.y), 4);
     }
+}
+
+#include <algorithm>
+#include <limits>
+
+wxRect CanvasElement::GetBounds() const
+{
+    if (m_shapes.empty()) return wxRect(m_pos, wxSize(1, 1));
+
+    int minX = std::numeric_limits<int>::max();
+    int minY = std::numeric_limits<int>::max();
+    int maxX = std::numeric_limits<int>::min();
+    int maxY = std::numeric_limits<int>::min();
+
+    auto update = [&](const Point& p) {
+        int x = m_pos.x + p.x;
+        int y = m_pos.y + p.y;
+        minX = std::min(minX, x);
+        minY = std::min(minY, y);
+        maxX = std::max(maxX, x);
+        maxY = std::max(maxY, y);
+        };
+
+    for (const auto& shape : m_shapes) {
+        std::visit([&](auto&& arg) {
+            using T = std::decay_t<decltype(arg)>;
+            if constexpr (std::is_same_v<T, PolyShape>) {
+                for (auto& pt : arg.pts) update(pt);
+            }
+            else if constexpr (std::is_same_v<T, Line>) {
+                update(arg.start); update(arg.end);
+            }
+            else if constexpr (std::is_same_v<T, Circle>) {
+                update({ arg.center.x - arg.radius, arg.center.y - arg.radius });
+                update({ arg.center.x + arg.radius, arg.center.y + arg.radius });
+            }
+            else if constexpr (std::is_same_v<T, Text>) {
+                update(arg.pos);
+            }
+            }, shape);
+    }
+    return wxRect(minX, minY, maxX - minX, maxY - minY);
 }

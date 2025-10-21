@@ -29,6 +29,7 @@
     <ClCompile Include="PropertyPanel.cpp" />
     <ClCompile Include="ToolboxModel.cpp" />
     <ClCompile Include="ToolboxPanel.cpp" />
+    <ClCompile Include="Wire.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="3rd\json\json.h" />
@@ -41,6 +42,7 @@
     <ClInclude Include="PropertyPanel.h" />
     <ClInclude Include="ToolboxModel.h" />
     <ClInclude Include="ToolboxPanel.h" />
+    <ClInclude Include="Wire.h" />
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>

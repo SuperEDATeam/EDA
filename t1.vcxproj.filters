@@ -45,6 +45,9 @@
     <ClCompile Include="CanvasElement.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="Wire.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="MainMenuBar.h">
@@ -75,6 +78,9 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="my_log.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Wire.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
