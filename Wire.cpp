@@ -7,16 +7,22 @@ void Wire::Draw(wxDC& dc) const {
         dc.DrawLine(pts[i - 1].pos, pts[i].pos);
 }
 
-std::vector<ControlPoint> Wire::RouteOrtho(const wxPoint& a, const wxPoint& b) {
+//采用曼哈顿路由（Manhattan Wiring）代替传统的正交路由
+// 输入：起点 a，终点 b   输出：2~3 个点的折线
+std::vector<ControlPoint>
+Wire::RouteOrtho(const wxPoint& a, const wxPoint& b)
+{
     std::vector<ControlPoint> out;
     out.push_back({ a, CPType::Pin });
-    if (a.x == b.x || a.y == b.y) {              // 直线
+
+    if (a.x == b.x || a.y == b.y) {          // 纯横 or 纯竖
         out.push_back({ b, CPType::Free });
+        return out;
     }
-    else {                                       // L 形
-        wxPoint bend((a.x + b.x) / 2, a.y);
-        out.push_back({ bend, CPType::Bend });
-        out.push_back({ b, CPType::Free });
-    }
+
+    // 先横后竖：中间折点在终点正上方（或下方）
+    wxPoint bend(b.x, a.y);
+    out.push_back({ bend, CPType::Bend });
+    out.push_back({ b, CPType::Free });
     return out;
 }

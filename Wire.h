@@ -24,6 +24,6 @@ public:
     bool Empty() const { return pts.empty(); }
     size_t Size() const { return pts.size(); }
 
-    // 正交路由：起点→终点 生成折点
+    //采用曼哈顿路由（Manhattan Wiring）代替传统的正交路由
     static std::vector<ControlPoint> RouteOrtho(const wxPoint& a, const wxPoint& b);
 };
