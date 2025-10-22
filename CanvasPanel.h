@@ -11,11 +11,30 @@ public:
     void AddElement(const CanvasElement& elem);
     void PlaceElement(const wxString& name, const wxPoint& pos);
 
-    // 鼠标事件（兼容原拖动 + 新增连线）
+
+    // 缩放相关方法
+    float GetScale() const { return m_scale; }  // 获取当前缩放比例
+    void SetScale(float scale);                 // 设置缩放比例并刷新
+
+    // 坐标转换（屏幕坐标 <-> 画布坐标，考虑缩放）
+    wxPoint ScreenToCanvas(const wxPoint& screenPos) const;
+    wxPoint CanvasToScreen(const wxPoint& canvasPos) const;
+
+    wxPoint m_offset;          // 画布偏移量（平移坐标）
+    bool m_isPanning;          // 是否正在拖拽平移
+    wxPoint m_panStartPos;     // 平移开始时的屏幕坐标
+
+
+      // 新增：判断是否点击在空白区域（无元素）
+    bool IsClickOnEmptyArea(const wxPoint& canvasPos);
+
+    // 事件处理函数（将中键改为左键相关）
     void OnLeftDown(wxMouseEvent& evt);
     void OnLeftUp(wxMouseEvent& evt);
     void OnMouseMove(wxMouseEvent& evt);
     void OnKeyDown(wxKeyEvent& evt);
+    void OnMouseWheel(wxMouseEvent& evt);  
+   
 
     // 暴露连线容器，供外部仿真/导出使用
     const std::vector<Wire>& GetWires() const { return m_wires; }
@@ -36,6 +55,9 @@ private:
 
     ControlPoint m_startCP;      // 连线起点
     wxPoint m_curSnap;           // 当前吸附/预览点
+
+    // 新增：缩放因子（默认1.0，即100%）
+    float m_scale = 1.0f;
 
     /* ---------- 原有函数 ---------- */
     void OnPaint(wxPaintEvent& evt);
