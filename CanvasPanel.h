@@ -4,6 +4,15 @@
 #include "CanvasElement.h"
 #include "Wire.h"          // ← 新增：连线数据
 
+/* 新增：拖动时需要更新的连线索引 + 对应引脚信息 */
+struct WireAnchor {
+    size_t wireIdx;   // 哪条线
+    size_t ptIdx;     // 该线第几个控制点（0 或 最后）
+    bool   isInput;   // 元件侧是输入还是输出引脚
+    size_t pinIdx;    // 元件侧引脚索引
+};
+
+
 class CanvasPanel : public wxPanel
 {
 public:
@@ -44,6 +53,8 @@ private:
     /* ---------- 新增辅助 ---------- */
     // 吸附：网格 + 引脚
     wxPoint Snap(const wxPoint& raw, bool* snapped);
+
+    std::vector<WireAnchor> m_movingWires;
 
     wxDECLARE_EVENT_TABLE();
 };

@@ -1,6 +1,6 @@
 #include "CanvasPanel.h"
 #include "MainFrame.h"
-#include "Wire.h"            // ← 新增
+#include "Wire.h"
 #include <wx/dcbuffer.h>
 #include "CanvasElement.h"
 #include "my_log.h"
@@ -82,10 +82,45 @@ void CanvasPanel::OnLeftDown(wxMouseEvent& evt)
         Refresh();
         return;
     }
+    //if (m_wireMode == WireMode::DragNew) {
+    //    ControlPoint end{ pos, snapped ? CPType::Pin : CPType::Free };
+    //    m_tempWire.AddPoint(end);
+
+    //    // 关键：只要吸附到引脚，就把两端都标记为 Pin，以便双向收集
+    //    if (snapped) {
+    //        m_tempWire.pts.front().type = CPType::Pin;
+    //        MyLog("Before: back.type=%d\n", int(m_tempWire.pts.back().type));
+    //        m_tempWire.pts.back().type = CPType::Pin;
+    //        MyLog("After : back.type=%d\n", int(m_tempWire.pts.back().type));
+    //    }
+
+    //    MyLog("After set: wire front type=%d  back type=%d\n",
+    //        int(m_tempWire.pts.front().type),
+    //        int(m_tempWire.pts.back().type));
+
+    //    MyLog("Assign: &front=%p  &back=%p  size=%zu\n",
+    //        &m_tempWire.pts.front().type,
+    //        &m_tempWire.pts.back().type,
+    //        m_tempWire.pts.size());
+    //    m_wires.emplace_back(m_tempWire);
+    //    m_wireMode = WireMode::Idle;
+    //    ReleaseMouse();
+    //    Refresh();
+    //    return;
+    //}
     if (m_wireMode == WireMode::DragNew) {
-        ControlPoint end{ pos, snapped ? CPType::Pin : CPType::Free };
+        bool snappedEnd = false;
+        wxPoint endPos = Snap(pos, &snappedEnd);   // 用 Snap 保证落在引脚或网格
+
+        ControlPoint end{ endPos, snappedEnd ? CPType::Pin : CPType::Free };
         m_tempWire.AddPoint(end);
-        m_wires.emplace_back(m_tempWire);   // 定型
+
+        if (snappedEnd) {
+            m_tempWire.pts.front().type = CPType::Pin;
+            m_tempWire.pts.back().type = CPType::Pin;
+        }
+
+        m_wires.emplace_back(m_tempWire);
         m_wireMode = WireMode::Idle;
         ReleaseMouse();
         Refresh();
@@ -98,6 +133,44 @@ void CanvasPanel::OnLeftDown(wxMouseEvent& evt)
         m_isDragging = true;
         m_dragStartPos = raw;
         m_elementStartPos = m_elements[m_selectedIndex].GetPos();
+
+        // ===== 双向收集：起点 OR 终点连到被拖元件引脚 =====
+        m_movingWires.clear();
+        const CanvasElement& elem = m_elements[m_selectedIndex];
+        MyLog("Drag elem POS = (%d,%d)\n", elem.GetPos().x, elem.GetPos().y);
+        auto collect = [&](const auto& pins, bool isInput) {
+            for (size_t p = 0; p < pins.size(); ++p) {
+                wxPoint pinWorld = elem.GetPos() + wxPoint(pins[p].pos.x, pins[p].pos.y);
+                MyLog("  pin[%zu] world = (%d,%d)\n", p, pinWorld.x, pinWorld.y);
+                for (size_t w = 0; w < m_wires.size(); ++w) {
+                    const auto& wire = m_wires[w];
+
+                    MyLog("    wire[%zu] front=(%d,%d) type=%d  back=(%d,%d) type=%d\n",
+                        w,
+                        wire.pts.front().pos.x, wire.pts.front().pos.y, int(wire.pts.front().type),
+                        wire.pts.back().pos.x, wire.pts.back().pos.y, int(wire.pts.back().type));
+
+                    // 起点命中
+                    if (wire.pts.front().type == CPType::Pin &&
+                        wire.pts.front().pos == pinWorld) {
+                        m_movingWires.push_back({ w, 0, isInput, p });
+                        MyLog("      HIT START\n");
+                        MyLog("Collect START wire=%zu pt=0 pin=%zu\n", w, p);
+                    }
+                    // 终点命中
+                    if (wire.pts.size() > 1 &&
+                        wire.pts.back().type == CPType::Pin &&
+                        wire.pts.back().pos == pinWorld) {
+                        m_movingWires.push_back({ w, wire.pts.size() - 1, isInput, p });
+                        MyLog("      HIT END\n");
+                        MyLog("Collect END   wire=%zu pt=%zu pin=%zu\n", w, wire.pts.size() - 1, p);
+                    }
+                }
+            }
+            };
+        collect(elem.GetInputPins(), true);
+        collect(elem.GetOutputPins(), false);
+        MyLog("Collect total=%zu\n", m_movingWires.size());
         SetFocus();
     }
     else {
@@ -125,10 +198,31 @@ void CanvasPanel::OnMouseMove(wxMouseEvent& evt)
         return;
     }
 
-    // ---- 原有元件拖动 ----
+    // ---- 元件拖动 + 连线实时重路由（Manhattan） ----
     if (m_isDragging && m_selectedIndex != -1) {
         wxPoint delta = evt.GetPosition() - m_dragStartPos;
         m_elements[m_selectedIndex].SetPos(m_elementStartPos + delta);
+
+        // 对所有连到被拖元件引脚的线段：整条重新生成横-竖-横
+        for (const auto& aw : m_movingWires) {
+            Wire& wire = m_wires[aw.wireIdx];
+
+            // 重新计算两端坐标
+            wxPoint newPin = m_elements[m_selectedIndex].GetPos() +
+                wxPoint((aw.isInput ?
+                    m_elements[m_selectedIndex].GetInputPins()[aw.pinIdx].pos :
+                    m_elements[m_selectedIndex].GetOutputPins()[aw.pinIdx].pos).x,
+                    (aw.isInput ?
+                        m_elements[m_selectedIndex].GetInputPins()[aw.pinIdx].pos :
+                        m_elements[m_selectedIndex].GetOutputPins()[aw.pinIdx].pos).y);
+
+            wxPoint startPt = (aw.ptIdx == 0) ? newPin : wire.pts.front().pos;
+            wxPoint endPt = (aw.ptIdx == wire.pts.size() - 1) ? newPin : wire.pts.back().pos;
+
+            // 丢弃旧折点，全程横-竖-横
+            wire.pts = Wire::RouteOrtho(startPt, endPt);
+        }
+
         Refresh();
     }
 }
@@ -137,6 +231,7 @@ void CanvasPanel::OnMouseMove(wxMouseEvent& evt)
 void CanvasPanel::OnLeftUp(wxMouseEvent& evt)
 {
     m_isDragging = false;
+    m_movingWires.clear();   // 拖动结束即可清空
 }
 
 //================= 键盘 =================
