@@ -56,22 +56,18 @@ void CanvasElement::Draw(wxDC& dc) const
             }, shape);
     }
 
-    // 2. 输入引脚
-    for (const auto& pin : m_inputPins)
-    {
+    // 输入引脚：只留直线，无小圆点，突出 1 像素
+    for (const auto& pin : m_inputPins) {
         wxPoint p = off(pin.pos);
         dc.SetPen(wxPen(wxColour(0, 0, 0), 1));
-        dc.DrawLine(p, wxPoint(p.x - 8, p.y));
-        dc.DrawCircle(wxPoint(p.x - 8, p.y), 4);
+        dc.DrawLine(p, wxPoint(p.x - 1, p.y));   // 突出长度 = 1 像素
     }
 
-    // 3. 输出引脚
-    for (const auto& pin : m_outputPins)
-    {
+    // 输出引脚：只留直线，无小圆点，突出 1 像素
+    for (const auto& pin : m_outputPins) {
         wxPoint p = off(pin.pos);
         dc.SetPen(wxPen(wxColour(0, 0, 0), 1));
-        dc.DrawLine(p, wxPoint(p.x + 8, p.y));
-        dc.DrawCircle(wxPoint(p.x + 8, p.y), 4);
+        dc.DrawLine(p, wxPoint(p.x + 1, p.y));   // 突出长度 = 1 像素
     }
 }
 

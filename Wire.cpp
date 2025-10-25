@@ -26,3 +26,26 @@ Wire::RouteOrtho(const wxPoint& a, const wxPoint& b)
     out.push_back({ b, CPType::Free });
     return out;
 }
+
+void Wire::GenerateCells()
+{
+    cells.clear();
+    if (pts.size() < 2) return;
+
+    for (size_t i = 1; i < pts.size(); ++i) {
+        wxPoint p0 = pts[i - 1].pos;
+        wxPoint p1 = pts[i].pos;
+        int dx = abs(p1.x - p0.x);
+        int dy = abs(p1.y - p0.y);
+        int steps = std::max(dx, dy) / 5;          // 每 2 px 一格
+        if (steps == 0) steps = 1;
+        for (int s = 0; s <= steps; ++s) {
+            double t = double(s) / steps;
+            wxPoint cell((1 - t) * p0.x + t * p1.x,
+                (1 - t) * p0.y + t * p1.y);
+            // 去重（可选）
+            if (cells.empty() || cell != cells.back())
+                cells.push_back(cell);
+        }
+    }
+}

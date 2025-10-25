@@ -1,4 +1,4 @@
-#include "CanvasPanel.h"
+ï»¿#include "CanvasPanel.h"
 #include "MainFrame.h"
 #include "Wire.h"
 #include <wx/dcbuffer.h>
@@ -11,19 +11,19 @@ EVT_LEFT_DOWN(CanvasPanel::OnLeftDown)
 EVT_LEFT_UP(CanvasPanel::OnLeftUp)
 EVT_MOTION(CanvasPanel::OnMouseMove)
 EVT_KEY_DOWN(CanvasPanel::OnKeyDown)
-EVT_MOUSEWHEEL(CanvasPanel::OnMouseWheel)  // ĞÂÔö£º°ó¶¨¹öÂÖÊÂ¼ş
-EVT_LEFT_DOWN(CanvasPanel::OnLeftDown)    // ×ó¼ü°´ÏÂ£¨ÓÃÓÚ¿ªÊ¼Æ½ÒÆ»ò²Ù×÷ÔªËØ£©
-EVT_LEFT_UP(CanvasPanel::OnLeftUp)        // ×ó¼üÊÍ·Å£¨½áÊøÆ½ÒÆ»ò²Ù×÷ÔªËØ£©
-EVT_MOTION(CanvasPanel::OnMouseMove)      // Êó±êÒÆ¶¯£¨´¦ÀíÆ½ÒÆ»òÔªËØÍÏ×§£©
+EVT_MOUSEWHEEL(CanvasPanel::OnMouseWheel)  // æ–°å¢ï¼šç»‘å®šæ»šè½®äº‹ä»¶
+EVT_LEFT_DOWN(CanvasPanel::OnLeftDown)    // å·¦é”®æŒ‰ä¸‹ï¼ˆç”¨äºå¼€å§‹å¹³ç§»æˆ–æ“ä½œå…ƒç´ ï¼‰
+EVT_LEFT_UP(CanvasPanel::OnLeftUp)        // å·¦é”®é‡Šæ”¾ï¼ˆç»“æŸå¹³ç§»æˆ–æ“ä½œå…ƒç´ ï¼‰
+EVT_MOTION(CanvasPanel::OnMouseMove)      // é¼ æ ‡ç§»åŠ¨ï¼ˆå¤„ç†å¹³ç§»æˆ–å…ƒç´ æ‹–æ‹½ï¼‰
 wxEND_EVENT_TABLE()
 
 
-//================= ¹¹Ôì =================
+//================= æ„é€  =================
 CanvasPanel::CanvasPanel(wxWindow* parent)
     : wxPanel(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize,
         wxFULL_REPAINT_ON_RESIZE | wxBORDER_NONE),
-    m_offset(0, 0),  // ³õÊ¼»¯Æ«ÒÆÁ¿
-    m_isPanning(false)  // ³õÊ¼»¯Æ½ÒÆ×´Ì¬
+    m_offset(0, 0),  // åˆå§‹åŒ–åç§»é‡
+    m_isPanning(false)  // åˆå§‹åŒ–å¹³ç§»çŠ¶æ€
 {
     SetBackgroundStyle(wxBG_STYLE_PAINT);
     SetBackgroundColour(*wxYELLOW);
@@ -33,23 +33,23 @@ CanvasPanel::CanvasPanel(wxWindow* parent)
 
 bool CanvasPanel::IsClickOnEmptyArea(const wxPoint& canvasPos)
 {
-    // ±éÀúËùÓĞÔªËØ£¬ÅĞ¶Ïµã»÷Î»ÖÃÊÇ·ñÔÚÈÎºÎÔªËØÄÚ²¿
+    // éå†æ‰€æœ‰å…ƒç´ ï¼Œåˆ¤æ–­ç‚¹å‡»ä½ç½®æ˜¯å¦åœ¨ä»»ä½•å…ƒç´ å†…éƒ¨
     for (const auto& elem : m_elements) {
         if (elem.GetBounds().Contains(canvasPos)) {
-            return false; // µã»÷ÔÚÔªËØÉÏ£¬²»ÊÇ¿Õ°×ÇøÓò
+            return false; // ç‚¹å‡»åœ¨å…ƒç´ ä¸Šï¼Œä¸æ˜¯ç©ºç™½åŒºåŸŸ
         }
     }
-    return true; // ¿Õ°×ÇøÓò
+    return true; // ç©ºç™½åŒºåŸŸ
 }  
 
-// ĞÂÔö£ºÉèÖÃËõ·Å±ÈÀı£¨ÏŞÖÆ·¶Î§0.1~5.0£¬±ÜÃâ¹ı¶ÈËõ·Å£©
+// æ–°å¢ï¼šè®¾ç½®ç¼©æ”¾æ¯”ä¾‹ï¼ˆé™åˆ¶èŒƒå›´0.1~5.0ï¼Œé¿å…è¿‡åº¦ç¼©æ”¾ï¼‰
 void CanvasPanel::SetScale(float scale)
 {
     if (scale < 0.1f) scale = 0.1f;
     if (scale > 5.0f) scale = 5.0f;
     m_scale = scale;
-    Refresh();  // ´¥·¢ÖØ»æ
-    // ¸üĞÂ×´Ì¬À¸ÏÔÊ¾Ëõ·Å±ÈÀı£¨Èç¹ûĞèÒª£©
+    Refresh();  // è§¦å‘é‡ç»˜
+    // æ›´æ–°çŠ¶æ€æ æ˜¾ç¤ºç¼©æ”¾æ¯”ä¾‹ï¼ˆå¦‚æœéœ€è¦ï¼‰
     MainFrame* mf = wxDynamicCast(GetParent(), MainFrame);
     if (mf) {
         mf->SetStatusText(wxString::Format("Zoom: %.0f%%", m_scale * 100));
@@ -57,7 +57,7 @@ void CanvasPanel::SetScale(float scale)
 }
 
 
-// ĞÂÔö£ºÆÁÄ»×ø±ê×ª»­²¼×ø±ê£¨³ıÒÔËõ·ÅÒò×Ó£©
+// æ–°å¢ï¼šå±å¹•åæ ‡è½¬ç”»å¸ƒåæ ‡ï¼ˆé™¤ä»¥ç¼©æ”¾å› å­ï¼‰
 wxPoint CanvasPanel::ScreenToCanvas(const wxPoint& screenPos) const
 {
     return wxPoint(
@@ -66,7 +66,7 @@ wxPoint CanvasPanel::ScreenToCanvas(const wxPoint& screenPos) const
     );
 }
 
-// ĞÂÔö£º»­²¼×ø±ê×ªÆÁÄ»×ø±ê£¨³ËÒÔËõ·ÅÒò×Ó£©
+// æ–°å¢ï¼šç”»å¸ƒåæ ‡è½¬å±å¹•åæ ‡ï¼ˆä¹˜ä»¥ç¼©æ”¾å› å­ï¼‰
 wxPoint CanvasPanel::CanvasToScreen(const wxPoint& canvasPos) const
 {
     return wxPoint(
@@ -75,7 +75,7 @@ wxPoint CanvasPanel::CanvasToScreen(const wxPoint& canvasPos) const
     );
 }
 
-//================= Ìí¼ÓÔª¼ş =================
+//================= æ·»åŠ å…ƒä»¶ =================
 void CanvasPanel::AddElement(const CanvasElement& elem)
 {
     m_elements.push_back(elem);
@@ -84,34 +84,34 @@ void CanvasPanel::AddElement(const CanvasElement& elem)
         elem.GetName().ToUTF8().data(), m_elements.size());
 }
 
-//================= »æÖÆ =================
-// ĞŞ¸Ä£º»æÍ¼Ê±Ó¦ÓÃËõ·ÅÒò×Ó
+//================= ç»˜åˆ¶ =================
+// ä¿®æ”¹ï¼šç»˜å›¾æ—¶åº”ç”¨ç¼©æ”¾å› å­
 void CanvasPanel::OnPaint(wxPaintEvent&)
 {
     wxAutoBufferedPaintDC dc(this);
     dc.Clear();
 
-    // Ó¦ÓÃËõ·ÅºÍÆ«ÒÆ
+    // åº”ç”¨ç¼©æ”¾å’Œåç§»
     dc.SetUserScale(m_scale, m_scale);
-    dc.SetDeviceOrigin(m_offset.x, m_offset.y);  // ÉèÖÃÉè±¸Ô­µãÆ«ÒÆ
+    dc.SetDeviceOrigin(m_offset.x, m_offset.y);  // è®¾ç½®è®¾å¤‡åŸç‚¹åç§»
 
-    // 1. »æÖÆÍø¸ñ£¨Íø¸ñ´óĞ¡ËæËõ·Å×ÔÊÊÓ¦£©
+    // 1. ç»˜åˆ¶ç½‘æ ¼ï¼ˆç½‘æ ¼å¤§å°éšç¼©æ”¾è‡ªé€‚åº”ï¼‰
     const int grid = 20;
     const wxColour c(240, 240, 240);
     dc.SetPen(wxPen(c, 1));
-    // ¼ÆËã¿É¼ûÇøÓòµÄÍø¸ñ·¶Î§£¨»ùÓÚËõ·ÅºóµÄ»­²¼´óĞ¡£©
+    // è®¡ç®—å¯è§åŒºåŸŸçš„ç½‘æ ¼èŒƒå›´ï¼ˆåŸºäºç¼©æ”¾åçš„ç”»å¸ƒå¤§å°ï¼‰
     wxSize sz = GetClientSize();
-    int maxX = static_cast<int>(sz.x / m_scale);  // ×ª»»Îª»­²¼×ø±ê
+    int maxX = static_cast<int>(sz.x / m_scale);  // è½¬æ¢ä¸ºç”»å¸ƒåæ ‡
     int maxY = static_cast<int>(sz.y / m_scale);
     for (int x = 0; x < maxX; x += grid)
         dc.DrawLine(x, 0, x, maxY);
     for (int y = 0; y < maxY; y += grid)
         dc.DrawLine(0, y, maxX, y);
 
-    // 2. »æÖÆÔªËØ£¨ÔªËØ×ø±êÒÑÔÚCanvasElementÄÚ²¿Î¬»¤£¬Ëõ·ÅÓÉDC×Ô¶¯´¦Àí£©
+    // 2. ç»˜åˆ¶å…ƒç´ ï¼ˆå…ƒç´ åæ ‡å·²åœ¨CanvasElementå†…éƒ¨ç»´æŠ¤ï¼Œç¼©æ”¾ç”±DCè‡ªåŠ¨å¤„ç†ï¼‰
     for (size_t i = 0; i < m_elements.size(); ++i) {
         m_elements[i].Draw(dc);
-        // Ñ¡ÖĞ×´Ì¬±ß¿ò
+        // é€‰ä¸­çŠ¶æ€è¾¹æ¡†
         if ((int)i == m_selectedIndex) {
             wxRect b = m_elements[i].GetBounds();
             dc.SetPen(wxPen(*wxRED, 2, wxPENSTYLE_DOT));
@@ -120,22 +120,53 @@ void CanvasPanel::OnPaint(wxPaintEvent&)
         }
     }
 
-    // 3. »æÖÆµ¼Ïß£¨µ¼Ïß×ø±ê»ùÓÚ»­²¼£¬Ëõ·ÅÓÉDC´¦Àí£©
+    // 3. ç»˜åˆ¶å¯¼çº¿ï¼ˆå¯¼çº¿åæ ‡åŸºäºç”»å¸ƒï¼Œç¼©æ”¾ç”±DCå¤„ç†ï¼‰
     for (const auto& w : m_wires) w.Draw(dc);
     if (m_wireMode == WireMode::DragNew) m_tempWire.Draw(dc);
+
+    // 4. æ‚¬åœå¼•è„šï¼šç»¿è‰²ç©ºå¿ƒåœ†
+    if (m_hoverPinIdx != -1) {
+        dc.SetBrush(*wxTRANSPARENT_BRUSH);              // ä¸å¡«å…… â†’ ç©ºå¿ƒ
+        dc.SetPen(wxPen(wxColour(0, 255, 0), 1));       // ç»¿è‰²è¾¹æ¡†ï¼Œçº¿å®½ 2
+        dc.DrawCircle(m_hoverPinPos, 3);                // åŠå¾„ 3 åƒç´ 
+    }
+
+    if (m_hoverCellIdx != -1) {
+        /*MyLog("DRAW GREEN CELL: wire=%zu cell=%zu  pos=(%d,%d)\n",
+            m_hoverCellWire, m_hoverCellIdx,
+            m_hoverCellPos.x, m_hoverCellPos.y);*/
+        dc.SetBrush(*wxTRANSPARENT_BRUSH);
+        dc.SetPen(wxPen(wxColour(0, 255, 0), 1));
+        dc.DrawCircle(m_hoverCellPos, 3);
+    }
 }
 
 void CanvasPanel::OnLeftDown(wxMouseEvent& evt)
 {
     wxPoint rawScreenPos = evt.GetPosition();
     wxPoint rawCanvasPos = ScreenToCanvas(rawScreenPos);
-    wxPoint canvasPos = rawCanvasPos;
 
-    // ÏÈ´¦Àíµ¼Ïß»æÖÆÄ£Ê½
+    /* ===== 1. ä¼˜å…ˆå¤„ç†ï¼šç‚¹å‡»å¯¼çº¿ç»¿è‰²å°æ–¹å— ===== */
+    bool snappedEnd = false;
+    int  cellWire, cellIdx;
+    wxPoint cellPos;
+    int newCell = HitHoverCell(rawCanvasPos, &cellWire, &cellIdx, &cellPos);
+    if (m_wireMode == WireMode::Idle && newCell != -1)
+    {
+        m_startCP = { cellPos, CPType::Pin };
+        m_tempWire.Clear();
+        m_tempWire.AddPoint(m_startCP);
+        m_wireMode = WireMode::DragNew;
+        CaptureMouse();
+        Refresh();
+        return;
+    }
+
+    /* ===== 2. æ‹‰çº¿èµ·ç‚¹ï¼šå¸é™„åˆ°å¼•è„š ===== */
     bool snapped = false;
     wxPoint pos = Snap(rawCanvasPos, &snapped);
-
-    if (m_wireMode == WireMode::Idle && snapped) {
+    if (m_wireMode == WireMode::Idle && snapped)
+    {
         m_startCP = { pos, CPType::Pin };
         m_tempWire.Clear();
         m_tempWire.AddPoint(m_startCP);
@@ -144,111 +175,108 @@ void CanvasPanel::OnLeftDown(wxMouseEvent& evt)
         Refresh();
         return;
     }
-    //if (m_wireMode == WireMode::DragNew) {
-    //    ControlPoint end{ pos, snapped ? CPType::Pin : CPType::Free };
-    //    m_tempWire.AddPoint(end);
 
-    //    // ¹Ø¼ü£ºÖ»ÒªÎü¸½µ½Òı½Å£¬¾Í°ÑÁ½¶Ë¶¼±ê¼ÇÎª Pin£¬ÒÔ±ãË«ÏòÊÕ¼¯
-    //    if (snapped) {
-    //        m_tempWire.pts.front().type = CPType::Pin;
-    //        MyLog("Before: back.type=%d\n", int(m_tempWire.pts.back().type));
-    //        m_tempWire.pts.back().type = CPType::Pin;
-    //        MyLog("After : back.type=%d\n", int(m_tempWire.pts.back().type));
-    //    }
-
-    //    MyLog("After set: wire front type=%d  back type=%d\n",
-    //        int(m_tempWire.pts.front().type),
-    //        int(m_tempWire.pts.back().type));
-
-    //    MyLog("Assign: &front=%p  &back=%p  size=%zu\n",
-    //        &m_tempWire.pts.front().type,
-    //        &m_tempWire.pts.back().type,
-    //        m_tempWire.pts.size());
-    //    m_wires.emplace_back(m_tempWire);
-    //    m_wireMode = WireMode::Idle;
-    //    ReleaseMouse();
-    //    Refresh();
-    //    return;
-    //}
-    if (m_wireMode == WireMode::DragNew) {
+    /* ===== 3. æ‹‰çº¿å®Œæˆï¼šåŒç«¯éƒ½å¯èƒ½æ˜¯å¼•è„š ===== */
+    if (m_wireMode == WireMode::DragNew)
+    {
         bool snappedEnd = false;
-        wxPoint endPos = Snap(pos, &snappedEnd);   // ÓÃ Snap ±£Ö¤ÂäÔÚÒı½Å»òÍø¸ñ
-
+        wxPoint endPos = Snap(pos, &snappedEnd);      // ç»ˆç‚¹
         ControlPoint end{ endPos, snappedEnd ? CPType::Pin : CPType::Free };
         m_tempWire.AddPoint(end);
 
-        if (snappedEnd) {
-            m_tempWire.pts.front().type = CPType::Pin;
-            m_tempWire.pts.back().type = CPType::Pin;
-        }
-
+        /* æ­£å¼å­˜å…¥å¯¼çº¿åˆ—è¡¨ */
         m_wires.emplace_back(m_tempWire);
+        Wire& newWire = m_wires.back();
+        newWire.GenerateCells();          // ç”Ÿæˆå°æ–¹å—
+
+        /* è®°å½•ä¸¤ç«¯è¿æ¥å…³ç³»ï¼ˆå…³é”®ï¼‰ */
+        auto recordConnection = [&](const wxPoint& pinPos, size_t ptIdx)
+            {
+                for (size_t i = 0; i < m_elements.size(); ++i)
+                {
+                    const auto& elem = m_elements[i];
+                    auto test = [&](const auto& pins, bool isIn)
+                        {
+                            for (size_t p = 0; p < pins.size(); ++p)
+                            {
+                                wxPoint w = elem.GetPos() + wxPoint(pins[p].pos.x, pins[p].pos.y);
+                                if (w == pinPos)
+                                {
+                                    m_movingWires.push_back({ m_wires.size() - 1, ptIdx, isIn, p });
+                                    return true;
+                                }
+                            }
+                            return false;
+                        };
+                    if (test(elem.GetInputPins(), true)) return;
+                    test(elem.GetOutputPins(), false);
+                }
+            };
+
+        /* çº¿å¤´ */
+        if (newWire.pts.front().type == CPType::Pin)
+            recordConnection(newWire.pts.front().pos, 0);
+
+        /* çº¿å°¾ */
+        if (newWire.pts.back().type == CPType::Pin)
+            recordConnection(newWire.pts.back().pos, newWire.pts.size() - 1);
+
         m_wireMode = WireMode::Idle;
         ReleaseMouse();
         Refresh();
         return;
     }
 
-    // ´¦ÀíÔª¼şÑ¡ÔñºÍÍÏ¶¯
+    /* ===== 4. å…ƒä»¶é€‰æ‹©/æ‹–åŠ¨ ===== */
     m_selectedIndex = HitTest(rawCanvasPos);
-    if (m_selectedIndex != -1) {
+    if (m_selectedIndex != -1)
+    {
         m_isDragging = true;
         m_dragStartPos = rawScreenPos;
         m_elementStartPos = m_elements[m_selectedIndex].GetPos();
 
-        // ===== Ë«ÏòÊÕ¼¯£ºÆğµã OR ÖÕµãÁ¬µ½±»ÍÏÔª¼şÒı½Å =====
+        /* æ”¶é›†è¯¥å…ƒä»¶æ‰€æœ‰å¼•è„šå¯¹åº”çš„å¯¼çº¿ç«¯ç‚¹ */
         m_movingWires.clear();
-        const CanvasElement& elem = m_elements[m_selectedIndex];
-        MyLog("Drag elem POS = (%d,%d)\n", elem.GetPos().x, elem.GetPos().y);
-        auto collect = [&](const auto& pins, bool isInput) {
-            for (size_t p = 0; p < pins.size(); ++p) {
-                wxPoint pinWorld = elem.GetPos() + wxPoint(pins[p].pos.x, pins[p].pos.y);
-                MyLog("  pin[%zu] world = (%d,%d)\n", p, pinWorld.x, pinWorld.y);
-                for (size_t w = 0; w < m_wires.size(); ++w) {
-                    const auto& wire = m_wires[w];
+        const auto& elem = m_elements[m_selectedIndex];
+        auto collect = [&](const auto& pins, bool isIn)
+            {
+                for (size_t p = 0; p < pins.size(); ++p)
+                {
+                    wxPoint pinWorld = elem.GetPos() + wxPoint(pins[p].pos.x, pins[p].pos.y);
+                    for (size_t w = 0; w < m_wires.size(); ++w)
+                    {
+                        const auto& wire = m_wires[w];
+                        if (!wire.pts.empty() && wire.pts.front().type == CPType::Pin &&
+                            wire.pts.front().pos == pinWorld)
+                            m_movingWires.push_back({ w, 0, isIn, p });
 
-                    MyLog("    wire[%zu] front=(%d,%d) type=%d  back=(%d,%d) type=%d\n",
-                        w,
-                        wire.pts.front().pos.x, wire.pts.front().pos.y, int(wire.pts.front().type),
-                        wire.pts.back().pos.x, wire.pts.back().pos.y, int(wire.pts.back().type));
-
-                    // ÆğµãÃüÖĞ
-                    if (wire.pts.front().type == CPType::Pin &&
-                        wire.pts.front().pos == pinWorld) {
-                        m_movingWires.push_back({ w, 0, isInput, p });
-                        MyLog("      HIT START\n");
-                        MyLog("Collect START wire=%zu pt=0 pin=%zu\n", w, p);
-                    }
-                    // ÖÕµãÃüÖĞ
-                    if (wire.pts.size() > 1 &&
-                        wire.pts.back().type == CPType::Pin &&
-                        wire.pts.back().pos == pinWorld) {
-                        m_movingWires.push_back({ w, wire.pts.size() - 1, isInput, p });
-                        MyLog("      HIT END\n");
-                        MyLog("Collect END   wire=%zu pt=%zu pin=%zu\n", w, wire.pts.size() - 1, p);
+                        if (wire.pts.size() > 1 &&
+                            wire.pts.back().type == CPType::Pin &&
+                            wire.pts.back().pos == pinWorld)
+                            m_movingWires.push_back({ w, wire.pts.size() - 1, isIn, p });
                     }
                 }
-            }
             };
         collect(elem.GetInputPins(), true);
         collect(elem.GetOutputPins(), false);
-        MyLog("Collect total=%zu\n", m_movingWires.size());
         SetFocus();
         Refresh();
         return;
     }
 
-    // ´¦ÀíÔª¼ş·ÅÖÃ£¨ÓÅÏÈÓÚÆ½ÒÆ£©
+    /* ===== 5. æ”¾ç½®æ–°å…ƒä»¶ ===== */
     MainFrame* mf = wxDynamicCast(GetParent(), MainFrame);
-    if (mf && !mf->GetPendingTool().IsEmpty()) {
+    if (mf && !mf->GetPendingTool().IsEmpty())
+    {
         PlaceElement(mf->GetPendingTool(), pos);
         mf->ClearPendingTool();
         Refresh();
         return;
     }
 
-    // ×îºó´¦Àí¿Õ°×ÇøÓòµÄÆ½ÒÆ
-    if (IsClickOnEmptyArea(canvasPos)) {
+    /* ===== 6. Ctrl+ç©ºç™½åŒº = å¹³ç§»ç”»å¸ƒ ===== */
+    if (evt.ControlDown())
+    {
         m_isPanning = true;
         m_panStartPos = rawScreenPos;
         SetCursor(wxCURSOR_HAND);
@@ -259,86 +287,136 @@ void CanvasPanel::OnLeftDown(wxMouseEvent& evt)
     Refresh();
 }
 
-
-
-
-
-
-// ĞŞ¸Ä£ºÊó±êÒÆ¶¯ÊÂ¼şÖĞ£¬ÊÊÅäËõ·ÅºóµÄ×ø±ê
 void CanvasPanel::OnMouseMove(wxMouseEvent& evt)
 {
-
-    // ÓÅÏÈ´¦ÀíÆ½ÒÆ
-    if (m_isPanning) {
-        wxPoint delta = evt.GetPosition() - m_panStartPos; // ¼ÆËãÆÁÄ»×ø±êÆ«ÒÆ
-        m_offset += delta; // ¸üĞÂ»­²¼Æ«ÒÆÁ¿£¨Æ½ÒÆºËĞÄ£©
-        m_panStartPos = evt.GetPosition(); // ¸üĞÂÆğµã
-        Refresh(); // ÖØ»æ»­²¼
-        return;
+    /* ===== 1. æ‚¬åœæ£€æµ‹ï¼ˆæ°¸è¿œæœ€å…ˆåšï¼‰ ===== */
+    bool isInput = false;
+    wxPoint hoverWorld;
+    int newHover = HitHoverPin(evt.GetPosition(), &isInput, &hoverWorld);
+    if (newHover != m_hoverPinIdx || isInput != m_hoverIsInput)
+    {
+        m_hoverPinIdx = newHover;
+        m_hoverIsInput = isInput;
+        m_hoverPinPos = hoverWorld;
+        Refresh();                     // é‡ç”»ç»¿åœ†
     }
-    // Æ½ÒÆ´¦Àí
-    if (m_isPanning) {
+
+    int cellWire, cellIdx;
+    wxPoint cellPos;
+    int newCell = HitHoverCell(evt.GetPosition(), &cellWire, &cellIdx, &cellPos);
+    if (newCell != m_hoverCellIdx || cellWire != m_hoverCellWire)
+    {
+        m_hoverCellWire = cellWire;
+        m_hoverCellIdx = cellIdx;
+        m_hoverCellPos = cellPos;
+        Refresh();
+    }
+
+    /* ===== 2. å„æ¨¡å¼å¤„ç† ===== */
+    if (evt.ControlDown() && m_isPanning)          // å¹³ç§»ç”»å¸ƒ
+    {
         wxPoint delta = evt.GetPosition() - m_panStartPos;
         m_offset += delta;
         m_panStartPos = evt.GetPosition();
         Refresh();
         return;
     }
-    if (m_wireMode == WireMode::DragNew) {
-        // µ¼ÏßÔ¤ÀÀ£ºÊó±êÎ»ÖÃ×ª»»Îª»­²¼×ø±ê
+
+    if (m_wireMode == WireMode::DragNew)           // å¯¼çº¿é¢„è§ˆ
+    {
         wxPoint rawCanvasPos = ScreenToCanvas(evt.GetPosition());
         bool snapped = false;
         m_curSnap = Snap(rawCanvasPos, &snapped);
-        auto route = Wire::RouteOrtho(m_startCP.pos, m_curSnap);
-        m_tempWire.pts = route;
+        m_tempWire.pts = Wire::RouteOrtho(m_startCP.pos, m_curSnap);
         Refresh();
         return;
     }
 
-    // ---- Ôª¼şÍÏ¶¯ + Á¬ÏßÊµÊ±ÖØÂ·ÓÉ£¨Manhattan£© ----
-    if (m_isDragging && m_selectedIndex != -1) {
+    if (m_isDragging && m_selectedIndex != -1)     // å…ƒä»¶æ‹–åŠ¨
+    {
+        /* 1. å…ˆæ›´æ–°å…ƒä»¶åæ ‡ï¼ˆå…³é”®ï¼ï¼‰ */
         wxPoint delta = evt.GetPosition() - m_dragStartPos;
-        m_elements[m_selectedIndex].SetPos(m_elementStartPos + delta);
+        wxPoint newPos = m_elementStartPos + delta;
+        m_elements[m_selectedIndex].SetPos(newPos);
 
-        // ¶ÔËùÓĞÁ¬µ½±»ÍÏÔª¼şÒı½ÅµÄÏß¶Î£ºÕûÌõÖØĞÂÉú³Éºá-Êú-ºá
-        for (const auto& aw : m_movingWires) {
+        /* 2. å†é‡ç®—æ‰€æœ‰ç›¸å…³å¯¼çº¿ç«¯ç‚¹ */
+        for (const auto& aw : m_movingWires)
+        {
             Wire& wire = m_wires[aw.wireIdx];
 
-            // ÖØĞÂ¼ÆËãÁ½¶Ë×ø±ê
-            wxPoint newPin = m_elements[m_selectedIndex].GetPos() +
-                wxPoint((aw.isInput ?
-                    m_elements[m_selectedIndex].GetInputPins()[aw.pinIdx].pos :
-                    m_elements[m_selectedIndex].GetOutputPins()[aw.pinIdx].pos).x,
-                    (aw.isInput ?
-                        m_elements[m_selectedIndex].GetInputPins()[aw.pinIdx].pos :
-                        m_elements[m_selectedIndex].GetOutputPins()[aw.pinIdx].pos).y);
+            /* è®¡ç®—æ–°å¼•è„šä¸–ç•Œåæ ‡ */
+            const auto& elem = m_elements[m_selectedIndex];
+            const auto& pins = aw.isInput ? elem.GetInputPins()
+                : elem.GetOutputPins();
+            wxPoint pinOffset = wxPoint(pins[aw.pinIdx].pos.x,
+                pins[aw.pinIdx].pos.y);
+            wxPoint newPinPos = elem.GetPos() + pinOffset;
 
-            wxPoint startPt = (aw.ptIdx == 0) ? newPin : wire.pts.front().pos;
-            wxPoint endPt = (aw.ptIdx == wire.pts.size() - 1) ? newPin : wire.pts.back().pos;
+            /* æ›´æ–°å¯¼çº¿ç«¯ç‚¹ */
+            if (aw.ptIdx == 0)
+                wire.pts.front().pos = newPinPos;
+            else
+                wire.pts.back().pos = newPinPos;
 
-            // ¶ªÆú¾ÉÕÛµã£¬È«³Ìºá-Êú-ºá
-            wire.pts = Wire::RouteOrtho(startPt, endPt);
+            /* å…¨ç¨‹æ¨ª-ç«–-æ¨ªé‡èµ°çº¿ */
+            wire.pts = Wire::RouteOrtho(wire.pts.front().pos,
+                wire.pts.back().pos);
         }
-
         Refresh();
-    }
-}
-
-//================= Êó±êÊÍ·Å =================
-void CanvasPanel::OnLeftUp(wxMouseEvent& evt)
-{
-    if (m_isPanning) {
-        // ½áÊøÆ½ÒÆ
-        m_isPanning = false;
-        ReleaseMouse();
-        SetCursor(wxCURSOR_ARROW); // »Ö¸´¼ıÍ·¹â±ê
         return;
     }
-    m_isDragging = false;
-    m_movingWires.clear();   // ÍÏ¶¯½áÊø¼´¿ÉÇå¿Õ
 }
 
-//================= ¼üÅÌ =================
+//================= é¼ æ ‡é‡Šæ”¾ =================
+void CanvasPanel::OnLeftUp(wxMouseEvent& evt)
+{
+    MyLog("OnLeftUp å…¥å£  m_selectedIndex=%d  size=%zu\n",
+        m_selectedIndex, m_elements.size());
+
+    // ç´¢å¼•æ— æ•ˆç›´æ¥é€€å‡º
+    if (m_selectedIndex == -1 || m_selectedIndex >= m_elements.size())
+        return;
+
+    // ===== Ctrl+é‡Šæ”¾ = ç»“æŸå¹³ç§» =====
+    if (evt.ControlDown() && m_isPanning) {
+        m_isPanning = false;
+        ReleaseMouse();
+        SetCursor(wxCURSOR_ARROW);
+        return;
+    }
+
+    m_isDragging = false;
+
+    /* å…³é”®ï¼šæŠŠå¯¼çº¿ç«¯ç‚¹åŒæ­¥åˆ°å…ƒä»¶æœ€æ–°å¼•è„š */
+    for (const auto& aw : m_movingWires)
+    {
+        MyLog("for å¾ªç¯ï¼šaw.wireIdx=%zu  m_wires.size=%zu\n",
+            aw.wireIdx, m_wires.size());
+        if (aw.wireIdx >= m_wires.size()) continue;          // é˜²å¯¼çº¿è¶Šç•Œ
+
+        Wire& wire = m_wires[aw.wireIdx];
+        MyLog("å³å°†è®¿é—® wire.pts  pts.size=%zu  ptIdx=%d\n",
+            wire.pts.size(), aw.ptIdx);
+        if (wire.pts.empty()) continue;                      // é˜²ç©ºå‘é‡
+
+        const auto& elem = m_elements[m_selectedIndex];
+        const auto& pins = aw.isInput ? elem.GetInputPins()
+            : elem.GetOutputPins();
+        if (aw.pinIdx >= pins.size()) continue;              // é˜²å¼•è„šè¶Šç•Œ
+
+        wxPoint newPin = elem.GetPos() + wxPoint(pins[aw.pinIdx].pos.x,
+            pins[aw.pinIdx].pos.y);
+        if (aw.ptIdx == 0)
+            wire.pts.front().pos = newPin;
+        else
+            wire.pts.back().pos = newPin;
+    }
+
+    m_selectedIndex = -1;
+    m_movingWires.clear();
+}
+
+//================= é”®ç›˜ =================
 void CanvasPanel::OnKeyDown(wxKeyEvent& evt)
 {
     if (evt.GetKeyCode() == WXK_ESCAPE) {
@@ -346,6 +424,25 @@ void CanvasPanel::OnKeyDown(wxKeyEvent& evt)
         if (mf) mf->ClearPendingTool();
     }
     else if (evt.GetKeyCode() == WXK_DELETE && m_selectedIndex != -1) {
+        /* ===== 1. å…ˆåŒæ­¥å¯¼çº¿ç«¯ç‚¹ï¼ˆè·Ÿ OnLeftUp é‡Œä¸€è‡´ï¼‰ ===== */
+        for (const auto& aw : m_movingWires)
+        {
+            if (aw.wireIdx >= m_wires.size()) continue;
+            Wire& wire = m_wires[aw.wireIdx];
+            const auto& elem = m_elements[m_selectedIndex];
+            const auto& pins = aw.isInput ? elem.GetInputPins()
+                : elem.GetOutputPins();
+            if (aw.pinIdx >= pins.size()) continue;
+
+            wxPoint newPin = elem.GetPos() + wxPoint(pins[aw.pinIdx].pos.x,
+                pins[aw.pinIdx].pos.y);
+            if (aw.ptIdx == 0)
+                wire.pts.front().pos = newPin;
+            else
+                wire.pts.back().pos = newPin;
+        }
+
+        /* ===== 2. å†åˆ å…ƒä»¶ã€æ¸…ç´¢å¼• ===== */
         m_elements.erase(m_elements.begin() + m_selectedIndex);
         m_selectedIndex = -1;
         Refresh();
@@ -355,7 +452,7 @@ void CanvasPanel::OnKeyDown(wxKeyEvent& evt)
     }
 }
 
-//================= ·ÅÖÃÔª¼ş =================
+//================= æ”¾ç½®å…ƒä»¶ =================
 void CanvasPanel::PlaceElement(const wxString& name, const wxPoint& pos)
 {
     extern std::vector<CanvasElement> g_elements;
@@ -366,57 +463,57 @@ void CanvasPanel::PlaceElement(const wxString& name, const wxPoint& pos)
     clone.SetPos(pos);
     AddElement(clone);
 }
-// ĞŞ¸Ä£ºHitTestÊ¹ÓÃ»­²¼×ø±êÅĞ¶Ï
-int CanvasPanel::HitTest(const wxPoint& pt)  // ptÒÑ×ª»»Îª»­²¼×ø±ê
+// ä¿®æ”¹ï¼šHitTestä½¿ç”¨ç”»å¸ƒåæ ‡åˆ¤æ–­
+int CanvasPanel::HitTest(const wxPoint& pt)  // ptå·²è½¬æ¢ä¸ºç”»å¸ƒåæ ‡
 {
     for (size_t i = 0; i < m_elements.size(); ++i) {
-        // ÔªËØµÄ±ß½çÊÇ»­²¼×ø±ê£¬Ö±½Ó±È½Ï
+        // å…ƒç´ çš„è¾¹ç•Œæ˜¯ç”»å¸ƒåæ ‡ï¼Œç›´æ¥æ¯”è¾ƒ
         if (m_elements[i].GetBounds().Contains(pt)) {
             return i;
         }
     }
     return -1;
 }
-// ĞŞ¸ÄÊó±ê¹öÂÖÊÂ¼ş£¬½öÔÚCtrl¼ü°´ÏÂÊ±Ëõ·Å
+// ä¿®æ”¹é¼ æ ‡æ»šè½®äº‹ä»¶ï¼Œä»…åœ¨Ctrlé”®æŒ‰ä¸‹æ—¶ç¼©æ”¾
 void CanvasPanel::OnMouseWheel(wxMouseEvent& evt)
 {
-    // Ö»ÓĞ°´×¡Ctrl¼üÊ±²Å´¦ÀíËõ·Å
+    // åªæœ‰æŒ‰ä½Ctrlé”®æ—¶æ‰å¤„ç†ç¼©æ”¾
     if (!evt.ControlDown()) {
         evt.Skip();
         return;
     }
 
-    // »ñÈ¡Êó±êÔÚ»­²¼ÉÏµÄÎ»ÖÃ£¨ÓÃÓÚËõ·ÅÖĞĞÄ¼ÆËã£©
+    // è·å–é¼ æ ‡åœ¨ç”»å¸ƒä¸Šçš„ä½ç½®ï¼ˆç”¨äºç¼©æ”¾ä¸­å¿ƒè®¡ç®—ï¼‰
     wxPoint mouseScreenPos = evt.GetPosition();
     wxPoint mouseCanvasPos = ScreenToCanvas(mouseScreenPos);
 
-    // ±£´æµ±Ç°Ëõ·Å±ÈÀı
+    // ä¿å­˜å½“å‰ç¼©æ”¾æ¯”ä¾‹
     float oldScale = m_scale;
 
-    // ¸ù¾İ¹öÂÖ·½Ïòµ÷ÕûËõ·Å
+    // æ ¹æ®æ»šè½®æ–¹å‘è°ƒæ•´ç¼©æ”¾
     if (evt.GetWheelRotation() > 0) {
-        SetScale(m_scale * 1.2f);  // ·Å´ó
+        SetScale(m_scale * 1.2f);  // æ”¾å¤§
     }
     else {
-        SetScale(m_scale / 1.2f);  // ËõĞ¡
+        SetScale(m_scale / 1.2f);  // ç¼©å°
     }
 
-    // µ÷ÕûÆ«ÒÆÁ¿£¬Ê¹Êó±êÖ¸ÏòµÄ»­²¼Î»ÖÃ±£³Ö²»±ä
+    // è°ƒæ•´åç§»é‡ï¼Œä½¿é¼ æ ‡æŒ‡å‘çš„ç”»å¸ƒä½ç½®ä¿æŒä¸å˜
     wxPoint newMouseScreenPos = CanvasToScreen(mouseCanvasPos);
     m_offset += mouseScreenPos - newMouseScreenPos;
 
-    evt.Skip(false);  // ²»ÔÙ´«µİÊÂ¼ş
+    evt.Skip(false);  // ä¸å†ä¼ é€’äº‹ä»¶
 }
 
 
-//================= Îü¸½£ºÍø¸ñ+Òı½Å =================
+//================= å¸é™„ï¼šç½‘æ ¼+å¼•è„š =================
 wxPoint CanvasPanel::Snap(const wxPoint& raw, bool* snapped)
 {
     *snapped = false;
     const int grid = 20;
     wxPoint s((raw.x + grid / 2) / grid * grid, (raw.y + grid / 2) / grid * grid);
 
-    // ÎüÒı½Å£¨°ë¾¶ 8 px£©
+    // å¸å¼•è„šï¼ˆåŠå¾„ 8 pxï¼‰
     for (const auto& elem : m_elements) {
         auto testPins = [&](const auto& pins) {
             for (const auto& pin : pins) {
@@ -434,4 +531,58 @@ wxPoint CanvasPanel::Snap(const wxPoint& raw, bool* snapped)
         if (out != wxPoint{}) return out;
     }
     return s;
+}
+
+// è¿”å›æ‚¬åœåˆ°çš„å¼•è„šç´¢å¼•ï¼ˆ-1 è¡¨ç¤ºæ— ï¼‰ï¼ŒåŒæ—¶è¾“å‡ºç±»å‹å’Œä¸–ç•Œåæ ‡
+int CanvasPanel::HitHoverPin(const wxPoint& raw, bool* isInput, wxPoint* worldPos)
+{
+    for (size_t i = 0; i < m_elements.size(); ++i) {
+        const auto& elem = m_elements[i];
+        // è¾“å…¥å¼•è„šå°–ç«¯ï¼ˆçªå‡º 1 pxï¼‰
+        for (size_t p = 0; p < elem.GetInputPins().size(); ++p) {
+            wxPoint tip = elem.GetPos() + wxPoint(elem.GetInputPins()[p].pos.x - 1,
+                elem.GetInputPins()[p].pos.y);
+            if (abs(raw.x - tip.x) <= 4 && abs(raw.y - tip.y) <= 4) {
+                *isInput = true;
+                *worldPos = tip;
+                return p;
+            }
+        }
+        // è¾“å‡ºå¼•è„šå°–ç«¯ï¼ˆçªå‡º 1 pxï¼‰
+        for (size_t p = 0; p < elem.GetOutputPins().size(); ++p) {
+            wxPoint tip = elem.GetPos() + wxPoint(elem.GetOutputPins()[p].pos.x + 1,
+                elem.GetOutputPins()[p].pos.y);
+            if (abs(raw.x - tip.x) <= 4 && abs(raw.y - tip.y) <= 4) {
+                *isInput = false;
+                *worldPos = tip;
+                return p;
+            }
+        }
+    }
+    return -1;
+}
+
+int CanvasPanel::HitHoverCell(const wxPoint& raw, int* wireIdx, int* cellIdx, wxPoint* cellPos)
+{
+    /*MyLog("HitHoverCell: (%d,%d)\n", raw.x, raw.y);
+    for (size_t w = 0; w < m_wires.size(); ++w) {
+        const auto& wire = m_wires[w];
+        for (size_t c = 0; c < wire.cells.size(); ++c) {
+            MyLog("  wire[%zu] cell[%zu] = (%d,%d)\n",
+                w, c, wire.cells[c].x, wire.cells[c].y);
+        }
+    }*/
+    for (size_t w = 0; w < m_wires.size(); ++w) {
+        const auto& wire = m_wires[w];
+        for (size_t c = 0; c < wire.cells.size(); ++c) {
+            if (abs(raw.x - wire.cells[c].x) <= 2 &&
+                abs(raw.y - wire.cells[c].y) <= 2) {
+                *wireIdx = w;
+                *cellIdx = c;
+                *cellPos = wire.cells[c];
+                return c;
+            }
+        }
+    }
+    return -1;
 }

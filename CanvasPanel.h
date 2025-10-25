@@ -4,6 +4,7 @@
 #include "CanvasElement.h"
 #include "Wire.h"          // ← 新增：连线数据
 
+
 /* 新增：拖动时需要更新的连线索引 + 对应引脚信息 */
 struct WireAnchor {
     size_t wireIdx;   // 哪条线
@@ -78,5 +79,16 @@ private:
 
     std::vector<WireAnchor> m_movingWires;
 
+    int m_hoverPinIdx=-1;
+    bool m_hoverIsInput=false;
+    wxPoint m_hoverPinPos;
+    int  HitHoverPin(const wxPoint& raw, bool* isInput, wxPoint* worldPos);
+
+    int  m_hoverCellWire = -1;   // 哪条线
+    int  m_hoverCellIdx = -1;   // 哪一格
+    wxPoint m_hoverCellPos;
+    int HitHoverCell(const wxPoint& raw, int* wireIdx, int* cellIdx, wxPoint* cellPos);
+
+    std::vector<WireWireAnchor> m_wireWireAnchors;// 导线<->导线小方块（新增）
     wxDECLARE_EVENT_TABLE();
 };
