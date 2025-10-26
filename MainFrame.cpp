@@ -41,6 +41,9 @@ MainFrame::MainFrame()
     m_canvas = new CanvasPanel(this);
     m_canvas->SetBackgroundColour(*wxWHITE);
 
+    m_toolBars = new ToolBars(this);
+    AddToolBarsToAuiManager();
+
     /* 创建侧边栏 + 属性表（上下叠放） */
     wxPanel* sidePanel = new wxPanel(this);  // 外壳
     wxBoxSizer* sideSizer = new wxBoxSizer(wxVERTICAL);
@@ -392,4 +395,69 @@ void MainFrame::UpdateCursor()
         SetCursor(wxCursor(wxCURSOR_ARROW));
     else
         SetCursor(wxCursor(wxCURSOR_CROSS));
+}
+
+void MainFrame::AddToolBarsToAuiManager() {
+    if (!m_toolBars) return;
+
+    wxToolBar* toolBar1 = m_toolBars->toolBar1;
+    wxToolBar* toolBar2 = m_toolBars->toolBar2;
+    wxToolBar* toolBar3 = m_toolBars->toolBar3;
+
+    // 设置工具栏大小
+    toolBar1->SetSizeHints(-1, 28);
+    toolBar2->SetSizeHints(-1, 28);
+    toolBar3->SetSizeHints(-1, 28);
+
+    // 确保工具栏已实现
+    toolBar1->Realize();
+    toolBar2->Realize();
+    toolBar3->Realize();
+
+    // 使用AUI管理器添加工具栏
+    m_auiMgr.AddPane(toolBar1, wxAuiPaneInfo()
+        .Name("Toolbar1")
+        .Caption("Tools")
+        .ToolbarPane()
+        .Top()
+        .LeftDockable(false)
+        .RightDockable(false)
+        .BottomDockable(false)
+        .Gripper(false)
+        .CloseButton(false)
+        .PaneBorder(false)
+        .Resizable(false)
+        .BestSize(10000, 28));
+
+    m_auiMgr.AddPane(toolBar2, wxAuiPaneInfo()
+        .Name("Toolbar2")
+        .Caption("Navigation")
+        .ToolbarPane()
+        .Top()
+        .Row(1)  // 第二行
+        .LeftDockable(false)
+        .RightDockable(false)
+        .BottomDockable(false)
+        .Gripper(false)
+        .CloseButton(false)
+        .PaneBorder(false)
+        .Resizable(false)
+        .BestSize(10000, 28));
+
+    m_auiMgr.AddPane(toolBar3, wxAuiPaneInfo()
+        .Name("Toolbar3")
+        .Caption("Actions")
+        .ToolbarPane()
+        .Top()
+        .Row(2)  // 第三行
+        .LeftDockable(false)
+        .RightDockable(false)
+        .BottomDockable(false)
+        .Gripper(false)
+        .CloseButton(false)
+        .PaneBorder(false)
+        .Resizable(false)
+        .BestSize(10000, 28));
+    m_toolBars->ChoosePageOne_toolBar1(-1); // 初始化工具栏状态
+    m_toolBars->ChoosePageOne_toolBar3(-1); // 初始化工具栏状态
 }

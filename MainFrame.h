@@ -7,6 +7,7 @@
 #include <wx/file.h>  // 包含wxFile类的定义
 #include <wx/xml/xml.h>
 #include <wx/mstream.h>
+#include "ToolBars.h"
 
 class MainFrame : public wxFrame
 {
@@ -93,6 +94,9 @@ public:
     void DoHelpUserGuide();
     void DoHelpLibraryRef();
     void DoHelpAbout();
+
+    ToolBars* m_toolBars;
+    void AddToolBarsToAuiManager();
 
     const wxString& GetPendingTool() const;
     void ClearPendingTool();

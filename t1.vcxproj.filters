@@ -48,6 +48,9 @@
     <ClCompile Include="Wire.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="ToolBars.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="MainMenuBar.h">
@@ -83,5 +86,94 @@
     <ClInclude Include="Wire.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="ToolBars.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <CopyFileToFolders Include="res\tool_icons\wrong.png">
+      <Filter>资源文件</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="res\tool_icons\1.png">
+      <Filter>资源文件</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="res\tool_icons\2.png">
+      <Filter>资源文件</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="res\tool_icons\3.png">
+      <Filter>资源文件</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="res\tool_icons\And Gate.png">
+      <Filter>资源文件</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="res\tool_icons\AND_Gate.png">
+      <Filter>资源文件</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="res\tool_icons\branch.png">
+      <Filter>资源文件</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="res\tool_icons\choose.png">
+      <Filter>资源文件</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="res\tool_icons\curve.png">
+      <Filter>资源文件</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="res\tool_icons\down.png">
+      <Filter>资源文件</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="res\tool_icons\drag.png">
+      <Filter>资源文件</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="res\tool_icons\draw.png">
+      <Filter>资源文件</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="res\tool_icons\east_pin.png">
+      <Filter>资源文件</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="res\tool_icons\line.png">
+      <Filter>资源文件</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="res\tool_icons\map.png">
+      <Filter>资源文件</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="res\tool_icons\NOT_Gate.png">
+      <Filter>资源文件</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="res\tool_icons\OR_Gate.png">
+      <Filter>资源文件</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="res\tool_icons\oval.png">
+      <Filter>资源文件</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="res\tool_icons\plus.png">
+      <Filter>资源文件</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="res\tool_icons\polygon.png">
+      <Filter>资源文件</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="res\tool_icons\polyline.png">
+      <Filter>资源文件</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="res\tool_icons\retangle.png">
+      <Filter>资源文件</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="res\tool_icons\rounded_retangle.png">
+      <Filter>资源文件</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="res\tool_icons\start.png">
+      <Filter>资源文件</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="res\tool_icons\text.png">
+      <Filter>资源文件</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="res\tool_icons\tools.png">
+      <Filter>资源文件</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="res\tool_icons\up.png">
+      <Filter>资源文件</Filter>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="res\tool_icons\west_pin.png">
+      <Filter>资源文件</Filter>
+    </CopyFileToFolders>
   </ItemGroup>
 </Project>
