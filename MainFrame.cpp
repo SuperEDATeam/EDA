@@ -9,6 +9,7 @@
 #include "my_log.h"
 #include <wx/filename.h> 
 #include <wx/sstream.h>
+#include "ToolBars.h"
 
 extern std::vector<CanvasElement> g_elements;
 
@@ -27,21 +28,27 @@ MainFrame::MainFrame()
     MyLog("MainFrame: JSON full path = [%s]\n", jsonPath.ToUTF8().data());
     g_elements = LoadCanvasElements(jsonPath);
 
-    /* 菜单 & 状态栏 */
+    ///* 菜单 & 状态栏 */
     SetMenuBar(new MainMenuBar(this));
     CreateStatusBar(1);
     SetStatusText("Ready");
     SetTitle("Untitled");
     static_cast<MainMenuBar*>(GetMenuBar())->SetCurrentDocInWindowList("Untitled");
 
-    /* 把窗口交给 AUI 管理（必须最先） */
+
+
+    ///* 把窗口交给 AUI 管理（必须最先） */
     m_auiMgr.SetManagedWindow(this);
 
-    /* 创建中央画布（先空白占位） */
+    //工具栏
+    m_toolBars = new ToolBars(this);
+    AddToolBarsToAuiManager();
+
+    ///* 创建中央画布（先空白占位） */
     m_canvas = new CanvasPanel(this);
     m_canvas->SetBackgroundColour(*wxWHITE);
 
-    /* 创建侧边栏 + 属性表（上下叠放） */
+    ///* 创建侧边栏 + 属性表（上下叠放） */
     wxPanel* sidePanel = new wxPanel(this);  // 外壳
     wxBoxSizer* sideSizer = new wxBoxSizer(wxVERTICAL);
 
@@ -53,7 +60,7 @@ MainFrame::MainFrame()
 
     sidePanel->SetSizer(sideSizer);
 
-    /* 把整个侧边区作为一个 AUI Pane 停靠 */
+    ///* 把整个侧边区作为一个 AUI Pane 停靠 */
     m_auiMgr.AddPane(sidePanel, wxAuiPaneInfo()
         .Name("side")               // 统一名字
         .Caption("Toolbox & Properties")
@@ -61,20 +68,20 @@ MainFrame::MainFrame()
         .Layer(1)
         .Position(1)
         .CloseButton(false)
-        .BestSize(280, 700)        // 总高度留给两部分
+        .BestSize(280, 700)        // 总高度留给两部/分
         .MinSize(200, 400)
         .FloatingSize(280, 700)
         .Gripper(true)
         .PaneBorder(false));
 
-    /* 画布保持原样 */
+    ///* 画布保持原样 */
     m_auiMgr.AddPane(m_canvas, wxAuiPaneInfo()
         .Name("canvas")
         .CenterPane()
         .CloseButton(false)
         .MinSize(400, 300));
 
-    /* 一次性提交 */
+    ///* 一次性提交 */
     m_auiMgr.Update();
 
     m_pendingTool.Clear();
@@ -392,4 +399,70 @@ void MainFrame::UpdateCursor()
         SetCursor(wxCursor(wxCURSOR_ARROW));
     else
         SetCursor(wxCursor(wxCURSOR_CROSS));
+}
+
+// 在 MainFrame 类中添加这个方法
+void MainFrame::AddToolBarsToAuiManager() {
+    if (!m_toolBars) return;
+
+    wxToolBar* toolBar1 = m_toolBars->toolBar1;
+    wxToolBar* toolBar2 = m_toolBars->toolBar2;
+    wxToolBar* toolBar3 = m_toolBars->toolBar3;
+
+    // 设置工具栏大小
+    toolBar1->SetSizeHints(-1, 28);
+    toolBar2->SetSizeHints(-1, 28);
+    toolBar3->SetSizeHints(-1, 28);
+
+    // 确保工具栏已实现
+    toolBar1->Realize();
+    toolBar2->Realize();
+    toolBar3->Realize();
+
+    // 使用AUI管理器添加工具栏
+    m_auiMgr.AddPane(toolBar1, wxAuiPaneInfo()
+        .Name("Toolbar1")
+        .Caption("Tools")
+        .ToolbarPane()
+        .Top()
+        .LeftDockable(false)
+        .RightDockable(false)
+        .BottomDockable(false)
+        .Gripper(false)
+        .CloseButton(false)
+        .PaneBorder(false)
+        .Resizable(false)
+        .BestSize(10000, 28));
+
+    m_auiMgr.AddPane(toolBar2, wxAuiPaneInfo()
+        .Name("Toolbar2")
+        .Caption("Navigation")
+        .ToolbarPane()
+        .Top()
+        .Row(1)  // 第二行
+        .LeftDockable(false)
+        .RightDockable(false)
+        .BottomDockable(false)
+        .Gripper(false)
+        .CloseButton(false)
+        .PaneBorder(false)
+        .Resizable(false)
+        .BestSize(10000, 28));
+
+    m_auiMgr.AddPane(toolBar3, wxAuiPaneInfo()
+        .Name("Toolbar3")
+        .Caption("Actions")
+        .ToolbarPane()
+        .Top()
+        .Row(2)  // 第三行
+        .LeftDockable(false)
+        .RightDockable(false)
+        .BottomDockable(false)
+        .Gripper(false)
+        .CloseButton(false)
+        .PaneBorder(false)
+        .Resizable(false)
+        .BestSize(10000, 28));
+	m_toolBars->ChoosePageOne_toolBar1(-1); // 初始化工具栏状态
+	m_toolBars->ChoosePageOne_toolBar3(-1); // 初始化工具栏状态
 }

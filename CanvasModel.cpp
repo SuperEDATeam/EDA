@@ -3,7 +3,7 @@
 #include <wx/filename.h>
 #include <wx/stdpaths.h>
 #include <fstream>
-#include <json/json.h>
+#include "3rd/json/json.h"
 #include "my_log.h"
 
 std::vector<CanvasElement> g_elements;

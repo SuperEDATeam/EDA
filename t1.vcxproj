@@ -27,9 +27,9 @@
     <ClCompile Include="MainFrame.cpp" />
     <ClCompile Include="MainMenuBar.cpp" />
     <ClCompile Include="PropertyPanel.cpp" />
+    <ClCompile Include="ToolBars.cpp" />
     <ClCompile Include="ToolboxModel.cpp" />
     <ClCompile Include="ToolboxPanel.cpp" />
-    <ClCompile Include="Wire.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="3rd\json\json.h" />
@@ -40,9 +40,107 @@
     <ClInclude Include="MainMenuBar.h" />
     <ClInclude Include="my_log.h" />
     <ClInclude Include="PropertyPanel.h" />
+    <ClInclude Include="ToolBars.h" />
     <ClInclude Include="ToolboxModel.h" />
     <ClInclude Include="ToolboxPanel.h" />
-    <ClInclude Include="Wire.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <CopyFileToFolders Include="res\And Gate.png">
+      <DestinationFolders Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(OutDir)/res</DestinationFolders>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="res\AND_Gate.png">
+      <DestinationFolders Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(OutDir)/res</DestinationFolders>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="res\branch.png">
+      <DestinationFolders Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(OutDir)/res</DestinationFolders>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="res\choose.png">
+      <DestinationFolders Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(OutDir)/res</DestinationFolders>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="res\curve.png">
+      <DestinationFolders Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(OutDir)/res</DestinationFolders>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="res\down.png">
+      <DestinationFolders Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(OutDir)/res</DestinationFolders>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="res\drag.png">
+      <DestinationFolders Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(OutDir)/res</DestinationFolders>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="res\draw.png">
+      <DestinationFolders Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(OutDir)/res</DestinationFolders>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="res\east_pin.png">
+      <DestinationFolders Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(OutDir)/res</DestinationFolders>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="res\line.png">
+      <DestinationFolders Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(OutDir)/res</DestinationFolders>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="res\map.png">
+      <DestinationFolders Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(OutDir)/res</DestinationFolders>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="res\NOT_Gate.png">
+      <DestinationFolders Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(OutDir)/res</DestinationFolders>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="res\OR_Gate.png">
+      <DestinationFolders Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(OutDir)/res</DestinationFolders>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="res\oval.png">
+      <DestinationFolders Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(OutDir)/res</DestinationFolders>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="res\plus.png">
+      <DestinationFolders Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(OutDir)/res</DestinationFolders>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="res\polygon.png">
+      <DestinationFolders Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(OutDir)/res</DestinationFolders>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="res\polyline.png">
+      <DestinationFolders Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(OutDir)/res</DestinationFolders>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="res\retangle.png">
+      <DestinationFolders Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(OutDir)/res</DestinationFolders>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="res\rounded_retangle.png">
+      <DestinationFolders Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(OutDir)/res</DestinationFolders>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="res\text.png">
+      <DestinationFolders Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(OutDir)/res</DestinationFolders>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="res\tools.png">
+      <DestinationFolders Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(OutDir)/res</DestinationFolders>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="res\up.png">
+      <DestinationFolders Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(OutDir)/res</DestinationFolders>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="res\west_pin.png">
+      <DestinationFolders Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(OutDir)/res</DestinationFolders>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="res\wrong.png">
+      <DestinationFolders Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(OutDir)/res</DestinationFolders>
+    </CopyFileToFolders>
+  </ItemGroup>
+  <ItemGroup>
+    <CopyFileToFolders Include="res\tools.ini">
+      <FileType>Document</FileType>
+      <DestinationFolders Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(OutDir)/res</DestinationFolders>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="res\tools.json">
+      <FileType>Document</FileType>
+      <DestinationFolders Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(OutDir)/res</DestinationFolders>
+    </CopyFileToFolders>
+  </ItemGroup>
+  <ItemGroup>
+    <CopyFileToFolders Include="res\1.png">
+      <DestinationFolders Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(OutDir)/res</DestinationFolders>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="res\2.png">
+      <DestinationFolders Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(OutDir)/res</DestinationFolders>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="res\3.png">
+      <DestinationFolders Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(OutDir)/res</DestinationFolders>
+    </CopyFileToFolders>
+    <CopyFileToFolders Include="res\start.png">
+      <DestinationFolders Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">$(OutDir)/res</DestinationFolders>
+    </CopyFileToFolders>
   </ItemGroup>
   <PropertyGroup Label="Globals">
     <VCProjectVersion>16.0</VCProjectVersion>
@@ -130,13 +228,13 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;WIN32;__WXMSW__;_WINDOWS;NOPCH;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>C:\wxWidgets-3.2.2.1\include;C:\wxWidgets-3.2.2.1\include\msvc;C:\wxWidgets-3.2.2.1\lib\vc_x64_lib\mswud;$(ProjectDir)3rd;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>E:\EDA\wxWidgets-3.2.2.1\include;E:\EDA\wxWidgets-3.2.2.1\include\msvc;E:\EDA\wxWidgets-3.2.2.1\lib\vc_x64_lib\mswud;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <LanguageStandard>stdcpp17</LanguageStandard>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>C:\wxWidgets-3.2.2.1\lib\vc_x64_lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>E:\EDA\wxWidgets-3.2.2.1\lib\vc_x64_lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>wxmsw32ud_core.lib;wxbase32ud.lib;wxtiffd.lib;wxjpegd.lib;wxpngd.lib;wxzlibd.lib;wxregexud.lib;wxexpatd.lib;winmm.lib;comctl32.lib;rpcrt4.lib;wsock32.lib;wininet.lib;advapi32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>

@@ -2,7 +2,7 @@
 #include <wx/filename.h>
 #include <wx/stdpaths.h>
 #include <fstream>
-#include <json/json.h>
+#include "3rd/json/json.h"
 
 static wxString GetJsonPath()
 {

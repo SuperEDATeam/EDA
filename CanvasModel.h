@@ -1,7 +1,7 @@
 #pragma once
 #include <wx/wx.h>
 #include <vector>
-#include <json/json.h>   
+#include "3rd/json/json.h"
 
 // 前向声明，避免循环包含
 class CanvasElement;
