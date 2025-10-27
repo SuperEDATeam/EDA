@@ -9,20 +9,44 @@ void Wire::Draw(wxDC& dc) const {
 
 //采用曼哈顿路由（Manhattan Wiring）代替传统的正交路由
 // 输入：起点 a，终点 b   输出：2~3 个点的折线
-std::vector<ControlPoint>
-Wire::RouteOrtho(const wxPoint& a, const wxPoint& b)
-{
+// cjc修改过
+std::vector<ControlPoint> Wire::RouteOrtho(const wxPoint& a, const wxPoint& b) {
     std::vector<ControlPoint> out;
     out.push_back({ a, CPType::Pin });
 
-    if (a.x == b.x || a.y == b.y) {          // 纯横 or 纯竖
+    // 如果起点和终点在同一位置，直接返回
+    if (a == b) {
         out.push_back({ b, CPType::Free });
         return out;
     }
 
-    // 先横后竖：中间折点在终点正上方（或下方）
-    wxPoint bend(b.x, a.y);
-    out.push_back({ bend, CPType::Bend });
+    // 如果水平或垂直对齐，直接连接
+    if (a.x == b.x || a.y == b.y) {
+        out.push_back({ b, CPType::Free });
+        return out;
+    }
+
+    // 曼哈顿路由：选择更合理的拐点
+    // 计算水平和垂直距离
+    int dx = b.x - a.x;
+    int dy = b.y - a.y;
+
+    // 选择拐点位置，尽量让导线路径自然
+    // 如果水平距离较大，先水平后垂直
+    if (abs(dx) > abs(dy)) {
+        wxPoint bend1(a.x + dx / 2, a.y);
+        wxPoint bend2(a.x + dx / 2, b.y);
+        out.push_back({ bend1, CPType::Bend });
+        out.push_back({ bend2, CPType::Bend });
+    }
+    // 如果垂直距离较大，先垂直后水平
+    else {
+        wxPoint bend1(a.x, a.y + dy / 2);
+        wxPoint bend2(b.x, a.y + dy / 2);
+        out.push_back({ bend1, CPType::Bend });
+        out.push_back({ bend2, CPType::Bend });
+    }
+
     out.push_back({ b, CPType::Free });
     return out;
 }

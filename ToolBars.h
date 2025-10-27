@@ -12,14 +12,6 @@
 
 class MainFrame;  // 前向声明
 
-
-enum class ToolType {
-	DEFAULT_TOOL,    // 默认工具
-	SELECT_TOOL,     // 选中工具  
-	TEXT_TOOL,       // 文本工具
-	COMPONENT_TOOL   // 元件工具（队友使用）
-};
-
 class ToolBars {
 public:
 	explicit ToolBars(MainFrame* owner);

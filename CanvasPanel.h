@@ -49,7 +49,7 @@ public:
     // 暴露连线容器，供外部仿真/导出使用
     const std::vector<Wire>& GetWires() const { return m_wires; }
 
-private:
+public :
     /* ---------- 原有元件相关 ---------- */
     std::vector<CanvasElement> m_elements;
     int  m_selectedIndex = -1;
