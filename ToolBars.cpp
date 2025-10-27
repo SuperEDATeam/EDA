@@ -24,12 +24,12 @@ void ToolBars::ArrangeIds() {
 		toolBar1_ids[i] = wxNewId();
 	}
 	toolBar1_toolPaths = {
-		"res\\drag.png",       "res\\choose.png",    "res\\text.png",
-		"res\\east_pin.png",   "res\\west_pin.png",  "res\\NOT_Gate.png",
-		"res\\AND_Gate.png",   "res\\OR_Gate.png",   "res\\choose.png",
-		"res\\text.png",       "res\\line.png",      "res\\curve.png",
-		"res\\polyline.png",   "res\\retangle.png",  "res\\rounded_retangle.png",
-		"res\\oval.png",       "res\\polygon.png"
+		"res\\tool_icons\\drag.png",       "res\\tool_icons\\choose.png",    "res\\tool_icons\\text.png",
+		"res\\tool_icons\\east_pin.png",   "res\\tool_icons\\west_pin.png",  "res\\tool_icons\\NOT_Gate.png",
+		"res\\tool_icons\\AND_Gate.png",   "res\\tool_icons\\OR_Gate.png",   "res\\tool_icons\\choose.png",
+		"res\\tool_icons\\text.png",       "res\\tool_icons\\line.png",      "res\\tool_icons\\curve.png",
+		"res\\tool_icons\\polyline.png",   "res\\tool_icons\\retangle.png",  "res\\tool_icons\\rounded_retangle.png",
+		"res\\tool_icons\\oval.png",       "res\\tool_icons\\polygon.png"
 	};
 
 	toolBar1_labels = {
@@ -61,7 +61,7 @@ void ToolBars::ArrangeIds() {
 		toolBar2_ids[i] = wxNewId();
 	}
 	toolBar2_toolPaths = {
-		"res\\tools.png", "res\\branch.png", "res\\map.png", "res\\draw.png"
+		"res\\tool_icons\\tools.png", "res\\tool_icons\\branch.png", "res\\tool_icons\\map.png", "res\\tool_icons\\draw.png"
 	};
 	toolBar2_labels = {
 		"Tools", "Branch", "Map", "Draw"
@@ -78,8 +78,8 @@ void ToolBars::ArrangeIds() {
 		toolBar3_ids[i] = wxNewId();
 	}
 	toolBar3_toolPaths = {
-		"res\\plus.png", "res\\up.png", "res\\down.png", "res\\wrong.png",
-		"res\\start.png", "res\\3.png", "res\\2.png", "res\\1.png"
+		"res\\tool_icons\\plus.png", "res\\tool_icons\\up.png", "res\\tool_icons\\down.png", "res\\tool_icons\\wrong.png",
+		"res\\tool_icons\\start.png", "res\\tool_icons\\3.png", "res\\tool_icons\\2.png", "res\\tool_icons\\1.png"
 	};
 	toolBar3_labels = {
 		"Plus", "Up", "Down", "Wrong", "1", "2", "3", "4"
