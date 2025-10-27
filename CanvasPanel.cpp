@@ -146,6 +146,12 @@ void CanvasPanel::OnLeftDown(wxMouseEvent& evt)
     wxPoint rawScreenPos = evt.GetPosition();
     wxPoint rawCanvasPos = ScreenToCanvas(rawScreenPos);
 
+    // 首先让工具管理器处理工具特定的行为
+    MainFrame* mainFrame = wxDynamicCast(GetParent(), MainFrame);
+    if (mainFrame && mainFrame->GetToolManager()) {
+        mainFrame->GetToolManager()->OnCanvasLeftDown(rawCanvasPos);
+    }
+
     /* ===== 1. 优先处理：点击导线绿色小方块 ===== */
     bool snappedEnd = false;
     int  cellWire, cellIdx;
@@ -264,16 +270,6 @@ void CanvasPanel::OnLeftDown(wxMouseEvent& evt)
         return;
     }
 
-    /* ===== 5. 放置新元件 ===== */
-    MainFrame* mf = wxDynamicCast(GetParent(), MainFrame);
-    if (mf && !mf->GetPendingTool().IsEmpty())
-    {
-        PlaceElement(mf->GetPendingTool(), pos);
-        mf->ClearPendingTool();
-        Refresh();
-        return;
-    }
-
     /* ===== 6. Ctrl+空白区 = 平移画布 ===== */
     if (evt.ControlDown())
     {
@@ -289,6 +285,15 @@ void CanvasPanel::OnLeftDown(wxMouseEvent& evt)
 
 void CanvasPanel::OnMouseMove(wxMouseEvent& evt)
 {
+    wxPoint rawScreenPos = evt.GetPosition();
+    wxPoint rawCanvasPos = ScreenToCanvas(rawScreenPos);
+
+    // 转发给工具管理器
+    MainFrame* mainFrame = wxDynamicCast(GetParent(), MainFrame);
+    if (mainFrame && mainFrame->GetToolManager()) {
+        mainFrame->GetToolManager()->OnCanvasMouseMove(rawCanvasPos);
+    }
+
     /* ===== 1. 悬停检测（永远最先做） ===== */
     bool isInput = false;
     wxPoint hoverWorld;
@@ -420,8 +425,12 @@ void CanvasPanel::OnLeftUp(wxMouseEvent& evt)
 void CanvasPanel::OnKeyDown(wxKeyEvent& evt)
 {
     if (evt.GetKeyCode() == WXK_ESCAPE) {
-        MainFrame* mf = wxDynamicCast(GetParent(), MainFrame);
-        if (mf) mf->ClearPendingTool();
+        MainFrame* mainFrame = wxDynamicCast(GetParent(), MainFrame);
+        if (mainFrame && mainFrame->GetToolManager()) {
+            // 取消当前工具并清空当前元件
+            mainFrame->GetToolManager()->SetCurrentTool(ToolType::DEFAULT_TOOL);
+            // 如果需要，也可以在这里清空当前元件
+        }
     }
     else if (evt.GetKeyCode() == WXK_DELETE && m_selectedIndex != -1) {
         /* ===== 1. 先同步导线端点（跟 OnLeftUp 里一致） ===== */
@@ -586,3 +595,24 @@ int CanvasPanel::HitHoverCell(const wxPoint& raw, int* wireIdx, int* cellIdx, wx
     }
     return -1;
 }
+
+    // 添加这些公有方法
+    void CanvasPanel::ClearSelection() {
+        m_selectedIndex = -1;
+        Refresh();
+    }
+
+    void CanvasPanel::SetSelectedIndex(int index) {
+        if (index >= 0 && index < (int)m_elements.size()) {
+            m_selectedIndex = index;
+            Refresh();
+        }
+    }
+
+    int CanvasPanel::HitTestPublic(const wxPoint& pt) {
+        return HitTest(pt);
+    }
+
+    bool CanvasPanel::IsClickOnEmptyAreaPublic(const wxPoint& canvasPos) {
+        return IsClickOnEmptyArea(canvasPos);
+    }

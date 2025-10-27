@@ -89,6 +89,13 @@ private:
     wxPoint m_hoverCellPos;
     int HitHoverCell(const wxPoint& raw, int* wireIdx, int* cellIdx, wxPoint* cellPos);
 
+	// 工具管理器需要的接口
+public:
+    void ClearSelection();
+    void SetSelectedIndex(int index);
+    int HitTestPublic(const wxPoint& pt);
+    bool IsClickOnEmptyAreaPublic(const wxPoint& canvasPos);
+
     std::vector<WireWireAnchor> m_wireWireAnchors;// 导线<->导线小方块（新增）
     wxDECLARE_EVENT_TABLE();
 };

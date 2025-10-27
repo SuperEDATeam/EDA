@@ -8,6 +8,7 @@
 #include <wx/xml/xml.h>
 #include <wx/mstream.h>
 #include "ToolBars.h"
+#include "ToolManager.h"
 
 class MainFrame : public wxFrame
 {
@@ -95,17 +96,22 @@ public:
     void DoHelpLibraryRef();
     void DoHelpAbout();
 
+    // 工具栏样式
     ToolBars* m_toolBars;
     void AddToolBarsToAuiManager();
 
-    const wxString& GetPendingTool() const;
-    void ClearPendingTool();
+	// 工具管理器
+    ToolManager* m_toolManager;
+    ToolManager* GetToolManager() const { return m_toolManager; }
+    void InitializeTools() {
+        m_toolManager = new ToolManager(this, m_toolBars, m_canvas);
+    }
+
 private:
     wxAuiManager m_auiMgr;
     PropertyPanel* m_propPanel = nullptr;
     CanvasPanel* m_canvas;
 
-    wxString m_pendingTool;     // 当前待放置的元件名，空串表示无
     void UpdateCursor();        // 根据 m_pendingTool 设置十字/常规光标
 
     void OnToolboxElement(wxCommandEvent& evt);

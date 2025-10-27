@@ -37,13 +37,13 @@ void ToolBars::ArrangeIds() {
 		"Choose", "Text", "Line", "Curve", "Polyline", "Retangle", "Rounded Retangle", "Oval", "Polygon"
 	};
 	//实现ID对方法MAP
-	toolIdToFunctionMap[toolBar1_ids[0]] = [this](int id) { OneChoose(id); };
-	toolIdToFunctionMap[toolBar1_ids[1]] = [this](int id) { OneChoose(id); };
-	toolIdToFunctionMap[toolBar1_ids[2]] = [this](int id) { OneChoose(id); };
+	toolIdToFunctionMap[toolBar1_ids[0]] = [this](int id) { OneChoose(id); m_owner->GetToolManager()->SetCurrentTool(ToolType::DEFAULT_TOOL); };
+	toolIdToFunctionMap[toolBar1_ids[1]] = [this](int id) { OneChoose(id); m_owner->GetToolManager()->SetCurrentTool(ToolType::SELECT_TOOL); };
+	toolIdToFunctionMap[toolBar1_ids[2]] = [this](int id) { OneChoose(id); m_owner->GetToolManager()->SetCurrentTool(ToolType::TEXT_TOOL); };
 	toolIdToFunctionMap[toolBar1_ids[3]] = [this](int id) { OneChoose(id); };
 	toolIdToFunctionMap[toolBar1_ids[4]] = [this](int id) { OneChoose(id); };
 	toolIdToFunctionMap[toolBar1_ids[5]] = [this](int id) { OneChoose(id); };
-	toolIdToFunctionMap[toolBar1_ids[6]] = [this](int id) { OneChoose(id); };
+	toolIdToFunctionMap[toolBar1_ids[6]] = [this](int id) { OneChoose(id); m_owner->GetToolManager()->SetCurrentComponent("AND Gate");  };
 	toolIdToFunctionMap[toolBar1_ids[7]] = [this](int id) { OneChoose(id); };
 	toolIdToFunctionMap[toolBar1_ids[8]] = [this](int id) { OneChoose(id); };
 	toolIdToFunctionMap[toolBar1_ids[9]] = [this](int id) { OneChoose(id); };
@@ -150,51 +150,70 @@ ToolBars::~ToolBars() {
 }
 
 void ToolBars::OnToolClicked(wxCommandEvent& event) {
-	int toolId = event.GetId(); // 获取被点击的工具的 ID
+	int toolId = event.GetId();
+
+	// 安全检查：确保 m_owner 和工具管理器存在
+	if (!m_owner) {
+		wxLogError("ToolBars: m_owner is null!");
+		return;
+	}
+
+	ToolManager* toolManager = m_owner->GetToolManager();
+	if (!toolManager) {
+		wxLogError("ToolBars: ToolManager is null!");
+		return;
+	}
 
 	// 查找对应的工具 ID 并调用其方法
 	auto it = toolIdToFunctionMap.find(toolId);
 	if (it != toolIdToFunctionMap.end()) {
-		it->second(toolId); // 调用对应的方法
+		it->second(toolId);
 	}
-
-	// 其他逻辑...
 }
 
 void ToolBars::OneChoose(int toolId) {
-	// 判断工具 ID 属于哪个工具栏
+	// 判断工具 ID 属于哪个工具栏，然后只取消该工具栏内其他工具的选择
+	bool found = false;
+
+	// 检查工具栏1
 	for (size_t i = 0; i < toolBar1_ids.size(); ++i) {
 		if (toolBar1_ids[i] == toolId) {
-			// 工具栏 1 的工具被点击
-			// 遍历工具栏 1 的所有工具，取消其他工具的选择
-			for (size_t i = 0; i < toolBar1_ids.size(); ++i) {
-				if (toolBar1_ids[i] != toolId) {
-					toolBar1->ToggleTool(toolBar1_ids[i], false); // 取消其他工具的选择
-				}
-			}
-			break;
-		}
-	}
-	for (size_t i = 0; i < toolBar2_ids.size(); ++i) {
-		if (toolBar2_ids[i] == toolId) {
-			// 工具栏 2 的工具被点击
-			// 遍历工具栏 2 的所有工具，取消其他工具的选择
-			for (size_t i = 0; i < toolBar2_ids.size(); ++i) {
-				if (toolBar2_ids[i] != toolId) {
-					toolBar2->ToggleTool(toolBar2_ids[i], false); // 取消其他工具的选择
+			found = true;
+			// 只取消工具栏1内其他工具的选择
+			for (size_t j = 0; j < toolBar1_ids.size(); ++j) {
+				if (toolBar1_ids[j] != toolId) {
+					toolBar1->ToggleTool(toolBar1_ids[j], false);
 				}
 			}
 			break;
 		}
 	}
 
+	if (found) return; // 如果已经在工具栏1找到，直接返回
+
+	// 检查工具栏2
+	for (size_t i = 0; i < toolBar2_ids.size(); ++i) {
+		if (toolBar2_ids[i] == toolId) {
+			found = true;
+			// 只取消工具栏2内其他工具的选择
+			for (size_t j = 0; j < toolBar2_ids.size(); ++j) {
+				if (toolBar2_ids[j] != toolId) {
+					toolBar2->ToggleTool(toolBar2_ids[j], false);
+				}
+			}
+			break;
+		}
+	}
+
+	if (found) return;
+
+	// 检查工具栏3
 	for (size_t i = 0; i < toolBar3_ids.size(); ++i) {
 		if (toolBar3_ids[i] == toolId) {
-			// 工具栏 3 的工具被点击
-			// 遍历工具栏 3 的所有工具，取消其他工具的选择
-			for (size_t i = 0; i < toolBar3_ids.size(); ++i) {
-				if (toolBar3_ids[i] != toolId) {
-					toolBar3->ToggleTool(toolBar3_ids[i], false); // 取消其他工具的选择
+			// 只取消工具栏3内其他工具的选择
+			for (size_t j = 0; j < toolBar3_ids.size(); ++j) {
+				if (toolBar3_ids[j] != toolId) {
+					toolBar3->ToggleTool(toolBar3_ids[j], false);
 				}
 			}
 			break;

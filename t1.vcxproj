@@ -30,6 +30,7 @@
     <ClCompile Include="ToolBars.cpp" />
     <ClCompile Include="ToolboxModel.cpp" />
     <ClCompile Include="ToolboxPanel.cpp" />
+    <ClCompile Include="ToolManager.cpp" />
     <ClCompile Include="Wire.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -44,6 +45,7 @@
     <ClInclude Include="ToolBars.h" />
     <ClInclude Include="ToolboxModel.h" />
     <ClInclude Include="ToolboxPanel.h" />
+    <ClInclude Include="ToolManager.h" />
     <ClInclude Include="Wire.h" />
   </ItemGroup>
   <ItemGroup>
