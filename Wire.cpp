@@ -6,50 +6,86 @@ void Wire::Draw(wxDC& dc) const {
     for (size_t i = 1; i < pts.size(); ++i)
         dc.DrawLine(pts[i - 1].pos, pts[i].pos);
 }
-
-//采用曼哈顿路由（Manhattan Wiring）代替传统的正交路由
-// 输入：起点 a，终点 b   输出：2~3 个点的折线
-// cjc修改过
-std::vector<ControlPoint> Wire::RouteOrtho(const wxPoint& a, const wxPoint& b) {
+std::vector<ControlPoint> Wire::RouteOrtho(
+    const ControlPoint& start,
+    const ControlPoint& end,
+    PinDirection startDir,
+    PinDirection endDir)
+{
     std::vector<ControlPoint> out;
-    out.push_back({ a, CPType::Pin });
+    out.push_back({ start.pos, start.type });
 
-    // 如果起点和终点在同一位置，直接返回
-    if (a == b) {
-        out.push_back({ b, CPType::Free });
+    // 边界情况处理
+    if (start.pos == end.pos) {
+        out.push_back({ end.pos, end.type });
         return out;
     }
 
-    // 如果水平或垂直对齐，直接连接
-    if (a.x == b.x || a.y == b.y) {
-        out.push_back({ b, CPType::Free });
-        return out;
-    }
+    // 第一步：从起始引脚水平延伸
+    wxPoint startExit = CalculateHorizontalExit(start.pos, startDir);
+    out.push_back({ startExit, CPType::Bend });
 
-    // 曼哈顿路由：选择更合理的拐点
-    // 计算水平和垂直距离
-    int dx = b.x - a.x;
-    int dy = b.y - a.y;
+    // 第二步：从终止引脚水平延伸  
+    wxPoint endExit = CalculateHorizontalExit(end.pos, endDir);
 
-    // 选择拐点位置，尽量让导线路径自然
-    // 如果水平距离较大，先水平后垂直
-    if (abs(dx) > abs(dy)) {
-        wxPoint bend1(a.x + dx / 2, a.y);
-        wxPoint bend2(a.x + dx / 2, b.y);
-        out.push_back({ bend1, CPType::Bend });
-        out.push_back({ bend2, CPType::Bend });
-    }
-    // 如果垂直距离较大，先垂直后水平
-    else {
-        wxPoint bend1(a.x, a.y + dy / 2);
-        wxPoint bend2(b.x, a.y + dy / 2);
-        out.push_back({ bend1, CPType::Bend });
-        out.push_back({ bend2, CPType::Bend });
-    }
+    // 第三步：连接两个延伸点
+    ConnectExits(out, startExit, endExit);
 
-    out.push_back({ b, CPType::Free });
+    // 第四步：连接到终止引脚
+    out.push_back({ endExit, CPType::Bend });
+    out.push_back({ end.pos, end.type });
+
     return out;
 }
+
+
+wxPoint Wire::CalculateHorizontalExit(const wxPoint& pinPos, PinDirection dir) {
+    const int EXIT_DISTANCE = 20; // 水平延伸距离
+
+    switch (dir) {
+    case PinDirection::Left:
+    case PinDirection::Right:
+        // 水平引脚：直接水平延伸
+        return wxPoint(
+            pinPos.x + (dir == PinDirection::Right ? EXIT_DISTANCE : -EXIT_DISTANCE),
+            pinPos.y
+        );
+
+    case PinDirection::Up:
+    case PinDirection::Down:
+        // 垂直引脚：先垂直移动，再水平延伸
+        int verticalOffset = (dir == PinDirection::Down ? EXIT_DISTANCE : -EXIT_DISTANCE);
+        return wxPoint(pinPos.x, pinPos.y + verticalOffset);
+    }
+    return pinPos;
+}
+
+void Wire::ConnectExits(std::vector<ControlPoint>& path,
+    const wxPoint& startExit, const wxPoint& endExit) {
+
+    // 情况1：两个延伸点在同一水平线上
+    if (startExit.y == endExit.y) {
+        // 直接水平连接
+        path.push_back({ endExit, CPType::Free });
+        return;
+    }
+
+    // 情况2：需要创建拐点连接
+    // 策略：先垂直移动到中间位置，再水平移动，再垂直移动
+
+    int midY = (startExit.y + endExit.y) / 2;
+
+    // 第一个垂直移动
+    wxPoint verticalPoint(startExit.x, midY);
+    path.push_back({ verticalPoint, CPType::Bend });
+
+    // 水平移动
+    wxPoint horizontalPoint(endExit.x, midY);
+    path.push_back({ horizontalPoint, CPType::Bend });
+
+    // 第二个垂直移动已经在后续步骤中处理
+}
+
 
 void Wire::GenerateCells()
 {

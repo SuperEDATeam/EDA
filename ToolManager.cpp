@@ -88,7 +88,7 @@ void ToolManager::OnCanvasLeftDown(const wxPoint& canvasPos) {
         return;
     }
 
-    // 2. 检查是否点击了引脚（开始绘制导线）
+     //2. 检查是否点击了引脚（开始绘制导线）
     bool snapped = false;
     wxPoint snappedPos = m_canvas->Snap(canvasPos, &snapped);
     if (snapped && m_currentTool == ToolType::DEFAULT_TOOL) {
@@ -208,7 +208,7 @@ void ToolManager::StartWireDrawing(const wxPoint& startPos, bool fromPin) {
     if (m_isPanning) {
         FinishPanning();
     }
-
+	m_currentTool = ToolType::WIRE_TOOL;
     m_isDrawingWire = true;
     m_wireStartPos = startPos;
     m_startCP = { startPos, fromPin ? CPType::Pin : CPType::Free };
@@ -233,18 +233,19 @@ void ToolManager::UpdateWireDrawing(const wxPoint& currentPos) {
 
     bool snapped = false;
     wxPoint snappedPos = m_canvas->Snap(currentPos, &snapped);
+	ControlPoint endCP = { snappedPos, snapped ? CPType::Pin : CPType::Free };
 
     // 更新导线预览
-    m_canvas->m_tempWire.pts = Wire::RouteOrtho(m_startCP.pos, snappedPos);
+    m_canvas->m_tempWire.pts = Wire::RouteOrtho(m_startCP, endCP, PinDirection::Right, PinDirection::Left);
     m_canvas->Refresh();
 
     if (m_mainFrame) {
         if (snapped) {
-            m_mainFrame->SetStatusText(wxString::Format("绘制导线: 吸附到引脚 (%d,%d)",
+            m_mainFrame->SetStatusText(wxString::Format("绘制导线: 终点吸附到引脚 (%d,%d)",
                 snappedPos.x, snappedPos.y));
         }
         else {
-            m_mainFrame->SetStatusText(wxString::Format("绘制导线: 自由端点 (%d,%d)",
+            m_mainFrame->SetStatusText(wxString::Format("绘制导线: 终点为自由端点 (%d,%d)",
                 snappedPos.x, snappedPos.y));
         }
     }
@@ -296,6 +297,7 @@ void ToolManager::OnCanvasLeftUp(const wxPoint& canvasPos) {
         FinishWireDrawing(canvasPos);
         m_eventHandled = true;
     }
+    m_currentTool = ToolType::DEFAULT_TOOL; // 恢复默认工具状态
 }
 
 void ToolManager::OnCanvasKeyDown(wxKeyEvent& evt) {
@@ -416,7 +418,7 @@ void ToolManager::FinishWireDrawing(const wxPoint& endPos) {
     completedWire.AddPoint(end);
 
     // 使用路由算法生成最终路径
-    completedWire.pts = Wire::RouteOrtho(m_startCP.pos, endSnapPos);
+    completedWire.pts = Wire::RouteOrtho(m_startCP, end, PinDirection::Right, PinDirection::Left);
 
     // 添加到导线列表
     m_canvas->m_wires.emplace_back(completedWire);
@@ -481,6 +483,7 @@ void ToolManager::CancelWireDrawing() {
 void ToolManager::StartWireEditing(int wireIndex, int pointIndex, const wxPoint& startPos) {
     if (wireIndex < 0 || wireIndex >= (int)m_canvas->m_wires.size()) return;
 
+	m_currentTool = ToolType::WIRE_TOOL;
     m_isEditingWire = true;
     m_editingWireIndex = wireIndex;
     m_editingPointIndex = pointIndex;
@@ -502,7 +505,7 @@ void ToolManager::UpdateWireEditing(const wxPoint& currentPos) {
 
         // 重新生成导线路径（如果是端点）
         if (m_editingPointIndex == 0 || m_editingPointIndex == (int)wire.pts.size() - 1) {
-            wire.pts = Wire::RouteOrtho(wire.pts.front().pos, wire.pts.back().pos);
+            wire.pts = Wire::RouteOrtho(wire.pts.front(), wire.pts.back(), PinDirection::Right, PinDirection::Left);
         }
 
         // 重新生成控制点
@@ -583,10 +586,15 @@ void ToolManager::UpdateElementDragging(const wxPoint& currentPos) {
     wxPoint delta = currentPos - m_elementDragStartPos;
     wxPoint newPos = m_elementStartCanvasPos + delta;
 
+    // 构建调试信息字符串
+    wxString debugInfo = wxString::Format("拖动元件: (%d,%d)    关联导线[",
+        newPos.x, newPos.y);
+
     // 更新元件位置
     m_canvas->m_elements[m_draggingElementIndex].SetPos(newPos);
 
     // 更新所有相关导线端点
+    bool firstWire = true;
     for (const auto& aw : m_canvas->m_movingWires) {
         if (aw.wireIdx >= m_canvas->m_wires.size()) continue;
 
@@ -600,6 +608,21 @@ void ToolManager::UpdateElementDragging(const wxPoint& currentPos) {
         wxPoint pinOffset = wxPoint(pins[aw.pinIdx].pos.x, pins[aw.pinIdx].pos.y);
         wxPoint newPinPos = elem.GetPos() + pinOffset;
 
+        // 添加详细导线信息到调试信息 - 分开构建避免格式化问题
+        if (!firstWire) {
+            debugInfo += ", ";
+        }
+
+        // 分开构建字符串，避免复杂的格式化
+        wxString wireType = aw.isInput ? wxString("输入") : wxString("输出");
+        wxString wireInfo = wxString::Format("导线%d-%s引脚%d(%d,%d)",
+            (int)aw.wireIdx,
+            wireType,
+            (int)aw.pinIdx,
+            newPinPos.x, newPinPos.y);
+        debugInfo += wireInfo;
+        firstWire = false;
+
         // 更新导线端点
         if (aw.ptIdx == 0)
             wire.pts.front().pos = newPinPos;
@@ -607,8 +630,14 @@ void ToolManager::UpdateElementDragging(const wxPoint& currentPos) {
             wire.pts.back().pos = newPinPos;
 
         // 重新生成导线路径
-        wire.pts = Wire::RouteOrtho(wire.pts.front().pos, wire.pts.back().pos);
+        wire.pts = Wire::RouteOrtho(wire.pts.front(), wire.pts.back(), PinDirection::Right, PinDirection::Left);
         wire.GenerateCells();
+    }
+
+	debugInfo += "]";
+    // 更新状态栏显示调试信息
+    if (m_mainFrame) {
+        m_mainFrame->SetStatusText(debugInfo);
     }
 
     m_canvas->Refresh();
