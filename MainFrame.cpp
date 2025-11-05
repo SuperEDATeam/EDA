@@ -41,8 +41,12 @@ MainFrame::MainFrame()
     m_canvas = new CanvasPanel(this);
     m_canvas->SetBackgroundColour(*wxWHITE);
 
+    // 工具栏
     m_toolBars = new ToolBars(this);
     AddToolBarsToAuiManager();
+
+    // 工具管理器
+    m_toolManager = new ToolManager(this, m_toolBars, m_canvas);
 
     /* 创建侧边栏 + 属性表（上下叠放） */
     wxPanel* sidePanel = new wxPanel(this);  // 外壳
@@ -80,8 +84,6 @@ MainFrame::MainFrame()
     /* 一次性提交 */
     m_auiMgr.Update();
 
-    m_pendingTool.Clear();
-    UpdateCursor();
 }
 
 MainFrame::~MainFrame()
@@ -106,17 +108,14 @@ MainFrame::~MainFrame()
 
 void MainFrame::OnToolboxElement(wxCommandEvent& evt)
 {
-    m_pendingTool = evt.GetString();
-    UpdateCursor();
-    SetStatusText(wxString::Format("Select position to place <%s>", m_pendingTool));
-}
+    wxString componentName = evt.GetString();
 
-const wxString& MainFrame::GetPendingTool() const { return m_pendingTool; }
-void MainFrame::ClearPendingTool()
-{
-    m_pendingTool.Clear();
-    UpdateCursor();
-    SetStatusText("Ready");
+    if (m_toolManager) {
+        m_toolManager->SetCurrentComponent(componentName);
+    }
+    else {
+        wxLogError("ToolManager is not initialized!");
+    }
 }
 
 //目前只修改了Mainframe。上面的私有变量，方法，以及json头文件
@@ -550,14 +549,6 @@ void MainFrame::DoHelpAbout()
 {
     wxMessageBox(wxString::Format("MyLogisim\n%s", wxVERSION_STRING),
         wxT("About"), wxOK | wxICON_INFORMATION, this);
-}
-
-void MainFrame::UpdateCursor()
-{
-    if (m_pendingTool.IsEmpty())
-        SetCursor(wxCursor(wxCURSOR_ARROW));
-    else
-        SetCursor(wxCursor(wxCURSOR_CROSS));
 }
 
 void MainFrame::AddToolBarsToAuiManager() {

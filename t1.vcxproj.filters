@@ -51,6 +51,9 @@
     <ClCompile Include="ToolBars.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="ToolManager.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="MainMenuBar.h">
@@ -87,6 +90,9 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="ToolBars.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="ToolManager.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
