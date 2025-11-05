@@ -28,11 +28,13 @@ struct Circle {
     Point center;
     int radius;
     wxColour color;
+
     bool fill;          // 新增：是否填充
     wxColour fillColor; // 新增：填充颜色
     Circle(Point c = Point(), int r = 0, wxColour col = wxColour(0, 0, 0),
         bool f = false, wxColour fc = wxColour(128, 128, 128))
         : center(c), radius(r), color(col), fill(f), fillColor(fc) {
+
     }
 };
 

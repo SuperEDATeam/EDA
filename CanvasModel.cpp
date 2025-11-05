@@ -20,6 +20,7 @@ std::vector<CanvasElement> LoadCanvasElements(const wxString& jsonPath)
     std::ifstream test(jsonPath.ToStdString());
     MyLog("LoadCanvas: ifstream good = %d\n", test.good());
 
+
     if (test.good()) {
         test.seekg(0, std::ios::end);
         size_t size = test.tellg();
@@ -77,6 +78,7 @@ std::vector<CanvasElement> LoadCanvasElements(const wxString& jsonPath)
                     });
             }
             else if (type == "circle") {
+
                 bool fill = shape.get("fill", false).asBool();
                 wxColour fillColor = fill ? wxColour(shape.get("fillColor", "#808080").asString()) : wxColour(0, 0, 0);
 
@@ -94,6 +96,7 @@ std::vector<CanvasElement> LoadCanvasElements(const wxString& jsonPath)
                 ce.AddShape(Text{
                     {shape["x"].asInt(), shape["y"].asInt()},
                     text,
+
                     shape["fontSize"].asInt(),
                     color
                     });
@@ -115,6 +118,7 @@ std::vector<CanvasElement> LoadCanvasElements(const wxString& jsonPath)
                     color
                     });
             }
+
             // 椭半圆的绘制
             else if (type == "BezierShape") {
                 Point p0 = { shape["p0"]["x"].asInt(), shape["p0"]["y"].asInt() };
@@ -126,6 +130,7 @@ std::vector<CanvasElement> LoadCanvasElements(const wxString& jsonPath)
                     color
                     });
             }
+
         }
         out.push_back(ce);
     }

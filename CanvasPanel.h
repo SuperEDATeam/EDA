@@ -49,7 +49,9 @@ public:
     // 暴露连线容器，供外部仿真/导出使用
     const std::vector<Wire>& GetWires() const { return m_wires; }
 
+
     void DeleteSelectedElement();
+
 
 private:
     /* ---------- 原有元件相关 ---------- */
@@ -59,7 +61,9 @@ private:
     wxPoint m_dragStartPos;
     wxPoint m_elementStartPos;
 
+
     void ClearElementWires(size_t elemIndex);
+
 
     /* ---------- 新增连线相关 ---------- */
     std::vector<Wire> m_wires;   // 已定型的连线

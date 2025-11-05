@@ -6,6 +6,7 @@
     "anchorPoint": [64, 64],
     "inputPins": [
       {"name": "Input A", "x": 32, "y": 40},
+
       {"name": "Input B", "x": 32, "y": 88}
     ],
     "outputPins": [{"name": "Output", "x": 96, "y": 64}],
@@ -605,5 +606,6 @@
       {"type": "line", "start": {"x": 112, "y": 32}, "end": {"x": 112, "y": 96}, "color": "#333333"},
       {"type": "text", "x": 32, "y": 64, "text": "TG Extender", "fontSize": 14, "color": "#333333"}
     ]
+
   }
 ]

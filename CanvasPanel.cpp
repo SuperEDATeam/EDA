@@ -585,6 +585,7 @@ int CanvasPanel::HitHoverCell(const wxPoint& raw, int* wireIdx, int* cellIdx, wx
         }
     }
     return -1;
+
 }
 
 // 清理与指定元件关联的导线
@@ -665,4 +666,5 @@ void CanvasPanel::DeleteSelectedElement() {
     // 4. 刷新画布
     Refresh();
     MyLog("CanvasPanel: Element deleted, remaining count: %zu\n", m_elements.size());
+
 }

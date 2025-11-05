@@ -8,6 +8,7 @@
 #include <algorithm>
 #include <limits>
 
+
 std::vector<wxPoint> CanvasElement::CalculateBezier(const Point& p0, const Point& p1, const Point& p2, int segments) const
 {
     std::vector<wxPoint> pts;
@@ -31,8 +32,10 @@ void CanvasElement::Draw(wxDC& dc) const
         return wxPoint(m_pos.x + p.x, m_pos.y + p.y);
         };
 
+
     for (const auto& shape : m_shapes)
     {
+
         auto visitor = [&](const auto& arg) {
             using T = std::decay_t<decltype(arg)>;
 
@@ -48,16 +51,19 @@ void CanvasElement::Draw(wxDC& dc) const
                 }
             }
             else if constexpr (std::is_same_v<T, Line>) {
+
                 dc.SetPen(wxPen(arg.color, 2));
                 dc.DrawLine(off(arg.start), off(arg.end));
             }
             else if constexpr (std::is_same_v<T, Circle>) {
+
                 if (arg.fill) {
                     dc.SetBrush(wxBrush(arg.fillColor));  // 设置填充画刷
                 }
                 else {
                     dc.SetBrush(*wxTRANSPARENT_BRUSH);
                 }
+
                 dc.SetPen(wxPen(arg.color, 2));
                 dc.DrawCircle(off(arg.center), arg.radius);
             }
@@ -109,6 +115,7 @@ void CanvasElement::Draw(wxDC& dc) const
 
                 std::string d = arg.d;
                 if (d.find("A 16 28") != std::string::npos) {
+
                     int verticalLineLength = 40;
                     int radius = verticalLineLength / 2;
 
@@ -118,6 +125,7 @@ void CanvasElement::Draw(wxDC& dc) const
 
                     dc.DrawLine(off(Point(10, 52)), off(Point(10 + radius, 52)));
 
+
                     std::vector<wxPoint> arcPoints;
                     for (int angle = -90; angle <= 90; angle += 5) {
                         double rad = angle * M_PI / 180.0;
@@ -125,6 +133,7 @@ void CanvasElement::Draw(wxDC& dc) const
                         int y = 32 + static_cast<int>(radius * sin(rad));
                         arcPoints.push_back(off(Point(x, y)));
                     }
+
 
                     if (arcPoints.size() >= 2) {
                         for (size_t i = 1; i < arcPoints.size(); i++) {
@@ -197,6 +206,7 @@ wxRect CanvasElement::GetBounds() const
             else if constexpr (std::is_same_v<T, BezierShape>) {
                 auto pts = CalculateBezier(arg.p0, arg.p1, arg.p2);
                 for (const auto& wp : pts) {
+
                     Point p{ wp.x, wp.y };
                     update(p);
                 }
@@ -211,6 +221,7 @@ wxRect CanvasElement::GetBounds() const
 
         std::visit(visitor, shape);
     }
+
 
     for (const auto& pin : m_inputPins) {
         update(pin.pos);
