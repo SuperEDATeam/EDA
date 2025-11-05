@@ -205,12 +205,16 @@ bool MainFrame::SaveToFile(const wxString& filePath) {
 
 
 
+
+
+
+
 wxString MainFrame::GenerateFileContent()
 {
-    // 1. 创建文档，**不**手工拼 XML 声明
+    // 1. 创建XML文档
     wxXmlDocument doc;
 
-    // 2. 直接挂根节点 <project>
+    // 2. 根节点 <project>
     wxXmlNode* root = new wxXmlNode(wxXML_ELEMENT_NODE, "project");
     root->AddAttribute("source", "2.7.1");
     root->AddAttribute("version", "1.0");
@@ -221,33 +225,198 @@ wxString MainFrame::GenerateFileContent()
         "This file is intended to be loaded by Logisim "
         "(http://www.cburch.com/logisim/)"));
 
-    // 4. 元件库
-    auto AddLib = [&](const wxString& desc, const wxString& name)
-        {
-            wxXmlNode* lib = new wxXmlNode(wxXML_ELEMENT_NODE, "lib");
-            lib->AddAttribute("desc", desc);
-            lib->AddAttribute("name", name);
-            root->AddChild(lib);
-        };
-    AddLib("#Wiring", "0");
-    AddLib("#Gates", "1");
+    // 4. 库信息
+    AddLibraryNode(root, "0", "#Wiring");
+    AddLibraryNode(root, "1", "#Gates");
 
-    // 5. 主电路
+    // 5. 电路节点
     wxXmlNode* circuit = new wxXmlNode(wxXML_ELEMENT_NODE, "circuit");
     circuit->AddAttribute("name", "main");
     root->AddChild(circuit);
 
-    // 6. 示例导线
-    wxXmlNode* wire = new wxXmlNode(wxXML_ELEMENT_NODE, "wire");
-    wire->AddAttribute("from", "(370,350)");
-    wire->AddAttribute("to", "(430,350)");
-    circuit->AddChild(wire);
+    // 保存元件信息（移除旋转角度相关代码）
+    for (const auto& elem : m_canvas->GetElements()) {
+        wxXmlNode* element = new wxXmlNode(wxXML_ELEMENT_NODE, "element");
+        element->AddAttribute("name", elem.GetName());  // 保留元件名称
+        element->AddAttribute("x", wxString::Format("%d", elem.GetPos().x));  // 保留X坐标
+        element->AddAttribute("y", wxString::Format("%d", elem.GetPos().y));  // 保留Y坐标
+        // 移除下面这行关于rotation的代码
+        // element->AddAttribute("rotation", wxString::Format("%d", elem.GetRotation()));
+        circuit->AddChild(element);
+    }
 
-    // 7. 内存→字符串（Unicode 安全）
+    // 7. 保存连线信息
+    for (const auto& wire : m_canvas->GetWires()) {
+        // 直接访问Wire类的pts成员变量获取点集合
+        const auto& pts = wire.pts;  // 关键修改：使用wire.pts替代wire.GetPoints()
+        if (pts.size() < 2) continue;
+
+        wxXmlNode* wireNode = new wxXmlNode(wxXML_ELEMENT_NODE, "wire");
+        // 保存起点（第一个点）和终点（最后一个点）
+        wireNode->AddAttribute("from", wxString::Format("(%d,%d)", pts[0].pos.x, pts[0].pos.y));
+        wireNode->AddAttribute("to", wxString::Format("(%d,%d)", pts.back().pos.x, pts.back().pos.y));
+
+        // 保存中间点（若存在）
+        if (pts.size() > 2) {
+            wxString midPoints;
+            for (size_t i = 1; i < pts.size() - 1; ++i) {
+                midPoints += wxString::Format("(%d,%d);", pts[i].pos.x, pts[i].pos.y);
+            }
+            wireNode->AddAttribute("midpoints", midPoints);
+        }
+        circuit->AddChild(wireNode);
+    }
+
+    // 8. 输出XML内容
     wxStringOutputStream strStream;
-    doc.Save(strStream, wxXML_DOCUMENT_TYPE_NODE); // 自动带 XML 声明
+    doc.Save(strStream, wxXML_DOCUMENT_TYPE_NODE);
     return strStream.GetString();
 }
+
+
+
+
+
+
+
+
+
+void MainFrame::DoFileOpen(const wxString& path)
+{
+    wxString filePath = path;
+
+    // 如果没有提供路径，显示文件选择对话框
+    if (filePath.IsEmpty()) {
+        wxFileDialog openDialog(
+            this,
+            "打开电路文件",
+            "",
+            "",
+            "电路文件 (*.circ)|*.circ|所有文件 (*.*)|*.*",
+            wxFD_OPEN | wxFD_FILE_MUST_EXIST
+        );
+
+        if (openDialog.ShowModal() != wxID_OK) {
+            return;
+        }
+        filePath = openDialog.GetPath();
+    }
+
+    // 尝试读取文件内容
+    wxFile file;
+    if (!file.Open(filePath, wxFile::read)) {
+        wxMessageBox("无法打开文件: " + filePath, "错误", wxOK | wxICON_ERROR);
+        return;
+    }
+
+    // 读取XML内容
+    wxString xmlContent;
+    file.ReadAll(&xmlContent);
+    file.Close();
+
+    // 解析XML
+    wxXmlDocument doc;
+    wxStringInputStream stream(xmlContent);
+    if (!doc.Load(stream)) {
+        wxMessageBox("文件格式错误: " + filePath, "错误", wxOK | wxICON_ERROR);
+        return;
+    }
+
+    // 清空当前画布
+    m_canvas->ClearAll();
+
+    // 解析根节点
+    wxXmlNode* root = doc.GetRoot();
+    if (!root || root->GetName() != "project") {
+        wxMessageBox("无效的电路文件", "错误", wxOK | wxICON_ERROR);
+        return;
+    }
+
+    // 查找电路节点
+    wxXmlNode* circuit = root->GetChildren();
+    while (circuit) {
+        if (circuit->GetName() == "circuit") {
+            break;
+        }
+        circuit = circuit->GetNext();
+    }
+
+    if (!circuit) {
+        wxMessageBox("文件中未找到电路信息", "错误", wxOK | wxICON_ERROR);
+        return;
+    }
+
+    // 解析元件和连线
+    wxXmlNode* child = circuit->GetChildren();
+    while (child) {
+        // 解析元件（移除旋转角度相关代码）
+        if (child->GetName() == "element") {
+            wxString name = child->GetAttribute("name");
+            int x = wxAtoi(child->GetAttribute("x", "0"));
+            int y = wxAtoi(child->GetAttribute("y", "0"));
+            // 移除下面这行关于rotation的读取
+            // int rotation = wxAtoi(child->GetAttribute("rotation", "0"));
+
+            m_canvas->PlaceElement(name, wxPoint(x, y));
+            // 同时移除设置旋转角度的逻辑（如果有的话）
+        }
+
+        // 解析连线（在DoFileOpen方法中）
+        else if (child->GetName() == "wire") {
+            wxString fromStr = child->GetAttribute("from");
+            wxString toStr = child->GetAttribute("to");
+            wxString midPointsStr = child->GetAttribute("midpoints", "");
+
+            // 解析坐标点 (x,y)
+            auto parsePoint = [](const wxString& str) -> wxPoint {
+                int x = 0, y = 0;
+                if (sscanf(str.ToUTF8().data(), "(%d,%d)", &x, &y) == 2) {
+                    return wxPoint(x, y);
+                }
+                return wxPoint(0, 0);
+                };
+
+            // 重建pts集合
+            std::vector<ControlPoint> pts;
+            pts.push_back({ parsePoint(fromStr), CPType::Pin });  // 起点（Pin类型）
+
+            // 解析中间点
+            if (!midPointsStr.IsEmpty()) {
+                wxArrayString midPoints = wxSplit(midPointsStr, ';');
+                for (const auto& ptStr : midPoints) {
+                    if (ptStr.IsEmpty()) continue;
+                    pts.push_back({ parsePoint(ptStr), CPType::Bend });  // 中间点为折点
+                }
+            }
+
+            pts.push_back({ parsePoint(toStr), CPType::Free });  // 终点（Free类型）
+
+            // 创建Wire并添加到画布
+            Wire wire;
+            wire.pts = pts;  // 直接赋值给Wire的pts成员
+            wire.GenerateCells();  // 生成网格点（保持显示一致性）
+            m_canvas->AddWire(wire);
+        }
+        
+        child = child->GetNext();
+    }
+
+    // 更新状态
+    m_currentFilePath = filePath;
+    m_isModified = false;
+    SetTitle(wxFileName(filePath).GetFullName());
+    static_cast<MainMenuBar*>(GetMenuBar())->AddFileToHistory(filePath);
+    SetStatusText("已打开: " + filePath);
+}
+
+
+
+
+
+
+
+
+
 
 
 // 辅助方法：添加元件库节点
@@ -295,13 +464,7 @@ void MainFrame::DoFileSaveAs() {
 
 
 
-void MainFrame::DoFileOpen(const wxString& path)
-{
-    wxString msg = path.IsEmpty()
-        ? wxString("DoFileOpen dialog")     // 强制 wxString
-        : wxString::Format(wxT("DoFileOpen: %s"), path);
-    wxMessageBox(msg, wxT("Info"), wxOK | wxICON_INFORMATION, this);
-}
+
 void MainFrame::OnAbout(wxCommandEvent&)
 {
     wxMessageBox(wxString::Format(wxT("MyLogisim\n%s"), wxVERSION_STRING),
