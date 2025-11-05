@@ -349,7 +349,9 @@ void MainMenuBar::OnFileNew(wxCommandEvent&)
 }
 void MainMenuBar::OnFileOpen(wxCommandEvent&)
 {
-    m_owner->DoFileOpen();
+    if (m_owner) {
+        m_owner->DoFileOpen();
+    }
 }
 void MainMenuBar::OnFileClose(wxCommandEvent&)
 {

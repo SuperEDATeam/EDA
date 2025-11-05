@@ -44,7 +44,23 @@ public:
     void OnMouseMove(wxMouseEvent& evt);
     void OnKeyDown(wxKeyEvent& evt);
     void OnMouseWheel(wxMouseEvent& evt);  
-   
+
+    const std::vector<CanvasElement>& GetElements() const { return m_elements; }
+    // 添加清空画布的方法
+    void ClearAll() {
+        m_elements.clear();
+        m_wires.clear();
+        m_selectedIndex = -1;
+        Refresh();
+    }
+
+    // 添加添加导线的方法
+    void AddWire(const Wire& wire) {
+        m_wires.push_back(wire);
+        Refresh();
+    }
+
+
 
     // 暴露连线容器，供外部仿真/导出使用
     const std::vector<Wire>& GetWires() const { return m_wires; }
