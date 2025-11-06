@@ -418,7 +418,6 @@ void CanvasPanel::DeleteSelectedElement() {
     MyLog("CanvasPanel: Element deleted, remaining count: %zu\n", m_elements.size());
 
 }
-}
 
     // 添加这些公有方法
     void CanvasPanel::ClearSelection() {
