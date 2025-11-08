@@ -42,9 +42,9 @@ void ToolBars::ArrangeIds() {
 	toolIdToFunctionMap[toolBar1_ids[2]] = [this](int id) { OneChoose(id); m_owner->GetToolManager()->SetCurrentTool(ToolType::TEXT_TOOL); };
 	toolIdToFunctionMap[toolBar1_ids[3]] = [this](int id) { OneChoose(id); };
 	toolIdToFunctionMap[toolBar1_ids[4]] = [this](int id) { OneChoose(id); };
-	toolIdToFunctionMap[toolBar1_ids[5]] = [this](int id) { OneChoose(id); };
-	toolIdToFunctionMap[toolBar1_ids[6]] = [this](int id) { OneChoose(id); m_owner->GetToolManager()->SetCurrentComponent("AND Gate");  };
-	toolIdToFunctionMap[toolBar1_ids[7]] = [this](int id) { OneChoose(id); };
+	toolIdToFunctionMap[toolBar1_ids[5]] = [this](int id) { OneChoose(id); m_owner->GetToolManager()->SetCurrentTool(ToolType::DRAG_TOOL); };
+	toolIdToFunctionMap[toolBar1_ids[6]] = [this](int id) { OneChoose(id); m_owner->GetToolManager()->SetCurrentTool(ToolType::COMPONENT_TOOL), m_owner->GetToolManager()->SetCurrentComponent("AND Gate");  };
+	toolIdToFunctionMap[toolBar1_ids[7]] = [this](int id) { OneChoose(id); m_owner->GetToolManager()->SetCurrentTool(ToolType::WIRE_TOOL); };
 	toolIdToFunctionMap[toolBar1_ids[8]] = [this](int id) { OneChoose(id); };
 	toolIdToFunctionMap[toolBar1_ids[9]] = [this](int id) { OneChoose(id); };
 	toolIdToFunctionMap[toolBar1_ids[10]] = [this](int id) { OneChoose(id); };

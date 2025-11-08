@@ -9,12 +9,14 @@ enum class ToolType {
     TEXT_TOOL,       // 文本工具
     COMPONENT_TOOL,  // 元件工具
     WIRE_TOOL,       // 专门的导线工具
-    PAN_TOOL         // 平移工具
+    DRAG_TOOL         // 拖拽工具
 };
 
 class ToolManager {
 private:
     ToolType m_currentTool;
+	ToolType m_previousTool;
+    bool m_tempTool;
     ToolBars* m_toolBars;
     CanvasPanel* m_canvas;
     MainFrame* m_mainFrame;
@@ -59,7 +61,7 @@ public:
     void HandleTextTool(const wxPoint& canvasPos);
     void HandleComponentTool(const wxPoint& canvasPos);
     void HandleWireTool(const wxPoint& canvasPos);
-    void HandlePanTool(const wxPoint& canvasPos);
+    void HandleDragTool(const wxPoint& canvasPos);
 
     // 画布事件转发
     void OnCanvasLeftDown(const wxPoint& canvasPos);
