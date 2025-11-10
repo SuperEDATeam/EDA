@@ -9,6 +9,8 @@
 #include "my_log.h"
 #include <wx/filename.h> 
 #include <wx/sstream.h>
+#include "ToolManager.h"
+#include "QuickToolBar.h"
 
 extern std::vector<CanvasElement> g_elements;
 
@@ -48,6 +50,7 @@ MainFrame::MainFrame()
     // 工具管理器
     m_toolManager = new ToolManager(this, m_toolBars, m_canvas);
 	m_toolManager->SetCurrentTool(ToolType::DRAG_TOOL);
+
 
     /* 创建侧边栏 + 属性表（上下叠放） */
     wxPanel* sidePanel = new wxPanel(this);  // 外壳
@@ -615,4 +618,8 @@ void MainFrame::AddToolBarsToAuiManager() {
         .BestSize(10000, 28));
     m_toolBars->ChoosePageOne_toolBar1(-1); // 初始化工具栏状态
     m_toolBars->ChoosePageOne_toolBar3(-1); // 初始化工具栏状态
+}
+
+void MainFrame::InitializeTools() {
+    m_toolManager = new ToolManager(this, m_toolBars, m_canvas);
 }

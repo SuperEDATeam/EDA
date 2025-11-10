@@ -3,6 +3,10 @@
 #include "ToolBars.h"
 #include "CanvasPanel.h"
 
+class MainFrame; // 前向声明
+class CanvasPanel; // 前向声明
+class ToolBars;   // 前向声明
+
 enum class ToolType {
     DEFAULT_TOOL,    // 默认工具（包含导线绘制、平移等）
     SELECT_TOOL,     // 选中工具
@@ -70,6 +74,8 @@ public:
     void OnCanvasMouseMove(const wxPoint& canvasPos);
     void OnCanvasKeyDown(wxKeyEvent& evt);
     void OnCanvasMouseWheel(wxMouseEvent& evt);
+    void OnCanvasRightDown(const wxPoint& canvasPos);
+    void OnCanvasRightUp(const wxPoint& canvasPos);
 
     // 导线绘制方法
     void StartWireDrawing(const wxPoint& startPos, bool fromPin);

@@ -9,6 +9,8 @@ wxBEGIN_EVENT_TABLE(CanvasPanel, wxPanel)
 EVT_PAINT(CanvasPanel::OnPaint)
 EVT_LEFT_DOWN(CanvasPanel::OnLeftDown)
 EVT_LEFT_UP(CanvasPanel::OnLeftUp)
+EVT_RIGHT_DOWN(CanvasPanel::OnRightDown) // 右键也触发左键抬起事件
+EVT_RIGHT_UP(CanvasPanel::OnRightUp)
 EVT_MOTION(CanvasPanel::OnMouseMove)
 EVT_KEY_DOWN(CanvasPanel::OnKeyDown)
 EVT_MOUSEWHEEL(CanvasPanel::OnMouseWheel)
@@ -20,6 +22,8 @@ CanvasPanel::CanvasPanel(wxWindow* parent)
     m_offset(0, 0), m_isPanning(false), m_scale(1.0f),
     m_wireMode(WireMode::Idle), m_selectedIndex(-1), m_isDragging(false),
     m_hoverPinIdx(-1), m_hoverCellIdx(-1), m_hoverCellWire(-1) {
+    // 快捷工具栏
+    m_quickToolBar = new QuickToolBar(this);
 
     SetBackgroundStyle(wxBG_STYLE_PAINT);
     SetBackgroundColour(*wxWHITE);
@@ -444,4 +448,34 @@ void CanvasPanel::DeleteSelectedElement() {
 
     bool CanvasPanel::IsClickOnEmptyAreaPublic(const wxPoint& canvasPos) {
         return IsClickOnEmptyArea(canvasPos);
+    }
+
+    void CanvasPanel::OnRightDown(wxMouseEvent& evt) {
+        // 右键按下时也触发左键抬起事件
+        wxPoint rawScreenPos = evt.GetPosition();
+        wxPoint rawCanvasPos = ScreenToCanvas(rawScreenPos);
+        // 交给工具管理器处理
+        MainFrame* mainFrame = wxDynamicCast(GetParent(), MainFrame);
+        if (mainFrame && mainFrame->GetToolManager()) {
+            mainFrame->GetToolManager()->OnCanvasRightDown(rawScreenPos);
+            if (mainFrame->GetToolManager()->IsEventHandled()) {
+                return; // 工具管理器已处理事件
+            }
+        }
+        evt.Skip();
+	}
+
+    void CanvasPanel::OnRightUp(wxMouseEvent& evt) {
+        // 右键按下时也触发左键抬起事件
+        wxPoint rawScreenPos = evt.GetPosition();
+        wxPoint rawCanvasPos = ScreenToCanvas(rawScreenPos);
+        // 交给工具管理器处理
+        MainFrame* mainFrame = wxDynamicCast(GetParent(), MainFrame);
+        if (mainFrame && mainFrame->GetToolManager()) {
+            mainFrame->GetToolManager()->OnCanvasRightUp(rawCanvasPos);
+            if (mainFrame->GetToolManager()->IsEventHandled()) {
+                return; // 工具管理器已处理事件
+            }
+        }
+        evt.Skip();
     }

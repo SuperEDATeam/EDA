@@ -2,6 +2,7 @@
 #include "MainFrame.h"
 #include "Wire.h"
 #include <wx/image.h>
+#include "QuickToolBar.h"
 
 ToolManager::ToolManager(MainFrame* mainFrame, ToolBars* toolBars, CanvasPanel* canvas)
     : m_mainFrame(mainFrame), m_toolBars(toolBars), m_canvas(canvas),
@@ -775,7 +776,30 @@ void ToolManager::HandleHoverFeedback(const wxPoint& canvasPos) {
                     m_canvas->m_elements[elementIndex].GetName());
             }
             else {
-                status = wxString::Format("位置: (%d, %d)", canvasPos.x, canvasPos.y);
+                wxString toolName;
+                if (m_mainFrame) {
+                    switch (m_currentTool) {
+                    case ToolType::DEFAULT_TOOL:
+                        toolName = "默认工具";
+                        break;
+                    case ToolType::SELECT_TOOL:
+                        toolName = "选中工具";
+                        break;
+                    case ToolType::TEXT_TOOL:
+                        toolName = "文本工具";
+                        break;
+                    case ToolType::COMPONENT_TOOL:
+                        toolName = "元件工具";
+                        break;
+                    case ToolType::WIRE_TOOL:
+                        toolName = "导线工具";
+                        break;
+                    case ToolType::DRAG_TOOL:
+                        toolName = "拖动工具";
+                        break;
+                    }
+                }
+                status = wxString::Format("当前工具: %s, 位置: (%d, %d)", toolName,canvasPos.x, canvasPos.y);
             }
         }
         m_mainFrame->SetStatusText(status);
@@ -818,4 +842,15 @@ void ToolManager::UpdatePanning(const wxPoint& currentPos) {
         m_mainFrame->SetStatusText(wxString::Format("平移画布: 偏移(%d, %d)", realDelta.x, realDelta.y));
         //m_mainFrame->SetStatusText(wxString::Format("平移画布: 偏移(%d, %d), (%d, %d)", m_panStartPos.x, m_panStartPos.y, currentPos.x, currentPos.y));
     }
+}
+
+void ToolManager::OnCanvasRightDown(const wxPoint& canvasPos){
+    wxPoint toolBarPos = canvasPos + wxPoint(240, 124);
+	m_canvas->m_quickToolBar->SetPosition(toolBarPos);
+	m_canvas->m_quickToolBar->Show();
+	m_canvas->m_quickToolBar->SetFocus();
+}
+
+void ToolManager::OnCanvasRightUp(const wxPoint& canvasPos) {
+    m_canvas->m_quickToolBar->Hide();
 }
