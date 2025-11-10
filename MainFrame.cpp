@@ -47,6 +47,7 @@ MainFrame::MainFrame()
 
     // 工具管理器
     m_toolManager = new ToolManager(this, m_toolBars, m_canvas);
+	m_toolManager->SetCurrentTool(ToolType::DRAG_TOOL);
 
     /* 创建侧边栏 + 属性表（上下叠放） */
     wxPanel* sidePanel = new wxPanel(this);  // 外壳

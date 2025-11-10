@@ -37,7 +37,7 @@ void ToolBars::ArrangeIds() {
 		"Choose", "Text", "Line", "Curve", "Polyline", "Retangle", "Rounded Retangle", "Oval", "Polygon"
 	};
 	//实现ID对方法MAP
-	toolIdToFunctionMap[toolBar1_ids[0]] = [this](int id) { OneChoose(id); m_owner->GetToolManager()->SetCurrentTool(ToolType::DEFAULT_TOOL); };
+	toolIdToFunctionMap[toolBar1_ids[0]] = [this](int id) { OneChoose(id); m_owner->GetToolManager()->SetCurrentTool(ToolType::DRAG_TOOL); };
 	toolIdToFunctionMap[toolBar1_ids[1]] = [this](int id) { OneChoose(id); m_owner->GetToolManager()->SetCurrentTool(ToolType::SELECT_TOOL); };
 	toolIdToFunctionMap[toolBar1_ids[2]] = [this](int id) { OneChoose(id); m_owner->GetToolManager()->SetCurrentTool(ToolType::TEXT_TOOL); };
 	toolIdToFunctionMap[toolBar1_ids[3]] = [this](int id) { OneChoose(id); };

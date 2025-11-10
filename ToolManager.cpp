@@ -105,7 +105,7 @@ void ToolManager::OnCanvasLeftDown(const wxPoint& canvasPos) {
      //2. 检查是否点击了引脚（开始绘制导线）
     bool snapped = false;
     wxPoint snappedPos = m_canvas->Snap(canvasPos, &snapped);
-    if (snapped && m_currentTool == ToolType::DEFAULT_TOOL) {
+    if (snapped) {
         m_tempTool = true;
 		SetCurrentTool(ToolType::WIRE_TOOL);
         StartWireDrawing(snappedPos, true);
@@ -171,7 +171,7 @@ void ToolManager::OnCanvasLeftDown(const wxPoint& canvasPos) {
         break;
         }
     case ToolType::DRAG_TOOL: {
-        HandleDragTool(canvasPos);
+        HandleDragTool(m_canvas->CanvasToScreen(canvasPos));
         m_eventHandled = true;
         break;
         }
@@ -298,10 +298,12 @@ void ToolManager::FinishPanning(const wxPoint& currentPos) {
 void ToolManager::HandleComponentTool(const wxPoint& canvasPos) {
     if (!m_currentComponent.IsEmpty() && m_canvas) {
         // 放置元件
-        m_canvas->PlaceElement(m_currentComponent, canvasPos);
+		bool snapped = false;
+		wxPoint snappedPos = m_canvas->Snap(canvasPos, &snapped);
+        m_canvas->PlaceElement(m_currentComponent, snappedPos);
 
         if (m_mainFrame) {
-            m_mainFrame->SetStatusText(wxString::Format("已放置: %s", m_currentComponent));
+            m_mainFrame->SetStatusText(wxString::Format("已放置: %s， 吸附到 (%d, %d)", m_currentComponent, snappedPos.x, snappedPos.y));
         }
     }
     else {
@@ -501,7 +503,7 @@ void ToolManager::FinishWireDrawing(const wxPoint& endPos) {
             m_mainFrame->SetStatusText("导线绘制完成: 连接到引脚");
         }
         else {
-            m_mainFrame->SetStatusText("导线绘制完成: 自由端点");
+            m_mainFrame->SetStatusText(wxString::Format("导线绘制完成: 自由端点(%d, %d)", endSnapPos.x, endSnapPos.y));
         }
     }
 
@@ -628,7 +630,10 @@ void ToolManager::UpdateElementDragging(const wxPoint& currentPos) {
     if (!m_isDraggingElement || m_draggingElementIndex == -1) return;
 
     // 计算偏移量
-    wxPoint delta = currentPos - m_elementDragStartPos;
+    wxPoint raw = currentPos - m_elementDragStartPos;
+    const int grid = 20;
+    wxPoint delta((raw.x + grid / 2) / grid * grid, (raw.y + grid / 2) / grid * grid);
+    
     wxPoint newPos = m_elementStartCanvasPos + delta;
 
     // 构建调试信息字符串

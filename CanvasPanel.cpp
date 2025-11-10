@@ -62,9 +62,11 @@ void CanvasPanel::OnMouseMove(wxMouseEvent& evt) {
 
 void CanvasPanel::OnLeftUp(wxMouseEvent& evt) {
     // 交给工具管理器处理
+    wxPoint screenpos = evt.GetPosition();
+	wxPoint canvasPos = ScreenToCanvas(screenpos);
     MainFrame* mainFrame = wxDynamicCast(GetParent(), MainFrame);
     if (mainFrame && mainFrame->GetToolManager()) {
-        mainFrame->GetToolManager()->OnCanvasLeftUp(evt.GetPosition());
+        mainFrame->GetToolManager()->OnCanvasLeftUp(canvasPos);
         if (mainFrame->GetToolManager()->IsEventHandled()) {
             return; // 工具管理器已处理事件
         }
@@ -243,7 +245,9 @@ void CanvasPanel::PlaceElement(const wxString& name, const wxPoint& pos)
         [&](const CanvasElement& e) { return e.GetName() == name; });
     if (it == g_elements.end()) return;
     CanvasElement clone = *it;
-    clone.SetPos(pos);
+    Pin standardPin = clone.GetOutputPins()[0];
+    wxPoint standardpos = pos - wxPoint(standardPin.pos.x, standardPin.pos.y);
+    clone.SetPos(standardpos);
     AddElement(clone);
 }
 // 修改：HitTest使用画布坐标判断
