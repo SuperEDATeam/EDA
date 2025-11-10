@@ -193,8 +193,10 @@ void CanvasPanel::OnPaint(wxPaintEvent&)
     dc.SetPen(wxPen(c, 1));
     // 计算可见区域的网格范围（基于缩放后的画布大小）
     wxSize sz = GetClientSize();
-    int maxX = static_cast<int>(sz.x / m_scale);  // 转换为画布坐标
-    int maxY = static_cast<int>(sz.y / m_scale);
+    //int maxX = static_cast<int>(sz.x / m_scale);  // 转换为画布坐标
+    //int maxY = static_cast<int>(sz.y / m_scale);
+    int maxX = sz.x;
+    int maxY = sz.y;
     for (int x = 0; x < maxX; x += grid)
         dc.DrawLine(x, 0, x, maxY);
     for (int y = 0; y < maxY; y += grid)

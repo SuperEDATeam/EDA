@@ -14,18 +14,18 @@ ToolManager::ToolManager(MainFrame* mainFrame, ToolBars* toolBars, CanvasPanel* 
 
 void ToolManager::SetCurrentTool(ToolType tool) {
     // 切换工具前清理当前操作状态
-    if (m_isDrawingWire) {
-        CancelWireDrawing();
-    }
-    if (m_isEditingWire) {
-        CancelWireEditing();
-    }
-    if (m_isDraggingElement) {
-        FinishElementDragging();
-    }
-    if (m_isPanning) {
-        FinishPanning();
-    }
+    //if (m_isDrawingWire) {
+    //    CancelWireDrawing();
+    //}
+    //if (m_isEditingWire) {
+    //    CancelWireEditing();
+    //}
+    //if (m_isDraggingElement) {
+    //    FinishElementDragging();
+    //}
+    //if (m_isPanning) {
+    //    FinishPanning(canvasPos);
+    //}
 
 	m_previousTool = m_currentTool;
     m_currentTool = tool;
@@ -136,7 +136,8 @@ void ToolManager::OnCanvasLeftDown(const wxPoint& canvasPos) {
         m_canvas->IsClickOnEmptyAreaPublic(canvasPos)) {
 		m_tempTool = true;
 		SetCurrentTool(ToolType::DRAG_TOOL);
-        StartPanning(canvasPos);
+        //StartPanning(canvasPos);
+        StartPanning(m_canvas->CanvasToScreen(canvasPos));
         m_eventHandled = true;
         return;
 	}
@@ -235,7 +236,7 @@ void ToolManager::StartWireDrawing(const wxPoint& startPos, bool fromPin) {
         FinishElementDragging();
     }
     if (m_isPanning) {
-        FinishPanning();
+        FinishPanning(startPos);
     }
 	m_currentTool = ToolType::WIRE_TOOL;
     m_isDrawingWire = true;
@@ -280,8 +281,10 @@ void ToolManager::UpdateWireDrawing(const wxPoint& currentPos) {
     }
 }
 
-void ToolManager::FinishPanning() {
+void ToolManager::FinishPanning(const wxPoint& currentPos) {
     m_isPanning = false;
+    m_panStartPos = currentPos;
+    m_fakeStartPos = currentPos;
     if (m_tempTool) {
         SetCurrentTool(m_previousTool);
         m_tempTool = false;
@@ -318,7 +321,8 @@ void ToolManager::OnCanvasLeftUp(const wxPoint& canvasPos) {
         m_eventHandled = true;
     }
     else if (m_isPanning) {
-        FinishPanning();
+        //FinishPanning(canvasPos);
+        FinishPanning(m_canvas->CanvasToScreen(canvasPos));
         m_eventHandled = true;
     }
     else if (m_isDrawingWire && m_currentTool == ToolType::WIRE_TOOL) {
@@ -583,7 +587,7 @@ void ToolManager::StartElementDragging(int elementIndex, const wxPoint& startPos
         CancelWireDrawing();
     }
     if (m_isPanning) {
-        FinishPanning();
+        FinishPanning(startPos);
     }
 
     if (elementIndex < 0 || elementIndex >= (int)m_canvas->m_elements.size()) return;
@@ -716,7 +720,8 @@ void ToolManager::OnCanvasMouseMove(const wxPoint& canvasPos) {
         m_eventHandled = true;
     }
     else if (m_isPanning) {
-        UpdatePanning(canvasPos);
+        //UpdatePanning(canvasPos);
+        UpdatePanning(m_canvas->CanvasToScreen(canvasPos));
         m_eventHandled = true;
     }
     else {
@@ -786,6 +791,7 @@ void ToolManager::StartPanning(const wxPoint& startPos) {
 
     m_isPanning = true;
     m_panStartPos = startPos;
+	m_fakeStartPos = startPos;
 
     if (m_mainFrame) {
         m_mainFrame->SetStatusText("平移画布: 拖动鼠标移动画布 (ESC取消)");
@@ -795,12 +801,16 @@ void ToolManager::StartPanning(const wxPoint& startPos) {
 void ToolManager::UpdatePanning(const wxPoint& currentPos) {
     if (!m_isPanning) return;
 
-    wxPoint delta = currentPos - m_panStartPos;
+    wxPoint delta = currentPos - m_fakeStartPos;
     m_canvas->m_offset += delta;
-    m_panStartPos = currentPos;
+    m_fakeStartPos = currentPos;
+
+	wxPoint realDelta = currentPos - m_panStartPos;
+    
     m_canvas->Refresh();
 
     if (m_mainFrame) {
-        m_mainFrame->SetStatusText(wxString::Format("平移画布: 偏移(%d, %d)", delta.x, delta.y));
+        m_mainFrame->SetStatusText(wxString::Format("平移画布: 偏移(%d, %d)", realDelta.x, realDelta.y));
+        //m_mainFrame->SetStatusText(wxString::Format("平移画布: 偏移(%d, %d), (%d, %d)", m_panStartPos.x, m_panStartPos.y, currentPos.x, currentPos.y));
     }
 }

@@ -32,6 +32,7 @@ private:
     // 平移相关状态
     bool m_isPanning;
     wxPoint m_panStartPos;
+	wxPoint m_fakeStartPos;
 
     // 导线编辑相关状态
     bool m_isEditingWire;
@@ -79,7 +80,7 @@ public:
     // 平移方法
     void StartPanning(const wxPoint& startPos);
     void UpdatePanning(const wxPoint& currentPos);
-    void FinishPanning();
+    void FinishPanning(const wxPoint& currentPos);
 
     // 状态获取
     bool IsDrawingWire() const { return m_isDrawingWire; }
