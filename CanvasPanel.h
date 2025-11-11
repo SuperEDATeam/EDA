@@ -81,13 +81,16 @@ public:
     // 文本元素相关
     std::vector<CanvasTextElement> m_textElements;
     wxTimer m_cursorTimer;
-    void OnChar(wxChar ch, int m_editingTextIndex);
-    void textCursor(int keyCode, int m_editingTextIndex);
 	int inWhichTextBox(const wxPoint& canvasPos);
-    void CursorTimer(int m_editingTextIndex);
     void CreateTextElement(const wxPoint& position);
-    void SetEditing(int index, bool isEditing);
 	void SetFocusToTextElement(int index);
+
+    wxTextCtrl* m_hiddenTextCtrl;
+    int m_currentEditingTextIndex;
+
+    void SetupHiddenTextCtrl();
+    void AttachHiddenTextCtrlToElement(int textIndex);
+    void DetachHiddenTextCtrl();
 
     /* ---------- 原有元件相关 ---------- */
     std::vector<CanvasElement> m_elements;
@@ -151,5 +154,15 @@ private:
     void OnFocus(wxFocusEvent& event);
     void OnKillFocus(wxFocusEvent& event);
     void EnsureFocus();
+
+
+public:
+    // 隐藏的文本控件用于输入法支持
+    bool m_isUsingHiddenCtrl;
+
+    void StartTextEditing(int index);
+
+    wxTextCtrl* m_sharedTextCtrl;
+
     wxDECLARE_EVENT_TABLE();
 };

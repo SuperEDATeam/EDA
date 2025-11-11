@@ -25,7 +25,13 @@ CanvasPanel::CanvasPanel(wxWindow* parent)
         wxFULL_REPAINT_ON_RESIZE | wxBORDER_NONE | wxWANTS_CHARS | wxTAB_TRAVERSAL),
     m_offset(0, 0), m_isPanning(false), m_scale(1.0f),
     m_wireMode(WireMode::Idle), m_selectedIndex(-1), m_isDragging(false),
-    m_hoverPinIdx(-1), m_hoverCellIdx(-1), m_hoverCellWire(-1), m_hasFocus(false) {
+    m_hoverPinIdx(-1), m_hoverCellIdx(-1), m_hoverCellWire(-1), m_hasFocus(false),
+    m_hiddenTextCtrl(nullptr), 
+    m_isUsingHiddenCtrl(false), m_currentEditingTextIndex(-1) {
+
+    SetupHiddenTextCtrl();
+
+
     // 快捷工具栏
     m_quickToolBar = new QuickToolBar(this);
     m_cursorTimer.Start(100);
@@ -254,9 +260,9 @@ void CanvasPanel::OnPaint(wxPaintEvent&)
         dc.DrawCircle(m_hoverCellPos, 3);
     }
 
-	// 5. 绘制文本元素
+    // 5. 绘制文本元素 - 修改为使用 unique_ptr
     for (auto& textElem : m_textElements) {
-        textElem.Draw(dc);
+            textElem.Draw(dc);
     }
 }
 
@@ -499,68 +505,13 @@ void CanvasPanel::OnRightUp(wxMouseEvent& evt) {
     evt.Skip();
 }
 
-void CanvasPanel::textCursor(int keyCode, int m_editingTextIndex) {
-    CanvasTextElement& editingElem = m_textElements[m_editingTextIndex];
-    switch (keyCode) {
-    case WXK_BACK:
-        editingElem.DeleteBackward();
-        Refresh();
-        break;
-    case WXK_DELETE:
-        editingElem.DeleteForward();
-        Refresh();
-        break;
-    case WXK_LEFT:
-        editingElem.MoveCursorLeft();
-        Refresh();
-        break;
-    case WXK_RIGHT:
-        editingElem.MoveCursorRight();
-        Refresh();
-        break;
-    default:
-        break;
-
-    }
-}
-
-int CanvasPanel::inWhichTextBox(const wxPoint& canvasPos) {
-    for (size_t i = 0; i < m_textElements.size(); ++i) {
-        if (m_textElements[i].Contains(canvasPos)) {
-			return i;
-        }
-    }
-	return -1;
-}
-
-void CanvasPanel::OnChar(wxChar ch, int m_editingTextIndex){ 
-    m_textElements[m_editingTextIndex].InsertText(ch);
-    Refresh();
-}
-
 void CanvasPanel::OnCursorTimer(wxTimerEvent& event) {
     // 转发到toolmanager
-	MainFrame* mainFrame = wxDynamicCast(GetParent(), MainFrame);
-    if (mainFrame && mainFrame->GetToolManager()) {
-        mainFrame->GetToolManager()->OnCursorTimer(event);
-	}
-}
-
-void CanvasPanel::CursorTimer(int m_editingTextIndex) {
-    m_textElements[m_editingTextIndex].UpdateCursorBlink();
-    Refresh();
-
-}
-
-void CanvasPanel::CreateTextElement(const wxPoint& position) {
-    // 创建新文本元素
-    CanvasTextElement newElem("", position);
-    m_textElements.push_back(newElem);
-
-}
-
-void CanvasPanel::SetEditing(int index, bool isEditing) {
-	m_textElements[index].SetEditing(isEditing);
+	//MainFrame* mainFrame = wxDynamicCast(GetParent(), MainFrame);
+ //   if (mainFrame && mainFrame->GetToolManager()) {
+ //       mainFrame->GetToolManager()->OnCursorTimer(event);
+	//}
+	event.Skip();
 }
 
 void CanvasPanel::SetFocusToTextElement(int index) {
@@ -586,4 +537,69 @@ void CanvasPanel::EnsureFocus() {
         SetFocus();
         MyLog("CanvasPanel: Ensuring focus\n");
     }
+}
+
+int CanvasPanel::inWhichTextBox(const wxPoint& canvasPos) {
+    for (size_t i = 0; i < m_textElements.size(); ++i) {
+        if (m_textElements[i].Contains(canvasPos)) {
+            return static_cast<int>(i);
+        }
+    }
+    return -1;
+}
+
+void CanvasPanel::SetupHiddenTextCtrl() {
+    if (!m_hiddenTextCtrl) {
+        m_hiddenTextCtrl = new wxTextCtrl(this, wxID_ANY, "",
+            wxPoint(-1000, -1000), wxSize(1, 1),
+            wxTE_PROCESS_ENTER | wxTE_RICH2);
+        m_hiddenTextCtrl->Hide();
+
+        // 事件绑定由ToolManager处理
+    }
+}
+
+void CanvasPanel::AttachHiddenTextCtrlToElement(int textIndex) {
+    if (textIndex >= 0 && textIndex < (int)m_textElements.size()) {
+        // 分离当前编辑的元素
+        if (m_currentEditingTextIndex != -1 && m_currentEditingTextIndex < (int)m_textElements.size()) {
+            m_textElements[m_currentEditingTextIndex].DetachHiddenTextCtrl();
+            m_textElements[m_currentEditingTextIndex].StopEditing();
+        }
+
+        // 附加到新元素
+        m_currentEditingTextIndex = textIndex;
+        m_textElements[textIndex].AttachHiddenTextCtrl(m_hiddenTextCtrl);
+        m_textElements[textIndex].StartEditing();
+
+        // 显示隐藏TextCtrl（在正确位置）
+        m_hiddenTextCtrl->Show();
+        Refresh();
+    }
+}
+
+void CanvasPanel::DetachHiddenTextCtrl() {
+    if (m_currentEditingTextIndex != -1 && m_currentEditingTextIndex < (int)m_textElements.size()) {
+        m_textElements[m_currentEditingTextIndex].DetachHiddenTextCtrl();
+        m_textElements[m_currentEditingTextIndex].StopEditing();
+        m_currentEditingTextIndex = -1;
+    }
+
+    m_hiddenTextCtrl->Hide();
+    m_hiddenTextCtrl->SetPosition(wxPoint(-1000, -1000));
+    Refresh();
+}
+
+void CanvasPanel::CreateTextElement(const wxPoint& position) {
+    // 创建新文本元素
+    CanvasTextElement newElem(this, "", position);
+    m_textElements.push_back(std::move(newElem));
+
+    // 立即开始编辑
+    int newIndex = static_cast<int>(m_textElements.size() - 1);
+    AttachHiddenTextCtrlToElement(newIndex);
+}
+
+void CanvasPanel::StartTextEditing(int index) {
+    AttachHiddenTextCtrlToElement(index);
 }

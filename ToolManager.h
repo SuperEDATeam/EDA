@@ -52,6 +52,7 @@ private:
 
     // 文本编辑相关状态
     int m_editingTextIndex = -1;
+    std::unordered_map<wxTextCtrl*, int> m_textCtrlBindings;
 
 public:
     ToolManager(MainFrame* mainFrame, ToolBars* toolBars, CanvasPanel* canvas);
@@ -82,7 +83,6 @@ public:
     void OnCanvasRightDown(const wxPoint& canvasPos);
     void OnCanvasRightUp(const wxPoint& canvasPos);
     bool IsCharacterKey(const wxKeyEvent& event);
-    void OnCursorTimer(wxTimerEvent& event);
 
     // 导线绘制方法
     void StartWireDrawing(const wxPoint& startPos, bool fromPin);
@@ -121,5 +121,22 @@ public:
     bool IsDraggingElement() const { return m_isDraggingElement; }
 
     void HandleHoverFeedback(const wxPoint& canvasPos);
+
+    // 文本编辑事件处理方法
+    void OnTextCtrlTextChanged(wxCommandEvent& evt, int textIndex);
+    void OnTextCtrlEnter(wxCommandEvent& evt, int textIndex);
+    void OnTextCtrlKillFocus(wxFocusEvent& evt, int textIndex);
+
+    // 文本控件事件绑定
+    void BindTextCtrlEvents(wxTextCtrl* textCtrl, int textIndex);
+    void UnbindTextCtrlEvents(wxTextCtrl* textCtrl);
+
+    // 隐藏TextCtrl事件处理
+    void OnHiddenTextCtrlText(wxCommandEvent& evt);
+    void OnHiddenTextCtrlEnter(wxCommandEvent& evt);
+    void OnHiddenTextCtrlKillFocus(wxFocusEvent& evt);
+
+    // 绑定隐藏TextCtrl事件
+    void BindHiddenTextCtrlEvents();
 
 };
