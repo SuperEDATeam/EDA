@@ -10,20 +10,22 @@ wxBEGIN_EVENT_TABLE(CanvasPanel, wxPanel)
 EVT_PAINT(CanvasPanel::OnPaint)
 EVT_LEFT_DOWN(CanvasPanel::OnLeftDown)
 EVT_LEFT_UP(CanvasPanel::OnLeftUp)
-EVT_RIGHT_DOWN(CanvasPanel::OnRightDown) // 右键也触发左键抬起事件
+EVT_RIGHT_DOWN(CanvasPanel::OnRightDown)
 EVT_RIGHT_UP(CanvasPanel::OnRightUp)
 EVT_MOTION(CanvasPanel::OnMouseMove)
 EVT_KEY_DOWN(CanvasPanel::OnKeyDown)
 EVT_MOUSEWHEEL(CanvasPanel::OnMouseWheel)
 EVT_TIMER(wxID_ANY, CanvasPanel::OnCursorTimer)
+EVT_SET_FOCUS(CanvasPanel::OnFocus)   
+EVT_KILL_FOCUS(CanvasPanel::OnKillFocus)
 wxEND_EVENT_TABLE()
 
 CanvasPanel::CanvasPanel(wxWindow* parent)
     : wxPanel(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize,
-        wxFULL_REPAINT_ON_RESIZE | wxBORDER_NONE),
+        wxFULL_REPAINT_ON_RESIZE | wxBORDER_NONE | wxWANTS_CHARS | wxTAB_TRAVERSAL),
     m_offset(0, 0), m_isPanning(false), m_scale(1.0f),
     m_wireMode(WireMode::Idle), m_selectedIndex(-1), m_isDragging(false),
-    m_hoverPinIdx(-1), m_hoverCellIdx(-1), m_hoverCellWire(-1) {
+    m_hoverPinIdx(-1), m_hoverCellIdx(-1), m_hoverCellWire(-1), m_hasFocus(false) {
     // 快捷工具栏
     m_quickToolBar = new QuickToolBar(this);
     m_cursorTimer.Start(100);
@@ -31,12 +33,15 @@ CanvasPanel::CanvasPanel(wxWindow* parent)
     SetBackgroundStyle(wxBG_STYLE_PAINT);
     SetBackgroundColour(*wxWHITE);
 
+    SetFocus();
     MyLog("CanvasPanel: constructed\n");
 }
 
 void CanvasPanel::OnLeftDown(wxMouseEvent& evt) {
     wxPoint rawScreenPos = evt.GetPosition();
     wxPoint rawCanvasPos = ScreenToCanvas(rawScreenPos);
+
+    EnsureFocus();
 
     // 交给工具管理器处理
     MainFrame* mainFrame = wxDynamicCast(GetParent(), MainFrame);
@@ -72,6 +77,9 @@ void CanvasPanel::OnLeftUp(wxMouseEvent& evt) {
     // 交给工具管理器处理
     wxPoint screenpos = evt.GetPosition();
 	wxPoint canvasPos = ScreenToCanvas(screenpos);
+
+    EnsureFocus();
+
     MainFrame* mainFrame = wxDynamicCast(GetParent(), MainFrame);
     if (mainFrame && mainFrame->GetToolManager()) {
         mainFrame->GetToolManager()->OnCanvasLeftUp(canvasPos);
@@ -559,3 +567,23 @@ void CanvasPanel::SetFocusToTextElement(int index) {
 	SetFocus();
 }
 
+void CanvasPanel::OnFocus(wxFocusEvent& event) {
+    m_hasFocus = true;
+    MyLog("CanvasPanel: Gained focus\n");
+    Refresh(); // 重绘以显示焦点状态
+    event.Skip();
+}
+
+void CanvasPanel::OnKillFocus(wxFocusEvent& event) {
+    m_hasFocus = false;
+    MyLog("CanvasPanel: Lost focus\n");
+    Refresh(); // 重绘以移除焦点状态
+    event.Skip();
+}
+
+void CanvasPanel::EnsureFocus() {
+    if (!m_hasFocus) {
+        SetFocus();
+        MyLog("CanvasPanel: Ensuring focus\n");
+    }
+}

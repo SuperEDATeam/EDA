@@ -143,5 +143,13 @@ public:
     QuickToolBar* m_quickToolBar;
 
     std::vector<WireWireAnchor> m_wireWireAnchors;// 导线<->导线小方块（新增）
+private:
+    // 添加焦点状态
+    bool m_hasFocus;
+
+    // 添加焦点事件处理
+    void OnFocus(wxFocusEvent& event);
+    void OnKillFocus(wxFocusEvent& event);
+    void EnsureFocus();
     wxDECLARE_EVENT_TABLE();
 };
