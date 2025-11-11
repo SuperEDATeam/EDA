@@ -422,6 +422,287 @@ void MainFrame::DoFileOpen(const wxString& path)
 
 
 
+
+
+
+
+
+
+
+
+
+
+// 1. 保存为BookShelf规范的.node文件
+bool MainFrame::SaveAsNodeFile(const wxString& filePath)
+{
+    wxFile file;
+    // 尝试打开文件，若失败返回false
+    if (!file.Exists(filePath)) {
+        if (!file.Create(filePath))
+            return false;
+    }
+    if (!file.Open(filePath, wxFile::write))
+        return false;
+
+    wxString content;
+    const auto& elements = m_canvas->GetElements();
+    int numTotalNodes = elements.size();  // 总单元数（所有画布元件）
+    int numTerminals = 0;                 // 终端单元数（需统计带I/O引脚的元件）
+
+    // 第一步：统计终端单元数（带输入/输出引脚的元件视为终端）
+    for (const auto& elem : elements)
+    {
+        if (!elem.GetInputPins().empty() || !elem.GetOutputPins().empty())
+            numTerminals++;
+    }
+
+    // 第二步：写入.node文件头部（NumNodes + NumTerminals）
+    content += wxString::Format("NumNodes %d\n", numTotalNodes);
+    content += wxString::Format("NumTerminals %d\n", numTerminals);
+
+    // 第三步：写入每个单元的详细信息（单元名 + 宽度 + 高度 + 终端标记）
+    for (const auto& elem : elements)
+    {
+        // 获取单元基本信息：名称、位置（用于计算宽高）
+        wxString nodeName = elem.GetName();
+        wxRect bounds = elem.GetBounds();  // 通过元件边界计算宽高
+        int width = bounds.GetWidth();     // 单元宽度（像素，可按工艺换算为μm，此处保留像素单位）
+        int height = bounds.GetHeight();   // 单元高度（适配site高度，文档默认12，此处按实际边界取整）
+
+        // 判断是否为终端单元（带I/O引脚）
+        bool isTerminal = (!elem.GetInputPins().empty() || !elem.GetOutputPins().empty());
+
+        // 拼接单元行：终端单元需加"terminal"标记，普通单元仅输出基础信息
+        if (isTerminal)
+        {
+            content += wxString::Format("%s %d %d terminal\n",
+                nodeName, width, height);
+        }
+        else
+        {
+            content += wxString::Format("%s %d %d\n",
+                nodeName, width, height);
+        }
+    }
+
+    // 写入文件并关闭
+    file.Write(content);
+    file.Close();
+    return true;
+}
+
+bool MainFrame::SaveAsNetFile(const wxString& filePath)
+{
+    // 尝试创建并打开文件
+    wxFile file;
+    if (!file.Exists(filePath))
+    {
+        if (!file.Create(filePath))
+        {
+            wxMessageBox("无法创建.net文件！", "错误", wxOK | wxICON_ERROR);
+            return false;
+        }
+    }
+    if (!file.Open(filePath, wxFile::write))
+    {
+        wxMessageBox("无法打开.net文件进行写入！", "错误", wxOK | wxICON_ERROR);
+        return false;
+    }
+
+    // 收集画布中的导线和元件数据
+    const auto& wires = m_canvas->GetWires();       // 假设画布有GetWires()方法返回导线列表
+    const auto& elements = m_canvas->GetElements(); // 假设画布有GetElements()方法返回元件列表
+    int numTotalNets = wires.size();
+    int numTotalPins = 0;
+
+    // 结构体：存储引脚关键信息（用于匹配）
+    struct PinInfo {
+        wxString cellName;    // 所属元件名称
+        wxString pinType;     // 引脚类型（I/O）
+        wxPoint absPos;       // 引脚绝对坐标（画布坐标系）
+        wxPoint offset;       // 引脚相对元件的偏移坐标
+    };
+    std::vector<PinInfo> allPins;
+
+    // 1. 预计算所有元件的引脚信息（绝对坐标+类型）
+    for (const auto& elem : elements)
+    {
+        wxPoint elemPos = elem.GetPos();          // 获取元件在画布的绝对位置
+        wxString cellName = elem.GetName();
+
+        // 处理输入引脚
+        for (const auto& pin : elem.GetInputPins())
+        {
+            // 计算引脚绝对坐标 = 元件位置 + 引脚相对偏移
+            wxPoint pinAbsPos(
+                elemPos.x + pin.pos.x,
+                elemPos.y + pin.pos.y
+            );
+            allPins.push_back({
+                cellName,
+                "I",  // 输入引脚标记
+                pinAbsPos,
+                wxPoint(pin.pos.x, pin.pos.y)  // 相对偏移
+                });
+        }
+
+        // 处理输出引脚
+        for (const auto& pin : elem.GetOutputPins())
+        {
+            wxPoint pinAbsPos(
+                elemPos.x + pin.pos.x,
+                elemPos.y + pin.pos.y
+            );
+            allPins.push_back({
+                cellName,
+                "O",  // 输出引脚标记
+                pinAbsPos,
+                wxPoint(pin.pos.x, pin.pos.y)
+                });
+        }
+
+        // 特殊处理"Pin (Output)"类元件（自身即为输出引脚）
+        if (cellName == "Pin (Output)")
+        {
+            allPins.push_back({
+                cellName,
+                "O",  // 明确为输出类型
+                elemPos,  // 自身位置即为引脚位置
+                wxPoint(0, 0)  // 相对自身偏移为(0,0)
+                });
+        }
+    }
+
+    // 2. 遍历所有导线，生成网络信息
+    wxString content;
+    for (int netIdx = 0; netIdx < numTotalNets; ++netIdx)
+    {
+        const auto& wire = wires[netIdx];
+        if (wire.pts.size() < 2)  // 跳过无效导线（至少需要起点和终点）
+            continue;
+
+        // 仅保留导线的起点和终点作为有效引脚（忽略中间控制点）
+        std::vector<wxPoint> validPinPositions;
+        validPinPositions.push_back(wire.pts[0].pos);                // 起点
+        validPinPositions.push_back(wire.pts[wire.pts.size() - 1].pos);  // 终点
+        int netDegree = validPinPositions.size();  // 固定为2（有效导线）
+        numTotalPins += netDegree;
+
+        // 写入网络头部信息（网络度数+网络名）
+        wxString netName = wxString::Format("n%d", netIdx);
+        content += wxString::Format("NetDegree %d %s\n", netDegree, netName);
+
+        // 3. 匹配每个有效引脚到对应的元件
+        const int COORD_TOLERANCE = 3;  // 坐标误差容忍（3像素内视为匹配）
+        for (const auto& pinPos : validPinPositions)
+        {
+            wxString cellName = "unknown_cell";
+            wxString pinType = "I";
+            wxPoint offset(0, 0);
+
+            // 遍历预计算的引脚列表，查找坐标匹配的引脚
+            for (const auto& pinInfo : allPins)
+            {
+                int dx = abs(pinPos.x - pinInfo.absPos.x);
+                int dy = abs(pinPos.y - pinInfo.absPos.y);
+                if (dx <= COORD_TOLERANCE && dy <= COORD_TOLERANCE)
+                {
+                    cellName = pinInfo.cellName;
+                    pinType = pinInfo.pinType;
+                    offset = pinInfo.offset;
+                    break;  // 找到匹配的引脚后退出循环
+                }
+            }
+
+            // 写入引脚信息（格式：元件名 类型:X偏移 Y偏移）
+            content += wxString::Format("%s %s:%d %d\n",
+                cellName, pinType, offset.x, offset.y);
+        }
+    }
+
+    // 4. 写入文件头部（总网络数和总引脚数）
+    wxString header;
+    header += wxString::Format("NumNets %d\n", numTotalNets);
+    header += wxString::Format("NumPins %d\n", numTotalPins);
+    content = header + content;
+
+    // 写入文件并关闭
+    file.Write(content);
+    file.Close();
+    return true;
+}
+
+// 3. （无需修改）.node文件保存触发函数（保持原逻辑）
+void MainFrame::DoFileSaveAsNode()
+{
+    wxFileDialog saveDialog(this,
+        "Save as BookShelf .node File",
+        "",
+        "circuit.node",  // 默认文件名
+        "BookShelf Node Files (*.node)|*.node",
+        wxFD_SAVE | wxFD_OVERWRITE_PROMPT);
+
+    if (saveDialog.ShowModal() == wxID_CANCEL)
+        return;
+
+    wxString filePath = saveDialog.GetPath();
+    bool success = SaveAsNodeFile(filePath);
+    if (success)
+    {
+        SetStatusText(wxString::Format("Saved BookShelf .node file: %s", filePath));
+    }
+    else
+    {
+        wxMessageBox("Failed to save .node file (check file permissions)", "Error", wxOK | wxICON_ERROR);
+    }
+}
+
+// 4. （无需修改）.net文件保存触发函数（保持原逻辑）
+void MainFrame::DoFileSaveAsNet()
+{
+    wxFileDialog saveDialog(this,
+        "Save as BookShelf .net File",
+        "",
+        "circuit.net",  // 默认文件名
+        "BookShelf Net Files (*.net)|*.net",
+        wxFD_SAVE | wxFD_OVERWRITE_PROMPT);
+
+    if (saveDialog.ShowModal() == wxID_CANCEL)
+        return;
+
+    wxString filePath = saveDialog.GetPath();
+    bool success = SaveAsNetFile(filePath);
+    if (success)
+    {
+        SetStatusText(wxString::Format("Saved BookShelf .net file: %s", filePath));
+    }
+    else
+    {
+        wxMessageBox("Failed to save .net file (check file permissions)", "Error", wxOK | wxICON_ERROR);
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 // 辅助方法：添加元件库节点
 void MainFrame::AddLibraryNode(wxXmlNode* parent, const wxString& name, const wxString& desc) {
     wxXmlNode* lib = new wxXmlNode(wxXML_ELEMENT_NODE, wxT("lib"));
