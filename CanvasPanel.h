@@ -8,6 +8,7 @@
 class QuickToolBar;
 class ToolManager;
 class MainFrame;
+class CanvasTextElement;
 
 /* 新增：拖动时需要更新的连线索引 + 对应引脚信息 */
 struct WireAnchor {
@@ -50,6 +51,7 @@ public:
     void OnMouseWheel(wxMouseEvent& evt);  
     void OnRightDown(wxMouseEvent& evt);
     void OnRightUp(wxMouseEvent& evt);
+    void OnCursorTimer(wxTimerEvent& event);
 
     const std::vector<CanvasElement>& GetElements() const { return m_elements; }
     // 添加清空画布的方法
@@ -76,6 +78,17 @@ public:
 
 
 public:
+    // 文本元素相关
+    std::vector<CanvasTextElement> m_textElements;
+    wxTimer m_cursorTimer;
+    void OnChar(wxChar ch, int m_editingTextIndex);
+    void textCursor(int keyCode, int m_editingTextIndex);
+	int inWhichTextBox(const wxPoint& canvasPos);
+    void CursorTimer(int m_editingTextIndex);
+    void CreateTextElement(const wxPoint& position);
+    void SetEditing(int index, bool isEditing);
+	void SetFocusToTextElement(int index);
+
     /* ---------- 原有元件相关 ---------- */
     std::vector<CanvasElement> m_elements;
     int  m_selectedIndex = -1;

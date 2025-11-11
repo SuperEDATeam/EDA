@@ -13,6 +13,15 @@ ToolManager::ToolManager(MainFrame* mainFrame, ToolBars* toolBars, CanvasPanel* 
 	m_previousTool(ToolType::DEFAULT_TOOL), m_tempTool(false) {
 }
 
+void ToolManager::CleanTempTool() {
+    m_tempTool = false;
+}
+
+void ToolManager::SetCurrentTool4Bar(ToolType tool) {
+    CleanTempTool();
+    SetCurrentTool(tool);
+}
+
 void ToolManager::SetCurrentTool(ToolType tool) {
     // 切换工具前清理当前操作状态
     //if (m_isDrawingWire) {
@@ -91,6 +100,11 @@ void ToolManager::SetCurrentTool(ToolType tool) {
 void ToolManager::OnCanvasLeftDown(const wxPoint& canvasPos) {
     m_eventHandled = false;
 
+    // 清除文本编辑焦点
+    if (m_editingTextIndex != -1) {
+        FinishTextEditing();
+    }
+
     // 1. 最高优先级：检查是否点击了导线控制点
     int cellWire, cellIdx;
     wxPoint cellPos;
@@ -132,14 +146,14 @@ void ToolManager::OnCanvasLeftDown(const wxPoint& canvasPos) {
         }
     }
 
-	// 4. 是否点击在默认工具下的空白区域
-    if (m_currentTool == ToolType::DEFAULT_TOOL &&
-        m_canvas->IsClickOnEmptyAreaPublic(canvasPos)) {
-		m_tempTool = true;
-		SetCurrentTool(ToolType::DRAG_TOOL);
-        //StartPanning(canvasPos);
-        StartPanning(m_canvas->CanvasToScreen(canvasPos));
-        m_eventHandled = true;
+    // 4. 检查是否点击了现有文本元素
+    bool clickedExisting = false;
+	int textIndex = m_canvas->inWhichTextBox(canvasPos);
+    if (textIndex != -1) {
+        m_tempTool = true;
+		SetCurrentTool(ToolType::TEXT_TOOL);
+        StartTextEditing(textIndex);
+        clickedExisting = true;
         return;
 	}
 
@@ -339,28 +353,74 @@ void ToolManager::OnCanvasLeftUp(const wxPoint& canvasPos) {
 }
 
 void ToolManager::OnCanvasKeyDown(wxKeyEvent& evt) {
-    if (evt.GetKeyCode() == WXK_ESCAPE) {
-        if (m_isDrawingWire) {
-            CancelWireDrawing();
-        }
-        else if (m_isEditingWire) {
-            CancelWireEditing();
-        }
-        else if (m_isDraggingElement) {
-            // 取消元件拖动，恢复原位
-            if (m_draggingElementIndex != -1) {
-                m_canvas->m_elements[m_draggingElementIndex].SetPos(m_elementStartCanvasPos);
-                m_canvas->Refresh();
-            }
-            FinishElementDragging();
-        }
-        else {
-            SetCurrentTool(ToolType::DEFAULT_TOOL);
-        }
-        evt.Skip(false); // 已处理
+    // Ctrl + z 撤销
+    if (evt.ControlDown() && evt.GetKeyCode() == 'z') {
+        m_eventHandled = true;
+        return;
     }
-    else {
-        evt.Skip(); // 其他按键继续传递
+
+    // Ctrl + s 保存
+    if (evt.ControlDown() && evt.GetKeyCode() == 's') {
+        m_eventHandled = true;
+        return;
+    }
+
+    // Space 开始/终止仿真
+    //if () {
+    //    m_eventHandled = true;
+    //    return;
+    //}
+
+
+    switch (m_currentTool) {
+    case ToolType::DRAG_TOOL: {
+
+    }
+    case ToolType::SELECT_TOOL: {
+
+    }
+    case ToolType::TEXT_TOOL: {
+        if (m_editingTextIndex == -1) {
+            evt.Skip();
+            return;
+        }
+        if (IsCharacterKey(evt)) {
+            wxChar ch = evt.GetUnicodeKey();
+            m_canvas->OnChar(ch, m_editingTextIndex);
+            m_eventHandled = true;
+            break;
+        }
+
+        else{
+            int keyCode = evt.GetKeyCode();
+
+            switch (keyCode) {
+            case WXK_ESCAPE:
+                FinishTextEditing();
+                break;
+            case WXK_RETURN:
+                FinishTextEditing();
+                break;
+            default:
+                m_canvas->textCursor(keyCode, m_editingTextIndex);
+                break;
+            }
+        }
+
+    }
+    case ToolType::WIRE_TOOL: {
+
+    }
+
+    default: {
+		return;
+    }
+    }
+}
+
+void ToolManager::OnCursorTimer(wxTimerEvent& event) {
+    if (m_editingTextIndex != -1) {
+		m_canvas->CursorTimer(m_editingTextIndex);
     }
 }
 
@@ -422,10 +482,13 @@ void ToolManager::HandleTextTool(const wxPoint& canvasPos) {
         }
     }
     */
+    CreateTextElement(canvasPos);
+    m_canvas->Refresh();
 
     if (m_mainFrame) {
-        m_mainFrame->SetStatusText("文本工具: 点击添加文本");
+        m_mainFrame->SetStatusText(wxString::Format("放置文本框：(%d, %d)", canvasPos.x, canvasPos.y));
     }
+
 }
 
 // 添加设置当前元件的方法
@@ -853,4 +916,122 @@ void ToolManager::OnCanvasRightDown(const wxPoint& canvasPos){
 
 void ToolManager::OnCanvasRightUp(const wxPoint& canvasPos) {
     m_canvas->m_quickToolBar->Hide();
+}
+
+bool ToolManager::IsCharacterKey(const wxKeyEvent& event) {
+    int keyCode = event.GetKeyCode();
+
+    // 直接排除已知的特殊键
+    switch (keyCode) {
+    case WXK_BACK:
+    case WXK_TAB:
+    case WXK_RETURN:
+    case WXK_ESCAPE:
+    case WXK_DELETE:
+    case WXK_START:
+    case WXK_LBUTTON:
+    case WXK_RBUTTON:
+    case WXK_CANCEL:
+    case WXK_MBUTTON:
+    case WXK_CLEAR:
+    case WXK_SHIFT:
+    case WXK_ALT:
+    case WXK_CONTROL:
+    case WXK_MENU:
+    case WXK_PAUSE:
+    case WXK_CAPITAL:
+    case WXK_END:
+    case WXK_HOME:
+    case WXK_LEFT:
+    case WXK_UP:
+    case WXK_RIGHT:
+    case WXK_DOWN:
+    case WXK_SELECT:
+    case WXK_PRINT:
+    case WXK_EXECUTE:
+    case WXK_SNAPSHOT:
+    case WXK_INSERT:
+    case WXK_HELP:
+    case WXK_NUMPAD0:
+    case WXK_NUMPAD1:
+    case WXK_NUMPAD2:
+    case WXK_NUMPAD3:
+    case WXK_NUMPAD4:
+    case WXK_NUMPAD5:
+    case WXK_NUMPAD6:
+    case WXK_NUMPAD7:
+    case WXK_NUMPAD8:
+    case WXK_NUMPAD9:
+    case WXK_MULTIPLY:
+    case WXK_ADD:
+    case WXK_SEPARATOR:
+    case WXK_SUBTRACT:
+    case WXK_DECIMAL:
+    case WXK_DIVIDE:
+    case WXK_F1:
+    case WXK_F2:
+    case WXK_F3:
+    case WXK_F4:
+    case WXK_F5:
+    case WXK_F6:
+    case WXK_F7:
+    case WXK_F8:
+    case WXK_F9:
+    case WXK_F10:
+    case WXK_F11:
+    case WXK_F12:
+    case WXK_F13:
+    case WXK_F14:
+    case WXK_F15:
+    case WXK_F16:
+    case WXK_F17:
+    case WXK_F18:
+    case WXK_F19:
+    case WXK_F20:
+    case WXK_F21:
+    case WXK_F22:
+    case WXK_F23:
+    case WXK_F24:
+    case WXK_NUMLOCK:
+    case WXK_SCROLL:
+    case WXK_PAGEUP:
+    case WXK_PAGEDOWN:
+    case WXK_WINDOWS_LEFT:
+    case WXK_WINDOWS_RIGHT:
+    case WXK_WINDOWS_MENU:
+        return false;
+    }
+
+    // 检查Unicode字符
+    wxChar unicodeChar = event.GetUnicodeKey();
+    return (unicodeChar >= 32 && unicodeChar != 127);
+}
+
+void ToolManager::CreateTextElement(const wxPoint& position) {
+    // 创建新文本元素
+	m_canvas->CreateTextElement(position);
+
+}
+
+void ToolManager::StartTextEditing(int index) {
+    // 结束之前的编辑
+    if (m_editingTextIndex != -1) {
+		m_canvas->SetEditing(m_editingTextIndex, false);
+    }
+
+    // 开始新的编辑
+    m_editingTextIndex = index;
+    m_canvas->SetEditing(m_editingTextIndex,true);
+}
+
+void ToolManager::FinishTextEditing() {
+    if (m_editingTextIndex != -1) {
+        m_canvas->SetEditing(m_editingTextIndex, false);
+        m_editingTextIndex = -1;
+        m_canvas->Refresh();
+    }
+    if (m_tempTool) {
+        SetCurrentTool(ToolType::DRAG_TOOL);
+        m_tempTool = false;
+    }
 }
