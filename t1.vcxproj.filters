@@ -51,6 +51,12 @@
     <ClCompile Include="ToolBars.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="ToolManager.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="QuickToolBar.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="MainMenuBar.h">
@@ -86,7 +92,10 @@
     <ClInclude Include="ToolBars.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="CanvasPanel.h">
+    <ClInclude Include="ToolManager.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="QuickToolBar.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

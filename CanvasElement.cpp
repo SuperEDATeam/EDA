@@ -62,12 +62,12 @@ void CanvasElement::DrawVector(wxGCDC& gcdc) const
 
             // 分支1：Line
             if constexpr (std::is_same_v<T, Line>) {
-                gc->SetPen(wxPen(s.color, 1.0));
+                gc->SetPen(wxPen(s.color, 3.0));
                 gc->StrokeLine(s.start.x, s.start.y, s.end.x, s.end.y);
             }
             // 分支2：ArcShape
             else if constexpr (std::is_same_v<T, ArcShape>) {
-                gc->SetPen(wxPen(s.color, 1.0));
+                gc->SetPen(wxPen(s.color, 3.0));
                 wxGraphicsPath path = gc->CreatePath();
                 path.AddArc(s.center.x, s.center.y, s.radius,
                     s.startAngle * M_PI / 180, s.endAngle * M_PI / 180, true);
@@ -82,7 +82,7 @@ void CanvasElement::DrawVector(wxGCDC& gcdc) const
             }
             // 分支4：Circle
             else if constexpr (std::is_same_v<T, Circle>) {
-                gc->SetPen(wxPen(s.color, 1.0));
+                gc->SetPen(wxPen(s.color, 3.0));
                 gc->SetBrush(s.fill ? wxBrush(s.fillColor) : *wxTRANSPARENT_BRUSH);
                 gc->DrawEllipse(s.center.x - s.radius, s.center.y - s.radius,
                     s.radius * 2, s.radius * 2);
@@ -97,13 +97,13 @@ void CanvasElement::DrawVector(wxGCDC& gcdc) const
                     }
                     path.CloseSubpath();
                 }
-                gc->SetPen(wxPen(s.color, 1.0));
+                gc->SetPen(wxPen(s.color, 3.0));
                 gc->SetBrush(*wxTRANSPARENT_BRUSH);
                 gc->StrokePath(path);
             }
             // 分支6：BezierShape
             else if constexpr (std::is_same_v<T, BezierShape>) {
-                gc->SetPen(wxPen(s.color, 1.0));
+                gc->SetPen(wxPen(s.color, 3.0));
                 wxGraphicsPath path = gc->CreatePath();
                 path.MoveToPoint(s.p0.x, s.p0.y);
                 path.AddCurveToPoint(s.p1.x, s.p1.y, s.p1.x, s.p1.y, s.p2.x, s.p2.y);

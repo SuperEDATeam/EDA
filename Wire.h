@@ -18,6 +18,13 @@ struct WireWireAnchor {
     size_t dstCell;   // 被连接的小方块序号
 };
 
+enum class PinDirection {
+    Left,    // 引脚朝左
+    Right,   // 引脚朝右
+    Up,      // 引脚朝上  
+    Down     // 引脚朝下
+};
+
 class Wire {
 public:
     std::vector<ControlPoint> pts;
@@ -33,8 +40,13 @@ public:
     size_t Size() const { return pts.size(); }
 
     //采用曼哈顿路由（Manhattan Wiring）代替传统的正交路由
-    static std::vector<ControlPoint> RouteOrtho(const wxPoint& a, const wxPoint& b);
-
+    static std::vector<ControlPoint> RouteOrtho(const ControlPoint& start,
+        const ControlPoint& end,
+        PinDirection startDir,
+        PinDirection endDir);
+    static wxPoint CalculateHorizontalExit(const wxPoint& pinPos, PinDirection dir);
+    static void ConnectExits(std::vector<ControlPoint>& path,
+        const wxPoint& startExit, const wxPoint& endExit);
     std::vector<wxPoint> cells;          // 每 2 px 小格中心
     void GenerateCells();                // 一次性切分
 private:

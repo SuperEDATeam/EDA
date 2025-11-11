@@ -4,7 +4,12 @@
 #include <wx/graphics.h>
 #include "CanvasElement.h"
 #include "Wire.h"         
+#include "Wire.h"          // ← 新增：连线数据
+#include "QuickToolBar.h"
 
+class QuickToolBar;
+class ToolManager;
+class MainFrame;
 
 /* 新增：拖动时需要更新的连线索引 + 对应引脚信息 */
 struct WireAnchor {
@@ -45,6 +50,8 @@ public:
     void OnMouseMove(wxMouseEvent& evt);
     void OnKeyDown(wxKeyEvent& evt);
     void OnMouseWheel(wxMouseEvent& evt);  
+    void OnRightDown(wxMouseEvent& evt);
+    void OnRightUp(wxMouseEvent& evt);
 
     const std::vector<CanvasElement>& GetElements() const { return m_elements; }
     // 添加清空画布的方法
@@ -70,7 +77,7 @@ public:
     void DeleteSelectedElement();
 
 
-private:
+public:
     /* ---------- 原有元件相关 ---------- */
     std::vector<CanvasElement> m_elements;
     int  m_selectedIndex = -1;
@@ -113,6 +120,16 @@ private:
     int  m_hoverCellIdx = -1;   // 哪一格
     wxPoint m_hoverCellPos;
     int HitHoverCell(const wxPoint& raw, int* wireIdx, int* cellIdx, wxPoint* cellPos);
+
+	// 工具管理器需要的接口
+public:
+    void ClearSelection();
+    void SetSelectedIndex(int index);
+    int HitTestPublic(const wxPoint& pt);
+    bool IsClickOnEmptyAreaPublic(const wxPoint& canvasPos);
+
+    // 快捷工具栏
+    QuickToolBar* m_quickToolBar;
 
     std::vector<WireWireAnchor> m_wireWireAnchors;// 导线<->导线小方块（新增）
     wxDECLARE_EVENT_TABLE();
