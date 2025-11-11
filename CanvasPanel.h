@@ -1,8 +1,9 @@
 #pragma once
 #include <wx/wx.h>
 #include <vector>
+#include <wx/graphics.h>
 #include "CanvasElement.h"
-#include "Wire.h"          // ← 新增：连线数据
+#include "Wire.h"         
 
 
 /* 新增：拖动时需要更新的连线索引 + 对应引脚信息 */
