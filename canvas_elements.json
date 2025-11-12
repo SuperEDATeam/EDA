@@ -5,15 +5,15 @@
     "name": "AND Gate",
     "anchorPoint": [64, 64],
     "inputPins": [
-      {"name": "Input A", "x": 32, "y": 40},
+      {"name": "Input A", "x": 36, "y": 44},
 
-      {"name": "Input B", "x": 32, "y": 88}
+      {"name": "Input B", "x": 36, "y": 84}
     ],
     "outputPins": [{"name": "Output", "x": 96, "y": 64}],
     "shapes": [
-      {"type": "line", "start": {"x": 32, "y": 32},"end": {"x": 32, "y": 96},"color": "#333333"},
-      {"type": "line","start": {"x": 32, "y": 96},"end": {"x": 64, "y": 96},"color": "#333333"},
-      {"type": "line","start": {"x": 32, "y": 32},"end": {"x": 64, "y": 32},"color": "#333333"},
+      {"type": "line", "start": {"x": 36, "y": 32},"end": {"x": 36, "y": 96},"color": "#333333"},
+      {"type": "line","start": {"x": 36, "y": 96},"end": {"x": 64, "y": 96},"color": "#333333"},
+      {"type": "line","start": {"x": 36, "y": 32},"end": {"x": 64, "y": 32},"color": "#333333"},
       {"type": "ArcShape","center": {"x": 64, "y": 64},"radius": 32,"startAngle": -90,"endAngle": 90,"color": "#333333"}
     ]
   },

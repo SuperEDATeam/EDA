@@ -1,50 +1,64 @@
 #include "ToolManager.h"
 #include "MainFrame.h"
 #include "Wire.h"
+#include <wx/image.h>
+#include "QuickToolBar.h"
+#include "UndoStack.h"
 
 ToolManager::ToolManager(MainFrame* mainFrame, ToolBars* toolBars, CanvasPanel* canvas)
     : m_mainFrame(mainFrame), m_toolBars(toolBars), m_canvas(canvas),
     m_currentTool(ToolType::DEFAULT_TOOL), m_eventHandled(false),
     m_isDrawingWire(false), m_isPanning(false),
     m_isEditingWire(false), m_editingWireIndex(-1), m_editingPointIndex(-1),
-    m_isDraggingElement(false), m_draggingElementIndex(-1) {
+    m_isDraggingElement(false), m_draggingElementIndex(-1),
+	m_previousTool(ToolType::DEFAULT_TOOL), m_tempTool(false) {
 }
 
 void ToolManager::SetCurrentTool(ToolType tool) {
     // 切换工具前清理当前操作状态
-    if (m_isDrawingWire) {
-        CancelWireDrawing();
-    }
-    if (m_isEditingWire) {
-        CancelWireEditing();
-    }
-    if (m_isDraggingElement) {
-        FinishElementDragging();
-    }
-    if (m_isPanning) {
-        FinishPanning();
-    }
+    //if (m_isDrawingWire) {
+    //    CancelWireDrawing();
+    //}
+    //if (m_isEditingWire) {
+    //    CancelWireEditing();
+    //}
+    //if (m_isDraggingElement) {
+    //    FinishElementDragging();
+    //}
+    //if (m_isPanning) {
+    //    FinishPanning(canvasPos);
+    //}
 
+	m_previousTool = m_currentTool;
     m_currentTool = tool;
 
     // 设置适当的光标
     if (m_canvas) {
         switch (tool) {
-        case ToolType::COMPONENT_TOOL:
+        case ToolType::COMPONENT_TOOL: {
             m_canvas->SetCursor(wxCursor(wxCURSOR_CROSS));
             break;
-        case ToolType::TEXT_TOOL:
+            }
+        case ToolType::TEXT_TOOL: {
             m_canvas->SetCursor(wxCursor(wxCURSOR_IBEAM));
             break;
-        case ToolType::WIRE_TOOL:
-            m_canvas->SetCursor(wxCursor(wxCURSOR_PENCIL));
+            }
+        case ToolType::WIRE_TOOL: {
+            wxImage image("res\\icons\\wiring.png", wxBITMAP_TYPE_PNG);
+            image.GetOptionInt(wxIMAGE_OPTION_CUR_HOTSPOT_X);
+            image.GetOptionInt(wxIMAGE_OPTION_CUR_HOTSPOT_Y);
+            wxCursor cursor(image);
+            m_canvas->SetCursor(cursor);
             break;
-        case ToolType::PAN_TOOL:
+        }
+        case ToolType::DRAG_TOOL: {
             m_canvas->SetCursor(wxCursor(wxCURSOR_HAND));
             break;
-        default:
+            }
+        default: {
             m_canvas->SetCursor(wxCursor(wxCURSOR_ARROW));
             break;
+            }
         }
     }
 
@@ -67,8 +81,8 @@ void ToolManager::SetCurrentTool(ToolType tool) {
         case ToolType::WIRE_TOOL:
             toolName = "导线工具";
             break;
-        case ToolType::PAN_TOOL:
-            toolName = "平移工具";
+        case ToolType::DRAG_TOOL:
+            toolName = "拖动工具";
             break;
         }
         m_mainFrame->SetStatusText(wxString::Format("当前工具: %s", toolName));
@@ -83,6 +97,8 @@ void ToolManager::OnCanvasLeftDown(const wxPoint& canvasPos) {
     wxPoint cellPos;
     int newCell = m_canvas->HitHoverCell(canvasPos, &cellWire, &cellIdx, &cellPos);
     if (newCell != -1) {
+		m_tempTool = true;
+		SetCurrentTool(ToolType::WIRE_TOOL);
         StartWireEditing(cellWire, cellIdx, canvasPos);
         m_eventHandled = true;
         return;
@@ -91,7 +107,9 @@ void ToolManager::OnCanvasLeftDown(const wxPoint& canvasPos) {
      //2. 检查是否点击了引脚（开始绘制导线）
     bool snapped = false;
     wxPoint snappedPos = m_canvas->Snap(canvasPos, &snapped);
-    if (snapped && m_currentTool == ToolType::DEFAULT_TOOL) {
+    if (snapped) {
+        m_tempTool = true;
+		SetCurrentTool(ToolType::WIRE_TOOL);
         StartWireDrawing(snappedPos, true);
         m_eventHandled = true;
         return;
@@ -100,52 +118,65 @@ void ToolManager::OnCanvasLeftDown(const wxPoint& canvasPos) {
     // 3. 检查是否点击了元件
     int elementIndex = m_canvas->HitTestPublic(canvasPos);
     if (elementIndex != -1) {
-        // 在默认工具下点击元件：开始拖动
-        if (m_currentTool == ToolType::DEFAULT_TOOL) {
-            StartElementDragging(elementIndex, canvasPos);
-            m_eventHandled = true;
-            return;
-        }
         // 在选择工具下点击元件：选择但不拖动
-        else if (m_currentTool == ToolType::SELECT_TOOL) {
+        if (m_currentTool == ToolType::SELECT_TOOL) {
             m_canvas->SetSelectedIndex(elementIndex);
             m_eventHandled = true;
             return;
         }
+        else {
+            m_tempTool = true;
+			SetCurrentTool(ToolType::DRAG_TOOL);
+            StartElementDragging(elementIndex, canvasPos);
+            m_eventHandled = true;
+			return;
+        }
     }
+
+	// 4. 是否点击在默认工具下的空白区域
+    if (m_currentTool == ToolType::DEFAULT_TOOL &&
+        m_canvas->IsClickOnEmptyAreaPublic(canvasPos)) {
+		m_tempTool = true;
+		SetCurrentTool(ToolType::DRAG_TOOL);
+        //StartPanning(canvasPos);
+        StartPanning(m_canvas->CanvasToScreen(canvasPos));
+        m_eventHandled = true;
+        return;
+	}
+
 
     // 4. 按工具类型处理其他情况
     switch (m_currentTool) {
-    case ToolType::DEFAULT_TOOL:
-        // 默认工具下点击空白区域：开始平移
-        if (m_canvas->IsClickOnEmptyAreaPublic(canvasPos)) {
-            StartPanning(canvasPos);
-            m_eventHandled = true;
-        }
-        break;
-    case ToolType::SELECT_TOOL:
+    case ToolType::SELECT_TOOL: {
         // 选择工具下点击空白区域：清除选择
         if (m_canvas->IsClickOnEmptyAreaPublic(canvasPos)) {
             m_canvas->ClearSelection();
             m_eventHandled = true;
         }
         break;
-    case ToolType::TEXT_TOOL:
+    }
+    case ToolType::TEXT_TOOL: {
         HandleTextTool(canvasPos);
         m_eventHandled = true;
         break;
-    case ToolType::COMPONENT_TOOL:
+    }
+    case ToolType::COMPONENT_TOOL: {
         HandleComponentTool(canvasPos);
         m_eventHandled = true;
         break;
-    case ToolType::WIRE_TOOL:
-        HandleWireTool(canvasPos);
+    }
+    case ToolType::WIRE_TOOL:{
+        bool snapped = false;
+        wxPoint snappedPos = m_canvas->Snap(canvasPos, &snapped);
+		StartWireDrawing(snappedPos, snapped);
         m_eventHandled = true;
         break;
-    case ToolType::PAN_TOOL:
-        HandlePanTool(canvasPos);
+        }
+    case ToolType::DRAG_TOOL: {
+        HandleDragTool(m_canvas->CanvasToScreen(canvasPos));
         m_eventHandled = true;
         break;
+        }
     }
 }
 
@@ -183,6 +214,7 @@ void ToolManager::HandleWireTool(const wxPoint& canvasPos) {
     else {
         // 完成导线绘制
         FinishWireDrawing(snappedPos);
+		SetCurrentTool(ToolType::WIRE_TOOL);
 
         // 导线工具模式下，绘制完成后可以立即开始新的导线
         // 这提供了连续绘制的体验
@@ -194,7 +226,7 @@ void ToolManager::HandleWireTool(const wxPoint& canvasPos) {
     }
 }
 
-void ToolManager::HandlePanTool(const wxPoint& canvasPos) {
+void ToolManager::HandleDragTool(const wxPoint& canvasPos) {
     // 专门的平移工具
     StartPanning(canvasPos);
     m_eventHandled = true;
@@ -206,7 +238,7 @@ void ToolManager::StartWireDrawing(const wxPoint& startPos, bool fromPin) {
         FinishElementDragging();
     }
     if (m_isPanning) {
-        FinishPanning();
+        FinishPanning(startPos);
     }
 	m_currentTool = ToolType::WIRE_TOOL;
     m_isDrawingWire = true;
@@ -251,32 +283,37 @@ void ToolManager::UpdateWireDrawing(const wxPoint& currentPos) {
     }
 }
 
-void ToolManager::FinishPanning() {
+void ToolManager::FinishPanning(const wxPoint& currentPos) {
     m_isPanning = false;
+    m_panStartPos = currentPos;
+    m_fakeStartPos = currentPos;
+    if (m_tempTool) {
+        SetCurrentTool(m_previousTool);
+        m_tempTool = false;
+	}
 
     if (m_mainFrame) {
         m_mainFrame->SetStatusText("平移完成");
     }
 }
 
-void ToolManager::HandleComponentTool(const wxPoint& canvasPos) {
-    if (!m_currentComponent.IsEmpty() && m_canvas) {
-        // 放置元件
-        m_canvas->PlaceElement(m_currentComponent, canvasPos);
 
-        // 重要：放置元件后自动切换回默认工具
-        SetCurrentTool(ToolType::DEFAULT_TOOL);
-        m_currentComponent.Clear(); // 清空当前元件
+void ToolManager::HandleComponentTool(const wxPoint& canvasPos)
+{
+    if (m_currentComponent.IsEmpty() || !m_canvas) return;
 
-        if (m_mainFrame) {
-            m_mainFrame->SetStatusText(wxString::Format("已放置: %s", m_currentComponent));
-        }
-    }
-    else {
-        if (m_mainFrame) {
-            m_mainFrame->SetStatusText("请先从元件库选择一个元件");
-        }
-    }
+    bool snapped = false;
+    wxPoint pos = m_canvas->Snap(canvasPos, &snapped);
+    m_canvas->PlaceElement(m_currentComponent, pos);   // 先放进去
+
+    // 把“刚才那一步”记进撤销栈
+    size_t idx = m_canvas->m_elements.size() - 1;
+    m_canvas->m_undoStack.Push(
+        std::make_unique<CmdAddElement>(m_currentComponent, idx));
+
+    // 通知主窗口刷新菜单状态
+    if (m_mainFrame)
+        m_mainFrame->OnUndoStackChanged();
 }
 
 void ToolManager::OnCanvasLeftUp(const wxPoint& canvasPos) {
@@ -289,7 +326,8 @@ void ToolManager::OnCanvasLeftUp(const wxPoint& canvasPos) {
         m_eventHandled = true;
     }
     else if (m_isPanning) {
-        FinishPanning();
+        //FinishPanning(canvasPos);
+        FinishPanning(m_canvas->CanvasToScreen(canvasPos));
         m_eventHandled = true;
     }
     else if (m_isDrawingWire && m_currentTool == ToolType::WIRE_TOOL) {
@@ -297,7 +335,9 @@ void ToolManager::OnCanvasLeftUp(const wxPoint& canvasPos) {
         FinishWireDrawing(canvasPos);
         m_eventHandled = true;
     }
-    m_currentTool = ToolType::DEFAULT_TOOL; // 恢复默认工具状态
+    else {
+        // 其他工具不处理
+	}
 }
 
 void ToolManager::OnCanvasKeyDown(wxKeyEvent& evt) {
@@ -456,15 +496,26 @@ void ToolManager::FinishWireDrawing(const wxPoint& endPos) {
     m_isDrawingWire = false;
     m_canvas->m_wireMode = CanvasPanel::WireMode::Idle;
     m_canvas->m_tempWire.Clear();
+    if (m_tempTool) {
+        SetCurrentTool(m_previousTool);
+        m_tempTool = false;
+	}
 
     if (m_mainFrame) {
         if (snappedEnd) {
             m_mainFrame->SetStatusText("导线绘制完成: 连接到引脚");
         }
         else {
-            m_mainFrame->SetStatusText("导线绘制完成: 自由端点");
+            m_mainFrame->SetStatusText(wxString::Format("导线绘制完成: 自由端点(%d, %d)", endSnapPos.x, endSnapPos.y));
         }
     }
+    // 把刚加入的导线注册为可撤销
+    size_t wireIdx = m_canvas->m_wires.size() - 1;
+    m_canvas->m_undoStack.Push(
+        std::make_unique<CmdAddWire>(wireIdx));
+
+    if (m_mainFrame)
+        m_mainFrame->OnUndoStackChanged();
 
     m_canvas->Refresh();
 }
@@ -520,6 +571,11 @@ void ToolManager::FinishWireEditing() {
     m_editingWireIndex = -1;
     m_editingPointIndex = -1;
 
+    if (m_tempTool) {
+        SetCurrentTool(m_previousTool);
+        m_tempTool = false;
+    }
+
     if (m_mainFrame) {
         m_mainFrame->SetStatusText("导线编辑完成");
     }
@@ -542,7 +598,7 @@ void ToolManager::StartElementDragging(int elementIndex, const wxPoint& startPos
         CancelWireDrawing();
     }
     if (m_isPanning) {
-        FinishPanning();
+        FinishPanning(startPos);
     }
 
     if (elementIndex < 0 || elementIndex >= (int)m_canvas->m_elements.size()) return;
@@ -583,7 +639,10 @@ void ToolManager::UpdateElementDragging(const wxPoint& currentPos) {
     if (!m_isDraggingElement || m_draggingElementIndex == -1) return;
 
     // 计算偏移量
-    wxPoint delta = currentPos - m_elementDragStartPos;
+    wxPoint raw = currentPos - m_elementDragStartPos;
+    const int grid = 20;
+    wxPoint delta((raw.x + grid / 2) / grid * grid, (raw.y + grid / 2) / grid * grid);
+    
     wxPoint newPos = m_elementStartCanvasPos + delta;
 
     // 构建调试信息字符串
@@ -643,14 +702,66 @@ void ToolManager::UpdateElementDragging(const wxPoint& currentPos) {
     m_canvas->Refresh();
 }
 
-void ToolManager::FinishElementDragging() {
+
+void ToolManager::FinishElementDragging()
+{
+    /* 0. 如果根本没拖，直接收工 */
+    if (m_draggingElementIndex == size_t(-1))
+        return;
+
+    /* 1. 计算最终网格对齐坐标 */
+    const int grid = 20;
+    wxPoint delta(
+        ((m_canvas->m_elements[m_draggingElementIndex].GetPos().x - m_elementStartCanvasPos.x) + grid / 2) / grid * grid,
+        ((m_canvas->m_elements[m_draggingElementIndex].GetPos().y - m_elementStartCanvasPos.y) + grid / 2) / grid * grid
+    );
+    wxPoint finalPos = m_elementStartCanvasPos + delta;
+
+    /* 2. 真正写回元件 */
+    m_canvas->m_elements[m_draggingElementIndex].SetPos(finalPos);
+
+    /* === 3. 收集本次拖动影响的导线端点（用于一并撤销） === */
+    std::vector<CmdMoveElement::Anchor> anchors;
+    for (const auto& aw : m_canvas->m_movingWires)
+    {
+        if (aw.wireIdx >= m_canvas->m_wires.size()) continue;
+        const auto& wire = m_canvas->m_wires[aw.wireIdx];
+        if (aw.ptIdx >= wire.pts.size()) continue;
+
+        anchors.push_back({
+            aw.wireIdx,
+            aw.ptIdx,
+            wire.pts[aw.ptIdx].pos   // 旧位置（拖动前）
+            });
+    }
+
+    /* 4. 压栈：元件+导线一起可撤销 */
+    if (finalPos != m_elementStartCanvasPos || !anchors.empty())
+    {
+        m_canvas->m_undoStack.Push(
+            std::make_unique<CmdMoveElement>(m_draggingElementIndex,
+                m_elementStartCanvasPos,
+                anchors));
+    }
+
+    /* 5. 原有收尾 */
     m_isDraggingElement = false;
     m_draggingElementIndex = -1;
     m_canvas->m_movingWires.clear();
 
-    if (m_mainFrame) {
-        m_mainFrame->SetStatusText("元件放置完成");
+    if (m_tempTool)
+    {
+        SetCurrentTool(m_previousTool);
+        m_tempTool = false;
     }
+
+    if (m_mainFrame)
+    {
+        m_mainFrame->SetStatusText("元件移动完成");
+        m_mainFrame->OnUndoStackChanged();   // 刷新 Undo 菜单
+    }
+
+    m_canvas->Refresh();   // 重画一次，确保位置正确
 }
 
 void ToolManager::OnCanvasMouseMove(const wxPoint& canvasPos) {
@@ -670,7 +781,8 @@ void ToolManager::OnCanvasMouseMove(const wxPoint& canvasPos) {
         m_eventHandled = true;
     }
     else if (m_isPanning) {
-        UpdatePanning(canvasPos);
+        //UpdatePanning(canvasPos);
+        UpdatePanning(m_canvas->CanvasToScreen(canvasPos));
         m_eventHandled = true;
     }
     else {
@@ -719,7 +831,30 @@ void ToolManager::HandleHoverFeedback(const wxPoint& canvasPos) {
                     m_canvas->m_elements[elementIndex].GetName());
             }
             else {
-                status = wxString::Format("位置: (%d, %d)", canvasPos.x, canvasPos.y);
+                wxString toolName;
+                if (m_mainFrame) {
+                    switch (m_currentTool) {
+                    case ToolType::DEFAULT_TOOL:
+                        toolName = "默认工具";
+                        break;
+                    case ToolType::SELECT_TOOL:
+                        toolName = "选中工具";
+                        break;
+                    case ToolType::TEXT_TOOL:
+                        toolName = "文本工具";
+                        break;
+                    case ToolType::COMPONENT_TOOL:
+                        toolName = "元件工具";
+                        break;
+                    case ToolType::WIRE_TOOL:
+                        toolName = "导线工具";
+                        break;
+                    case ToolType::DRAG_TOOL:
+                        toolName = "拖动工具";
+                        break;
+                    }
+                }
+                status = wxString::Format("当前工具: %s, 位置: (%d, %d)", toolName,canvasPos.x, canvasPos.y);
             }
         }
         m_mainFrame->SetStatusText(status);
@@ -740,6 +875,7 @@ void ToolManager::StartPanning(const wxPoint& startPos) {
 
     m_isPanning = true;
     m_panStartPos = startPos;
+	m_fakeStartPos = startPos;
 
     if (m_mainFrame) {
         m_mainFrame->SetStatusText("平移画布: 拖动鼠标移动画布 (ESC取消)");
@@ -749,12 +885,27 @@ void ToolManager::StartPanning(const wxPoint& startPos) {
 void ToolManager::UpdatePanning(const wxPoint& currentPos) {
     if (!m_isPanning) return;
 
-    wxPoint delta = currentPos - m_panStartPos;
+    wxPoint delta = currentPos - m_fakeStartPos;
     m_canvas->m_offset += delta;
-    m_panStartPos = currentPos;
+    m_fakeStartPos = currentPos;
+
+	wxPoint realDelta = currentPos - m_panStartPos;
+    
     m_canvas->Refresh();
 
     if (m_mainFrame) {
-        m_mainFrame->SetStatusText(wxString::Format("平移画布: 偏移(%d, %d)", delta.x, delta.y));
+        m_mainFrame->SetStatusText(wxString::Format("平移画布: 偏移(%d, %d)", realDelta.x, realDelta.y));
+        //m_mainFrame->SetStatusText(wxString::Format("平移画布: 偏移(%d, %d), (%d, %d)", m_panStartPos.x, m_panStartPos.y, currentPos.x, currentPos.y));
     }
+}
+
+void ToolManager::OnCanvasRightDown(const wxPoint& canvasPos){
+    wxPoint toolBarPos = canvasPos + wxPoint(240, 124);
+	m_canvas->m_quickToolBar->SetPosition(toolBarPos);
+	m_canvas->m_quickToolBar->Show();
+	m_canvas->m_quickToolBar->SetFocus();
+}
+
+void ToolManager::OnCanvasRightUp(const wxPoint& canvasPos) {
+    m_canvas->m_quickToolBar->Hide();
 }

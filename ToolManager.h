@@ -3,18 +3,24 @@
 #include "ToolBars.h"
 #include "CanvasPanel.h"
 
+class MainFrame; // 前向声明
+class CanvasPanel; // 前向声明
+class ToolBars;   // 前向声明
+
 enum class ToolType {
     DEFAULT_TOOL,    // 默认工具（包含导线绘制、平移等）
     SELECT_TOOL,     // 选中工具
     TEXT_TOOL,       // 文本工具
     COMPONENT_TOOL,  // 元件工具
     WIRE_TOOL,       // 专门的导线工具
-    PAN_TOOL         // 平移工具
+    DRAG_TOOL         // 拖拽工具
 };
 
 class ToolManager {
 private:
     ToolType m_currentTool;
+	ToolType m_previousTool;
+    bool m_tempTool;
     ToolBars* m_toolBars;
     CanvasPanel* m_canvas;
     MainFrame* m_mainFrame;
@@ -30,6 +36,7 @@ private:
     // 平移相关状态
     bool m_isPanning;
     wxPoint m_panStartPos;
+	wxPoint m_fakeStartPos;
 
     // 导线编辑相关状态
     bool m_isEditingWire;
@@ -59,7 +66,7 @@ public:
     void HandleTextTool(const wxPoint& canvasPos);
     void HandleComponentTool(const wxPoint& canvasPos);
     void HandleWireTool(const wxPoint& canvasPos);
-    void HandlePanTool(const wxPoint& canvasPos);
+    void HandleDragTool(const wxPoint& canvasPos);
 
     // 画布事件转发
     void OnCanvasLeftDown(const wxPoint& canvasPos);
@@ -67,6 +74,8 @@ public:
     void OnCanvasMouseMove(const wxPoint& canvasPos);
     void OnCanvasKeyDown(wxKeyEvent& evt);
     void OnCanvasMouseWheel(wxMouseEvent& evt);
+    void OnCanvasRightDown(const wxPoint& canvasPos);
+    void OnCanvasRightUp(const wxPoint& canvasPos);
 
     // 导线绘制方法
     void StartWireDrawing(const wxPoint& startPos, bool fromPin);
@@ -77,7 +86,7 @@ public:
     // 平移方法
     void StartPanning(const wxPoint& startPos);
     void UpdatePanning(const wxPoint& currentPos);
-    void FinishPanning();
+    void FinishPanning(const wxPoint& currentPos);
 
     // 状态获取
     bool IsDrawingWire() const { return m_isDrawingWire; }

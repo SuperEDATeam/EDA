@@ -10,6 +10,11 @@
 #include "ToolBars.h"
 #include "ToolManager.h"
 
+class ToolManager; // 前向声明
+class ToolBars;   // 前向声明
+class CanvasPanel; // 前向声明
+class QuickToolBar;
+
 class MainFrame : public wxFrame
 {
 
@@ -34,6 +39,9 @@ private:
 public:
     MainFrame();
     ~MainFrame();
+
+    void OnUndoStackChanged();
+
     /* File 菜单业务接口 */
     void DoFileNew();
     void DoFileOpen(const wxString& path = {});
@@ -103,9 +111,9 @@ public:
 	// 工具管理器
     ToolManager* m_toolManager;
     ToolManager* GetToolManager() const { return m_toolManager; }
-    void InitializeTools() {
-        m_toolManager = new ToolManager(this, m_toolBars, m_canvas);
-    }
+    void InitializeTools();
+
+	
 
 private:
     wxAuiManager m_auiMgr;

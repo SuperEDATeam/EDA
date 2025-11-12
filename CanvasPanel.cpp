@@ -9,6 +9,8 @@ wxBEGIN_EVENT_TABLE(CanvasPanel, wxPanel)
 EVT_PAINT(CanvasPanel::OnPaint)
 EVT_LEFT_DOWN(CanvasPanel::OnLeftDown)
 EVT_LEFT_UP(CanvasPanel::OnLeftUp)
+EVT_RIGHT_DOWN(CanvasPanel::OnRightDown) // 右键也触发左键抬起事件
+EVT_RIGHT_UP(CanvasPanel::OnRightUp)
 EVT_MOTION(CanvasPanel::OnMouseMove)
 EVT_KEY_DOWN(CanvasPanel::OnKeyDown)
 EVT_MOUSEWHEEL(CanvasPanel::OnMouseWheel)
@@ -20,6 +22,8 @@ CanvasPanel::CanvasPanel(wxWindow* parent)
     m_offset(0, 0), m_isPanning(false), m_scale(1.0f),
     m_wireMode(WireMode::Idle), m_selectedIndex(-1), m_isDragging(false),
     m_hoverPinIdx(-1), m_hoverCellIdx(-1), m_hoverCellWire(-1) {
+    // 快捷工具栏
+    m_quickToolBar = new QuickToolBar(this);
 
     SetBackgroundStyle(wxBG_STYLE_PAINT);
     SetBackgroundColour(*wxWHITE);
@@ -62,9 +66,11 @@ void CanvasPanel::OnMouseMove(wxMouseEvent& evt) {
 
 void CanvasPanel::OnLeftUp(wxMouseEvent& evt) {
     // 交给工具管理器处理
+    wxPoint screenpos = evt.GetPosition();
+	wxPoint canvasPos = ScreenToCanvas(screenpos);
     MainFrame* mainFrame = wxDynamicCast(GetParent(), MainFrame);
     if (mainFrame && mainFrame->GetToolManager()) {
-        mainFrame->GetToolManager()->OnCanvasLeftUp(evt.GetPosition());
+        mainFrame->GetToolManager()->OnCanvasLeftUp(canvasPos);
         if (mainFrame->GetToolManager()->IsEventHandled()) {
             return; // 工具管理器已处理事件
         }
@@ -193,8 +199,10 @@ void CanvasPanel::OnPaint(wxPaintEvent&)
     dc.SetPen(wxPen(c, 1));
     // 计算可见区域的网格范围（基于缩放后的画布大小）
     wxSize sz = GetClientSize();
-    int maxX = static_cast<int>(sz.x / m_scale);  // 转换为画布坐标
-    int maxY = static_cast<int>(sz.y / m_scale);
+    //int maxX = static_cast<int>(sz.x / m_scale);  // 转换为画布坐标
+    //int maxY = static_cast<int>(sz.y / m_scale);
+    int maxX = sz.x;
+    int maxY = sz.y;
     for (int x = 0; x < maxX; x += grid)
         dc.DrawLine(x, 0, x, maxY);
     for (int y = 0; y < maxY; y += grid)
@@ -241,7 +249,9 @@ void CanvasPanel::PlaceElement(const wxString& name, const wxPoint& pos)
         [&](const CanvasElement& e) { return e.GetName() == name; });
     if (it == g_elements.end()) return;
     CanvasElement clone = *it;
-    clone.SetPos(pos);
+    Pin standardPin = clone.GetOutputPins()[0];
+    wxPoint standardpos = pos - wxPoint(standardPin.pos.x, standardPin.pos.y);
+    clone.SetPos(standardpos);
     AddElement(clone);
 }
 // 修改：HitTest使用画布坐标判断
@@ -438,4 +448,34 @@ void CanvasPanel::DeleteSelectedElement() {
 
     bool CanvasPanel::IsClickOnEmptyAreaPublic(const wxPoint& canvasPos) {
         return IsClickOnEmptyArea(canvasPos);
+    }
+
+    void CanvasPanel::OnRightDown(wxMouseEvent& evt) {
+        // 右键按下时也触发左键抬起事件
+        wxPoint rawScreenPos = evt.GetPosition();
+        wxPoint rawCanvasPos = ScreenToCanvas(rawScreenPos);
+        // 交给工具管理器处理
+        MainFrame* mainFrame = wxDynamicCast(GetParent(), MainFrame);
+        if (mainFrame && mainFrame->GetToolManager()) {
+            mainFrame->GetToolManager()->OnCanvasRightDown(rawScreenPos);
+            if (mainFrame->GetToolManager()->IsEventHandled()) {
+                return; // 工具管理器已处理事件
+            }
+        }
+        evt.Skip();
+	}
+
+    void CanvasPanel::OnRightUp(wxMouseEvent& evt) {
+        // 右键按下时也触发左键抬起事件
+        wxPoint rawScreenPos = evt.GetPosition();
+        wxPoint rawCanvasPos = ScreenToCanvas(rawScreenPos);
+        // 交给工具管理器处理
+        MainFrame* mainFrame = wxDynamicCast(GetParent(), MainFrame);
+        if (mainFrame && mainFrame->GetToolManager()) {
+            mainFrame->GetToolManager()->OnCanvasRightUp(rawCanvasPos);
+            if (mainFrame->GetToolManager()->IsEventHandled()) {
+                return; // 工具管理器已处理事件
+            }
+        }
+        evt.Skip();
     }

@@ -3,7 +3,12 @@
 #include <vector>
 #include "CanvasElement.h"
 #include "Wire.h"          // ← 新增：连线数据
+#include "QuickToolBar.h"
+#include "UndoStack.h"
 
+class QuickToolBar;
+class ToolManager;
+class MainFrame;
 
 /* 新增：拖动时需要更新的连线索引 + 对应引脚信息 */
 struct WireAnchor {
@@ -21,6 +26,7 @@ public:
     void AddElement(const CanvasElement& elem);
     void PlaceElement(const wxString& name, const wxPoint& pos);
 
+    UndoStack m_undoStack;
 
     // 缩放相关方法
     float GetScale() const { return m_scale; }  // 获取当前缩放比例
@@ -44,6 +50,8 @@ public:
     void OnMouseMove(wxMouseEvent& evt);
     void OnKeyDown(wxKeyEvent& evt);
     void OnMouseWheel(wxMouseEvent& evt);  
+    void OnRightDown(wxMouseEvent& evt);
+    void OnRightUp(wxMouseEvent& evt);
 
     const std::vector<CanvasElement>& GetElements() const { return m_elements; }
     // 添加清空画布的方法
@@ -119,6 +127,9 @@ public:
     void SetSelectedIndex(int index);
     int HitTestPublic(const wxPoint& pt);
     bool IsClickOnEmptyAreaPublic(const wxPoint& canvasPos);
+
+    // 快捷工具栏
+    QuickToolBar* m_quickToolBar;
 
     std::vector<WireWireAnchor> m_wireWireAnchors;// 导线<->导线小方块（新增）
     wxDECLARE_EVENT_TABLE();

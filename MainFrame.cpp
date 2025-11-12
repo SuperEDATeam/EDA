@@ -9,6 +9,9 @@
 #include "my_log.h"
 #include <wx/filename.h> 
 #include <wx/sstream.h>
+#include "ToolManager.h"
+#include "QuickToolBar.h"
+#include "UndoStack.h"
 
 extern std::vector<CanvasElement> g_elements;
 
@@ -47,6 +50,8 @@ MainFrame::MainFrame()
 
     // 工具管理器
     m_toolManager = new ToolManager(this, m_toolBars, m_canvas);
+	m_toolManager->SetCurrentTool(ToolType::DRAG_TOOL);
+
 
     /* 创建侧边栏 + 属性表（上下叠放） */
     wxPanel* sidePanel = new wxPanel(this);  // 外壳
@@ -84,6 +89,7 @@ MainFrame::MainFrame()
     /* 一次性提交 */
     m_auiMgr.Update();
 
+    OnUndoStackChanged();
 }
 
 MainFrame::~MainFrame()
@@ -470,7 +476,12 @@ void MainFrame::OnAbout(wxCommandEvent&)
         wxT("About"), wxOK | wxICON_INFORMATION, this);
 }
 
-void MainFrame::DoEditUndo() { wxMessageBox("Edit->Undo"); }
+void MainFrame::DoEditUndo()
+{
+    m_canvas->m_undoStack.Undo(m_canvas);
+    OnUndoStackChanged();   // 刷新菜单
+}
+
 void MainFrame::DoEditCut() { wxMessageBox("Edit->Cut"); }
 void MainFrame::DoEditCopy() { wxMessageBox("Edit->Copy"); }
 void MainFrame::DoEditPaste() { wxMessageBox("Edit->Paste"); }
@@ -614,4 +625,28 @@ void MainFrame::AddToolBarsToAuiManager() {
         .BestSize(10000, 28));
     m_toolBars->ChoosePageOne_toolBar1(-1); // 初始化工具栏状态
     m_toolBars->ChoosePageOne_toolBar3(-1); // 初始化工具栏状态
+}
+
+void MainFrame::InitializeTools() {
+    m_toolManager = new ToolManager(this, m_toolBars, m_canvas);
+}
+
+void MainFrame::OnUndoStackChanged()
+{
+    wxMenuBar* bar = GetMenuBar();
+    if (!bar) return;
+
+    wxMenu* editMenu = bar->GetMenu(1);      // Edit 菜单
+    if (!editMenu) return;
+
+    wxMenuItem* undoItem = editMenu->FindItem(wxID_UNDO);
+    if (undoItem)
+    {
+        wxString base = m_canvas->m_undoStack.GetUndoName(); // "Add AND Gate"
+        wxString text = m_canvas->m_undoStack.CanUndo()
+            ? wxString("Undo ") + base
+            : wxString("Can't Undo");
+        undoItem->SetItemLabel(text);
+        undoItem->Enable(m_canvas->m_undoStack.CanUndo());
+    }
 }

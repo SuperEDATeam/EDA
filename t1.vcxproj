@@ -27,10 +27,12 @@
     <ClCompile Include="MainFrame.cpp" />
     <ClCompile Include="MainMenuBar.cpp" />
     <ClCompile Include="PropertyPanel.cpp" />
+    <ClCompile Include="QuickToolBar.cpp" />
     <ClCompile Include="ToolBars.cpp" />
     <ClCompile Include="ToolboxModel.cpp" />
     <ClCompile Include="ToolboxPanel.cpp" />
     <ClCompile Include="ToolManager.cpp" />
+    <ClCompile Include="UndoStack.cpp" />
     <ClCompile Include="Wire.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -41,11 +43,13 @@
     <ClInclude Include="MainFrame.h" />
     <ClInclude Include="MainMenuBar.h" />
     <ClInclude Include="my_log.h" />
+    <ClInclude Include="QuickToolBar.h" />
     <ClInclude Include="PropertyPanel.h" />
     <ClInclude Include="ToolBars.h" />
     <ClInclude Include="ToolboxModel.h" />
     <ClInclude Include="ToolboxPanel.h" />
     <ClInclude Include="ToolManager.h" />
+    <ClInclude Include="UndoStack.h" />
     <ClInclude Include="Wire.h" />
   </ItemGroup>
   <ItemGroup>
