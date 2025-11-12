@@ -4,7 +4,6 @@
 #include <wx/graphics.h>
 #include "CanvasElement.h"
 #include "Wire.h"         
-#include "Wire.h"          // ← 新增：连线数据
 #include "QuickToolBar.h"
 
 class QuickToolBar;
@@ -54,7 +53,6 @@ public:
     void OnRightUp(wxMouseEvent& evt);
 
     const std::vector<CanvasElement>& GetElements() const { return m_elements; }
-    // 添加清空画布的方法
     void ClearAll() {
         m_elements.clear();
         m_wires.clear();
@@ -62,7 +60,6 @@ public:
         Refresh();
     }
 
-    // 添加添加导线的方法
     void AddWire(const Wire& wire) {
         m_wires.push_back(wire);
         Refresh();
@@ -89,7 +86,6 @@ public:
     void ClearElementWires(size_t elemIndex);
 
 
-    /* ---------- 新增连线相关 ---------- */
     std::vector<Wire> m_wires;   // 已定型的连线
     Wire m_tempWire;             // 正在拖动/预览的连线
     enum class WireMode { Idle, DragNew, DragMove };
@@ -98,14 +94,14 @@ public:
     ControlPoint m_startCP;      // 连线起点
     wxPoint m_curSnap;           // 当前吸附/预览点
 
-    // 新增：缩放因子（默认1.0，即100%）
+
     float m_scale = 1.0f;
 
-    /* ---------- 原有函数 ---------- */
+
     void OnPaint(wxPaintEvent& evt);
     int  HitTest(const wxPoint& pt);
 
-    /* ---------- 新增辅助 ---------- */
+
     // 吸附：网格 + 引脚
     wxPoint Snap(const wxPoint& raw, bool* snapped);
 

@@ -51,9 +51,7 @@ void CanvasElement::DrawVector(wxGCDC& gcdc) const
     origMatrix.Get(&a, &b, &c, &d, &origTx, &origTy); // 对象调用 Get()
     double origSx = a;
     double origSy = d;
-    // 应用偏移（这里是对的，两个参数，之前报错是连带的）
     gc->Translate(m_pos.x, m_pos.y);
-
 
     // -------------------------- 3. 绘制所有形状（逻辑不变，补充 Path 分支避免 visit 遗漏） --------------------------
     for (const auto& shape : m_shapes) {
@@ -119,7 +117,21 @@ void CanvasElement::DrawVector(wxGCDC& gcdc) const
             }, shape);  // 确保 std::visit 的 lambda 正确闭合
     }
 
-    // -------------------------- 4. 恢复原始上下文变换（3.2 版本兼容写法） --------------------------
+    // 绘制输入引脚（蓝色圆点）
+    for (const auto& pin : m_inputPins) {
+        gc->SetPen(wxPen(wxColour(0, 0, 255), 1.0)); // 蓝色边框
+        gc->SetBrush(wxBrush(wxColour(0, 0, 255)));  // 蓝色填充
+        gc->DrawEllipse(pin.pos.x - 3, pin.pos.y - 3, 6, 6); // 半径为3的圆点
+    }
+
+    // 绘制输出引脚（红色圆点）
+    for (const auto& pin : m_outputPins) {
+        gc->SetPen(wxPen(wxColour(255, 0, 0), 1.0)); // 红色边框
+        gc->SetBrush(wxBrush(wxColour(255, 0, 0)));  // 红色填充
+        gc->DrawEllipse(pin.pos.x - 3, pin.pos.y - 3, 6, 6); // 半径为3的圆点
+    }
+
+    // -------------------------- 4. 恢复原始上下文变换 --------------------------
     gc->SetTransform(origMatrix); // 这里不用 *，直接传对象
 }
 
@@ -210,18 +222,20 @@ void CanvasElement::DrawFallback(wxDC& dc) const
         std::visit(visitor, shape);
     }
 
-    // 绘制输入引脚
+    // 绘制输入引脚（蓝色圆点）
     for (const auto& pin : m_inputPins) {
         wxPoint p = off(pin.pos);
-        dc.SetPen(wxPen(wxColour(0, 0, 255), 1));
-        dc.DrawLine(p, wxPoint(p.x - 6, p.y));
+        dc.SetPen(wxPen(wxColour(0, 0, 255), 1)); // 蓝色边框
+        dc.SetBrush(wxBrush(wxColour(0, 0, 255))); // 蓝色填充
+        dc.DrawCircle(p, 3); // 半径为3的圆点
     }
 
-    // 绘制输出引脚
+    // 绘制输出引脚（红色圆点）
     for (const auto& pin : m_outputPins) {
         wxPoint p = off(pin.pos);
-        dc.SetPen(wxPen(wxColour(255, 0, 0), 1));
-        dc.DrawLine(p, wxPoint(p.x + 6, p.y));
+        dc.SetPen(wxPen(wxColour(255, 0, 0), 1)); // 红色边框
+        dc.SetBrush(wxBrush(wxColour(255, 0, 0))); // 红色填充
+        dc.DrawCircle(p, 3); // 半径为3的圆点
     }
 }
 
@@ -336,12 +350,14 @@ wxRect CanvasElement::GetBounds() const
 
     for (const auto& pin : m_inputPins) {
         update(pin.pos);
-        update(Point(pin.pos.x - 6, pin.pos.y));
+        update(Point(pin.pos.x - 3, pin.pos.y - 3)); // 更新为圆点的边界
+        update(Point(pin.pos.x + 3, pin.pos.y + 3));
     }
 
     for (const auto& pin : m_outputPins) {
         update(pin.pos);
-        update(Point(pin.pos.x + 6, pin.pos.y));
+        update(Point(pin.pos.x - 3, pin.pos.y - 3)); // 更新为圆点的边界
+        update(Point(pin.pos.x + 3, pin.pos.y + 3));
     }
 
     return wxRect(minX, minY, maxX - minX + 1, maxY - minY + 1);
