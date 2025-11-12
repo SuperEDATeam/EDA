@@ -301,9 +301,17 @@ void ToolManager::FinishPanning(const wxPoint& currentPos) {
 void ToolManager::HandleComponentTool(const wxPoint& canvasPos) {
     if (!m_currentComponent.IsEmpty() && m_canvas) {
         // 放置元件
-        bool snapped = false;
-        wxPoint snappedPos = m_canvas->Snap(canvasPos, &snapped);
+		bool snapped = false;
+		wxPoint snappedPos = m_canvas->Snap(canvasPos, &snapped);
         m_canvas->PlaceElement(m_currentComponent, snappedPos);
+        SetCurrentTool(ToolType::DEFAULT_TOOL);
+        m_currentComponent.Clear(); // 清空当前元件
+        SetCurrentTool(ToolType::DEFAULT_TOOL);
+        m_currentComponent.Clear(); // 清空当前元件
+        SetCurrentTool(ToolType::DEFAULT_TOOL);
+        m_currentComponent.Clear(); // 清空当前元件
+        SetCurrentTool(ToolType::DEFAULT_TOOL);
+        m_currentComponent.Clear(); // 清空当前元件
 
         if (m_mainFrame) {
             m_mainFrame->SetStatusText(wxString::Format("已放置: %s， 吸附到 (%d, %d)", m_currentComponent, snappedPos.x, snappedPos.y));
@@ -489,6 +497,10 @@ void ToolManager::FinishWireDrawing(const wxPoint& endPos) {
     if (newWire.pts.front().type == CPType::Pin)
         recordConnection(newWire.pts.front().pos, 0);
 
+    if (m_tempTool) {
+        SetCurrentTool(m_previousTool);
+        m_tempTool = false;
+	}
     // 记录终点连接
     if (newWire.pts.back().type == CPType::Pin)
         recordConnection(newWire.pts.back().pos, newWire.pts.size() - 1);
@@ -497,10 +509,6 @@ void ToolManager::FinishWireDrawing(const wxPoint& endPos) {
     m_isDrawingWire = false;
     m_canvas->m_wireMode = CanvasPanel::WireMode::Idle;
     m_canvas->m_tempWire.Clear();
-    if (m_tempTool) {
-        SetCurrentTool(m_previousTool);
-        m_tempTool = false;
-    }
 
     if (m_mainFrame) {
         if (snappedEnd) {
@@ -695,6 +703,11 @@ void ToolManager::UpdateElementDragging(const wxPoint& currentPos) {
     }
 
     m_canvas->Refresh();
+    if (m_tempTool) {
+        SetCurrentTool(m_previousTool);
+        m_tempTool = false;
+	}
+
 }
 
 
@@ -702,11 +715,6 @@ void ToolManager::FinishElementDragging() {
     m_isDraggingElement = false;
     m_draggingElementIndex = -1;
     m_canvas->m_movingWires.clear();
-
-    if (m_tempTool) {
-        SetCurrentTool(m_previousTool);
-        m_tempTool = false;
-    }
 
     if (m_mainFrame) {
         m_mainFrame->SetStatusText("元件放置完成");

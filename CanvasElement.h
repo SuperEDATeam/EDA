@@ -1,5 +1,8 @@
 #pragma once
+
 #include <wx/wx.h>
+#include <wx/dcgraph.h>  
+#include <wx/graphics.h>  
 #include <vector>
 #include <variant>
 
@@ -114,6 +117,12 @@ private:
     std::vector<Shape> m_shapes;
     std::vector<Pin> m_inputPins;
     std::vector<Pin> m_outputPins;
-
+    void DrawVector(wxGCDC& gcdc) const;
     std::vector<wxPoint> CalculateBezier(const Point& p0, const Point& p1, const Point& p2, int segments = 16) const;
+    // 回退绘制方法
+    void DrawFallback(wxDC& dc) const;
+    // 1. 正确声明 wxGCDC 版本的 DrawPathFallback（别注释！）
+    void DrawPathFallback(wxGCDC& gcdc, const Path& arg, std::function<wxPoint(const Point&)> off) const;
+    // 2. 保留 wxDC 版本的 DrawPathFallback
+    void DrawPathFallback(wxDC& dc, const Path& arg, std::function<wxPoint(const Point&)> off) const;
 };

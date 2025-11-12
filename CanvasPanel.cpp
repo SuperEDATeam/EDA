@@ -4,6 +4,9 @@
 #include <wx/dcbuffer.h>
 #include "CanvasElement.h"
 #include "my_log.h"
+#include <wx/dcgraph.h>  
+#include <wx/graphics.h> 
+
 
 wxBEGIN_EVENT_TABLE(CanvasPanel, wxPanel)
 EVT_PAINT(CanvasPanel::OnPaint)
@@ -183,61 +186,127 @@ void CanvasPanel::AddElement(const CanvasElement& elem)
 }
 
 //================= 绘制 =================
-// 修改：绘图时应用缩放因子
 void CanvasPanel::OnPaint(wxPaintEvent&)
 {
     wxAutoBufferedPaintDC dc(this);
     dc.Clear();
 
-    // 应用缩放和偏移
-    dc.SetUserScale(m_scale, m_scale);
-    dc.SetDeviceOrigin(m_offset.x, m_offset.y);  // 设置设备原点偏移
+    wxGCDC* gcdc = nullptr;
+    wxGraphicsContext* gc = nullptr;
 
-    // 1. 绘制网格（网格大小随缩放自适应）
-    const int grid = 20;
-    const wxColour c(240, 240, 240);
-    dc.SetPen(wxPen(c, 1));
-    // 计算可见区域的网格范围（基于缩放后的画布大小）
-    wxSize sz = GetClientSize();
-    //int maxX = static_cast<int>(sz.x / m_scale);  // 转换为画布坐标
-    //int maxY = static_cast<int>(sz.y / m_scale);
-    int maxX = sz.x;
-    int maxY = sz.y;
-    for (int x = 0; x < maxX; x += grid)
-        dc.DrawLine(x, 0, x, maxY);
-    for (int y = 0; y < maxY; y += grid)
-        dc.DrawLine(0, y, maxX, y);
+    if (wxGraphicsRenderer::GetDefaultRenderer()) {
+        gcdc = new wxGCDC(dc);
+        gc = gcdc->GetGraphicsContext();
+    }
 
-    // 2. 绘制元素（元素坐标已在CanvasElement内部维护，缩放由DC自动处理）
-    for (size_t i = 0; i < m_elements.size(); ++i) {
-        m_elements[i].Draw(dc);
-        // 选中状态边框
-        if ((int)i == m_selectedIndex) {
-            wxRect b = m_elements[i].GetBounds();
-            dc.SetPen(wxPen(*wxRED, 2, wxPENSTYLE_DOT));
-            dc.SetBrush(*wxTRANSPARENT_BRUSH);
-            dc.DrawRectangle(b);
+    if (gc) {
+        // 启用高质量抗锯齿
+        gc->SetAntialiasMode(wxANTIALIAS_DEFAULT);
+
+        // 应用缩放和偏移（逻辑坐标 -> 设备坐标）
+        gc->Scale(m_scale, m_scale);
+        gc->Translate(m_offset.x / m_scale, m_offset.y / m_scale);
+
+        // 高DPI适配：获取设备缩放因子
+        double dpiScale = GetContentScaleFactor();
+        gc->Scale(dpiScale, dpiScale);
+
+        // 1. 绘制网格（逻辑坐标，线宽随缩放自适应）
+        const int grid = 20;
+        const wxColour gridColor(240, 240, 240);
+        gc->SetPen(wxPen(gridColor, 1.0 / m_scale)); // 笔宽在逻辑坐标下调整
+
+        wxSize sz = GetClientSize();
+        int maxX = static_cast<int>(sz.x / (m_scale * dpiScale));
+        int maxY = static_cast<int>(sz.y / (m_scale * dpiScale));
+
+        for (int x = 0; x < maxX; x += grid) {
+            gc->StrokeLine(x, 0, x, maxY);
         }
+        for (int y = 0; y < maxY; y += grid) {
+            gc->StrokeLine(0, y, maxX, y);
+        }
+
+        // 2. 绘制元素（使用矢量绘制）
+        for (size_t i = 0; i < m_elements.size(); ++i) {
+            m_elements[i].Draw(*gcdc); // 确保元素内部使用gc绘制
+
+            // 选中状态边框（虚线宽度随缩放调整）
+            if ((int)i == m_selectedIndex) {
+                wxRect b = m_elements[i].GetBounds();
+                gc->SetPen(wxPen(*wxRED, 2.0 / m_scale, wxPENSTYLE_DOT));
+                gc->SetBrush(*wxTRANSPARENT_BRUSH);
+                gc->DrawRectangle(b.x, b.y, b.width, b.height);
+            }
+        }
+
+        // 3. 绘制导线（矢量线段）
+        gc->SetPen(wxPen(*wxBLACK, 1.5 / m_scale)); // 导线宽度自适应
+        for (const auto& w : m_wires) w.Draw(*gcdc);
+        if (m_wireMode == WireMode::DragNew) m_tempWire.Draw(*gcdc);
+
+        // 4. 悬停引脚高亮（绿色空心圆）
+        if (m_hoverPinIdx != -1) {
+            gc->SetBrush(*wxTRANSPARENT_BRUSH);
+            gc->SetPen(wxPen(wxColour(0, 255, 0), 1.0 / m_scale));
+            gc->DrawEllipse(m_hoverPinPos.x - 3, m_hoverPinPos.y - 3, 6, 6);
+        }
+
+        if (m_hoverCellIdx != -1) {
+            gc->SetBrush(*wxTRANSPARENT_BRUSH);
+            gc->SetPen(wxPen(wxColour(0, 255, 0), 1.0 / m_scale));
+            gc->DrawEllipse(m_hoverCellPos.x - 3, m_hoverCellPos.y - 3, 6, 6);
+        }
+
+        delete gcdc; // 释放资源
     }
+    else {
+        // 如果无法获取 GraphicsContext，回退到原始绘制方法
+        // 应用缩放和偏移
+        dc.SetUserScale(m_scale, m_scale);
+        dc.SetDeviceOrigin(m_offset.x, m_offset.y);  // 设置设备原点偏移
 
-    // 3. 绘制导线（导线坐标基于画布，缩放由DC处理）
-    for (const auto& w : m_wires) w.Draw(dc);
-    if (m_wireMode == WireMode::DragNew) m_tempWire.Draw(dc);
+        // 1. 绘制网格（网格大小随缩放自适应）
+        const int grid = 20;
+        const wxColour c(240, 240, 240);
+        dc.SetPen(wxPen(c, 1));
+        // 计算可见区域的网格范围（基于缩放后的画布大小）
+        wxSize sz = GetClientSize();
+        int maxX = static_cast<int>(sz.x / m_scale);  // 转换为画布坐标
+        int maxY = static_cast<int>(sz.y / m_scale);
+        for (int x = 0; x < maxX; x += grid)
+            dc.DrawLine(x, 0, x, maxY);
+        for (int y = 0; y < maxY; y += grid)
+            dc.DrawLine(0, y, maxX, y);
 
-    // 4. 悬停引脚：绿色空心圆
-    if (m_hoverPinIdx != -1) {
-        dc.SetBrush(*wxTRANSPARENT_BRUSH);              // 不填充 → 空心
-        dc.SetPen(wxPen(wxColour(0, 255, 0), 1));       // 绿色边框，线宽 2
-        dc.DrawCircle(m_hoverPinPos, 3);                // 半径 3 像素
-    }
+        // 2. 绘制元素（元素坐标已在CanvasElement内部维护，缩放由DC自动处理）
+        for (size_t i = 0; i < m_elements.size(); ++i) {
+            m_elements[i].Draw(dc);
+            // 选中状态边框
+            if ((int)i == m_selectedIndex) {
+                wxRect b = m_elements[i].GetBounds();
+                dc.SetPen(wxPen(*wxRED, 2, wxPENSTYLE_DOT));
+                dc.SetBrush(*wxTRANSPARENT_BRUSH);
+                dc.DrawRectangle(b);
+            }
+        }
 
-    if (m_hoverCellIdx != -1) {
-        /*MyLog("DRAW GREEN CELL: wire=%zu cell=%zu  pos=(%d,%d)\n",
-            m_hoverCellWire, m_hoverCellIdx,
-            m_hoverCellPos.x, m_hoverCellPos.y);*/
-        dc.SetBrush(*wxTRANSPARENT_BRUSH);
-        dc.SetPen(wxPen(wxColour(0, 255, 0), 1));
-        dc.DrawCircle(m_hoverCellPos, 3);
+        // 3. 绘制导线（导线坐标基于画布，缩放由DC处理）
+        for (const auto& w : m_wires) w.Draw(dc);
+        if (m_wireMode == WireMode::DragNew) m_tempWire.Draw(dc);
+
+        // 4. 悬停引脚：绿色空心圆
+        if (m_hoverPinIdx != -1) {
+            dc.SetBrush(*wxTRANSPARENT_BRUSH);              // 不填充 → 空心
+            dc.SetPen(wxPen(wxColour(0, 255, 0), 1));       // 绿色边框，线宽 2
+            dc.DrawCircle(m_hoverPinPos, 3);                // 半径 3 像素
+        }
+
+        if (m_hoverCellIdx != -1) {
+            dc.SetBrush(*wxTRANSPARENT_BRUSH);
+            dc.SetPen(wxPen(wxColour(0, 255, 0), 1));
+            dc.DrawCircle(m_hoverCellPos, 3);
+        }
     }
 }
 

@@ -4,7 +4,9 @@
 
 enum
 {
-    idExportImage = wxID_HIGHEST + 1
+    idExportImage = wxID_HIGHEST + 1,
+    idSaveAsNode = wxID_HIGHEST + 2,  // 保存.node文件
+    idSaveAsNet = wxID_HIGHEST + 3    // 保存.net文件
 };
 
 wxBEGIN_EVENT_TABLE(MainMenuBar, wxMenuBar)
@@ -14,6 +16,8 @@ EVT_MENU(wxID_OPEN, MainMenuBar::OnFileOpen)
 EVT_MENU(wxID_CLOSE, MainMenuBar::OnFileClose)
 EVT_MENU(wxID_SAVE, MainMenuBar::OnFileSave)
 EVT_MENU(wxID_SAVEAS, MainMenuBar::OnFileSaveAs)
+EVT_MENU(idSaveAsNode, MainMenuBar::OnSaveAsNode)
+EVT_MENU(idSaveAsNet, MainMenuBar::OnSaveAsNet)
 EVT_MENU(idExportImage, MainMenuBar::OnExportImage)
 EVT_MENU(wxID_PRINT, MainMenuBar::OnPrint)
 EVT_MENU(wxID_PREFERENCES, MainMenuBar::OnPreferences)
@@ -161,6 +165,9 @@ wxMenu* MainMenuBar::CreateFileMenu()
     menu->Append(wxID_CLOSE, "&Close\tCtrl+Shift+W", "Close current window");
     menu->Append(wxID_SAVE, "&Save\tCtrl+S", "Save current circuit");
     menu->Append(wxID_SAVEAS, "Save &As...\tCtrl+Shift+S", "Save with new name");
+
+    menu->Append(idSaveAsNode, "Save as .node", "Save nodes to .node file");
+    menu->Append(idSaveAsNet, "Save as .net", "Save network to .net file");
 
     menu->AppendSeparator();
     menu->Append(idExportImage, "Export Image...", "Export canvas to PNG/JPEG");
@@ -364,6 +371,17 @@ void MainMenuBar::OnFileSave(wxCommandEvent&)
 void MainMenuBar::OnFileSaveAs(wxCommandEvent&)
 {
     m_owner->DoFileSaveAs();
+}
+void MainMenuBar::OnSaveAsNode(wxCommandEvent&)
+{
+    if (m_owner)
+        m_owner->DoFileSaveAsNode();
+}
+
+void MainMenuBar::OnSaveAsNet(wxCommandEvent&)
+{
+    if (m_owner)
+        m_owner->DoFileSaveAsNet();
 }
 void MainMenuBar::OnExportImage(wxCommandEvent&)
 {
