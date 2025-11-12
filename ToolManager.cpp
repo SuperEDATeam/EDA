@@ -298,23 +298,24 @@ void ToolManager::FinishPanning(const wxPoint& currentPos) {
 }
 
 
-void ToolManager::HandleComponentTool(const wxPoint& canvasPos)
-{
-    if (m_currentComponent.IsEmpty() || !m_canvas) return;
+void ToolManager::HandleComponentTool(const wxPoint& canvasPos) {
+    if (!m_currentComponent.IsEmpty() && m_canvas) {
+        // 放置元件
+        bool snapped = false;
+        wxPoint snappedPos = m_canvas->Snap(canvasPos, &snapped);
+        m_canvas->PlaceElement(m_currentComponent, snappedPos);
 
-    bool snapped = false;
-    wxPoint pos = m_canvas->Snap(canvasPos, &snapped);
-    m_canvas->PlaceElement(m_currentComponent, pos);   // 先放进去
-
-    // 把“刚才那一步”记进撤销栈
-    size_t idx = m_canvas->m_elements.size() - 1;
-    m_canvas->m_undoStack.Push(
-        std::make_unique<CmdAddElement>(m_currentComponent, idx));
-
-    // 通知主窗口刷新菜单状态
-    if (m_mainFrame)
-        m_mainFrame->OnUndoStackChanged();
+        if (m_mainFrame) {
+            m_mainFrame->SetStatusText(wxString::Format("已放置: %s， 吸附到 (%d, %d)", m_currentComponent, snappedPos.x, snappedPos.y));
+        }
+    }
+    else {
+        if (m_mainFrame) {
+            m_mainFrame->SetStatusText("请先从元件库选择一个元件");
+        }
+    }
 }
+
 
 void ToolManager::OnCanvasLeftUp(const wxPoint& canvasPos) {
     if (m_isEditingWire) {
@@ -499,7 +500,7 @@ void ToolManager::FinishWireDrawing(const wxPoint& endPos) {
     if (m_tempTool) {
         SetCurrentTool(m_previousTool);
         m_tempTool = false;
-	}
+    }
 
     if (m_mainFrame) {
         if (snappedEnd) {
@@ -509,13 +510,7 @@ void ToolManager::FinishWireDrawing(const wxPoint& endPos) {
             m_mainFrame->SetStatusText(wxString::Format("导线绘制完成: 自由端点(%d, %d)", endSnapPos.x, endSnapPos.y));
         }
     }
-    // 把刚加入的导线注册为可撤销
-    size_t wireIdx = m_canvas->m_wires.size() - 1;
-    m_canvas->m_undoStack.Push(
-        std::make_unique<CmdAddWire>(wireIdx));
 
-    if (m_mainFrame)
-        m_mainFrame->OnUndoStackChanged();
 
     m_canvas->Refresh();
 }
@@ -703,65 +698,19 @@ void ToolManager::UpdateElementDragging(const wxPoint& currentPos) {
 }
 
 
-void ToolManager::FinishElementDragging()
-{
-    /* 0. 如果根本没拖，直接收工 */
-    if (m_draggingElementIndex == size_t(-1))
-        return;
-
-    /* 1. 计算最终网格对齐坐标 */
-    const int grid = 20;
-    wxPoint delta(
-        ((m_canvas->m_elements[m_draggingElementIndex].GetPos().x - m_elementStartCanvasPos.x) + grid / 2) / grid * grid,
-        ((m_canvas->m_elements[m_draggingElementIndex].GetPos().y - m_elementStartCanvasPos.y) + grid / 2) / grid * grid
-    );
-    wxPoint finalPos = m_elementStartCanvasPos + delta;
-
-    /* 2. 真正写回元件 */
-    m_canvas->m_elements[m_draggingElementIndex].SetPos(finalPos);
-
-    /* === 3. 收集本次拖动影响的导线端点（用于一并撤销） === */
-    std::vector<CmdMoveElement::Anchor> anchors;
-    for (const auto& aw : m_canvas->m_movingWires)
-    {
-        if (aw.wireIdx >= m_canvas->m_wires.size()) continue;
-        const auto& wire = m_canvas->m_wires[aw.wireIdx];
-        if (aw.ptIdx >= wire.pts.size()) continue;
-
-        anchors.push_back({
-            aw.wireIdx,
-            aw.ptIdx,
-            wire.pts[aw.ptIdx].pos   // 旧位置（拖动前）
-            });
-    }
-
-    /* 4. 压栈：元件+导线一起可撤销 */
-    if (finalPos != m_elementStartCanvasPos || !anchors.empty())
-    {
-        m_canvas->m_undoStack.Push(
-            std::make_unique<CmdMoveElement>(m_draggingElementIndex,
-                m_elementStartCanvasPos,
-                anchors));
-    }
-
-    /* 5. 原有收尾 */
+void ToolManager::FinishElementDragging() {
     m_isDraggingElement = false;
     m_draggingElementIndex = -1;
     m_canvas->m_movingWires.clear();
 
-    if (m_tempTool)
-    {
+    if (m_tempTool) {
         SetCurrentTool(m_previousTool);
         m_tempTool = false;
     }
 
-    if (m_mainFrame)
-    {
-        m_mainFrame->SetStatusText("元件移动完成");
-        m_mainFrame->OnUndoStackChanged();   // 刷新 Undo 菜单
+    if (m_mainFrame) {
+        m_mainFrame->SetStatusText("元件放置完成");
     }
-
-    m_canvas->Refresh();   // 重画一次，确保位置正确
 }
 
 void ToolManager::OnCanvasMouseMove(const wxPoint& canvasPos) {
