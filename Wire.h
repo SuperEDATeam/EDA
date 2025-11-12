@@ -2,6 +2,8 @@
 #include <wx/wx.h>
 #include <vector>
 
+class CanvasPanel;
+
 enum class CPType { Pin, Bend, Free };
 
 struct ControlPoint {
@@ -38,6 +40,8 @@ public:
     void Clear() { pts.clear(); }
     bool Empty() const { return pts.empty(); }
     size_t Size() const { return pts.size(); }
+
+    CanvasPanel* m_canvas;
 
     //采用曼哈顿路由（Manhattan Wiring）代替传统的正交路由
     static std::vector<ControlPoint> RouteOrtho(const ControlPoint& start,

@@ -1,4 +1,5 @@
 #include "Wire.h"
+#include "CanvasPanel.h"
 
 void Wire::Draw(wxDC& dc) const {
     if (pts.size() < 2) return;
@@ -21,18 +22,18 @@ std::vector<ControlPoint> Wire::RouteOrtho(
         return out;
     }
 
-    // 第一步：从起始引脚水平延伸
-    wxPoint startExit = CalculateHorizontalExit(start.pos, startDir);
-    out.push_back({ startExit, CPType::Bend });
+    //// 第一步：从起始引脚水平延伸
+    //wxPoint startExit = CalculateHorizontalExit(start.pos, startDir);
+    //out.push_back({ startExit, CPType::Bend });
 
-    // 第二步：从终止引脚水平延伸  
-    wxPoint endExit = CalculateHorizontalExit(end.pos, endDir);
+    //// 第二步：从终止引脚水平延伸  
+    //wxPoint endExit = CalculateHorizontalExit(end.pos, endDir);
 
     // 第三步：连接两个延伸点
-    ConnectExits(out, startExit, endExit);
+    ConnectExits(out, start.pos, end.pos);
 
     // 第四步：连接到终止引脚
-    out.push_back({ endExit, CPType::Bend });
+    out.push_back({ end.pos, CPType::Bend });
     out.push_back({ end.pos, end.type });
 
     return out;
