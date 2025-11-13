@@ -92,23 +92,38 @@ void ToolManager::OnCanvasLeftDown(const wxPoint& canvasPos) {
     m_eventHandled = false;
 
     // 1. 最高优先级：检查是否点击了导线控制点
-    int cellWire, cellIdx;
-    wxPoint cellPos;
-    int newCell = m_canvas->HitHoverCell(canvasPos, &cellWire, &cellIdx, &cellPos);
-    if (newCell != -1) {
-		m_tempTool = true;
-		SetCurrentTool(ToolType::WIRE_TOOL);
-        StartWireEditing(cellWire, cellIdx, canvasPos);
-        m_eventHandled = true;
-        return;
-    }
+  //  int cellWire, cellIdx;
+  //  wxPoint cellPos;
+  //  int newCell = m_canvas->HitHoverCell(canvasPos, &cellWire, &cellIdx, &cellPos);
+  //  if (newCell != -1) {
+        //m_tempTool = true;
+        //SetCurrentTool(ToolType::WIRE_TOOL);
+  //      bool snapped = false;
+  //      wxPoint snappedPos = m_canvas->Snap(canvasPos, &snapped);
+  //      StartWireDrawing(snappedPos, snapped);
+  //      m_eventHandled = true;
+  //      return;
+  //  }
 
      //2. 检查是否点击了引脚（开始绘制导线）
+  //  bool snapped = false;
+  //  wxPoint snappedPos = m_canvas->Snap(canvasPos, &snapped);
+  //  if (snapped) {
+  //      m_tempTool = true;
+        //SetCurrentTool(ToolType::WIRE_TOOL);
+  //      StartWireDrawing(snappedPos, snapped);
+  //      m_eventHandled = true;
+  //      return;
+  //  }
+
+    int cellWire, cellIdx;
+    wxPoint cellPos;
     bool snapped = false;
     wxPoint snappedPos = m_canvas->Snap(canvasPos, &snapped);
-    if (snapped) {
+    if (snapped || m_canvas->HitHoverCell(canvasPos, &cellWire, &cellIdx, &cellPos) != -1){
+
         m_tempTool = true;
-		SetCurrentTool(ToolType::WIRE_TOOL);
+        SetCurrentTool(ToolType::WIRE_TOOL);
         StartWireDrawing(snappedPos, true);
         m_eventHandled = true;
         return;

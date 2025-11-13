@@ -324,29 +324,41 @@ int CanvasPanel::HitHoverPin(const wxPoint& raw, bool* isInput, wxPoint* worldPo
 
 int CanvasPanel::HitHoverCell(const wxPoint& raw, int* wireIdx, int* cellIdx, wxPoint* cellPos)
 {
-    /*MyLog("HitHoverCell: (%d,%d)\n", raw.x, raw.y);
+    const int GRID_SIZE = 20;
+    const int HIT_RADIUS = 8;
+
+    // 首先将点击位置对齐到最近的网格点
+    wxPoint alignedRaw(
+        (raw.x / GRID_SIZE) * GRID_SIZE,
+        (raw.y / GRID_SIZE) * GRID_SIZE
+    );
+   
     for (size_t w = 0; w < m_wires.size(); ++w) {
         const auto& wire = m_wires[w];
         for (size_t c = 0; c < wire.cells.size(); ++c) {
-            MyLog("  wire[%zu] cell[%zu] = (%d,%d)\n",
-                w, c, wire.cells[c].x, wire.cells[c].y);
-        }
-    }*/
-    for (size_t w = 0; w < m_wires.size(); ++w) {
-        const auto& wire = m_wires[w];
-        for (size_t c = 0; c < wire.cells.size(); ++c) {
-            if (abs(raw.x - wire.cells[c].x) <= 2 &&
-                abs(raw.y - wire.cells[c].y) <= 2) {
-                *wireIdx = w;
-                *cellIdx = c;
-                *cellPos = wire.cells[c];
-                return c;
+            const wxPoint& cell = wire.cells[c];
+
+            // 检查是否在网格点上且与对齐后的点击位置匹配
+            if (cell.x == alignedRaw.x && cell.y == alignedRaw.y) {
+                // 二次验证：确保在点击半径内
+                if (abs(raw.x - cell.x) <= HIT_RADIUS &&
+                    abs(raw.y - cell.y) <= HIT_RADIUS) {
+
+                    *wireIdx = w;
+                    *cellIdx = c;
+                    *cellPos = cell;
+                    return c;
+                }
             }
         }
     }
-    return -1;
 
+    *wireIdx = -1;
+    *cellIdx = -1;
+    *cellPos = wxPoint(0, 0);
+    return -1;
 }
+
 
 // 清理与指定元件关联的导线
 void CanvasPanel::ClearElementWires(size_t elemIndex) {

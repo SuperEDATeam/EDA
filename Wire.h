@@ -44,9 +44,6 @@ public:
         const ControlPoint& end,
         PinDirection startDir,
         PinDirection endDir);
-    static wxPoint CalculateHorizontalExit(const wxPoint& pinPos, PinDirection dir);
-    static void ConnectExits(std::vector<ControlPoint>& path,
-        const wxPoint& startExit, const wxPoint& endExit);
     std::vector<wxPoint> cells;          // 每 2 px 小格中心
     void GenerateCells();                // 一次性切分
 private:
