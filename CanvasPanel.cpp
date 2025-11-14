@@ -181,8 +181,11 @@ void CanvasPanel::AddElement(const CanvasElement& elem)
 {
     m_elements.push_back(elem);
     Refresh();
-    MyLog("CanvasPanel::AddElement: <%s> total=%zu\n",
-        elem.GetName().ToUTF8().data(), m_elements.size());
+
+    // 记录撤销
+    m_undoStack.Push(std::make_unique<CmdAddElement>(elem.GetName(), m_elements.size() - 1));
+    /*MyLog("CanvasPanel::AddElement: <%s> total=%zu\n",
+        elem.GetName().ToUTF8().data(), m_elements.size());*/
 }
 
 //================= 绘制 =================

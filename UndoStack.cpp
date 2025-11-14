@@ -1,5 +1,6 @@
 #include "UndoStack.h"
 #include "CanvasPanel.h"
+#include "UndoNotifier.h"
 
 /* ---------------- CmdAddElement ---------------- */
 void CmdAddElement::undo(CanvasPanel* canvas)
@@ -23,6 +24,8 @@ void UndoStack::Push(std::unique_ptr<Command> cmd)
     m_stack.emplace_back(std::move(cmd));
     if (m_stack.size() > m_limit)
         m_stack.erase(m_stack.begin());
+    // 发出通知
+    UndoNotifier::Notify(GetUndoName(), CanUndo());
 }
 
 void UndoStack::Undo(CanvasPanel* canvas)

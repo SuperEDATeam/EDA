@@ -60,6 +60,9 @@
     <ClCompile Include="UndoStack.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="UndoNotifier.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="MainMenuBar.h">
@@ -102,6 +105,12 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="UndoStack.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="CanvasPanel.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="UndoNotifier.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

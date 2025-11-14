@@ -12,6 +12,7 @@
 #include "ToolManager.h"
 #include "QuickToolBar.h"
 #include "UndoStack.h"
+#include "UndoNotifier.h"
 
 extern std::vector<CanvasElement> g_elements;
 
@@ -89,28 +90,16 @@ MainFrame::MainFrame()
     /* 一次性提交 */
     m_auiMgr.Update();
 
-    OnUndoStackChanged();
+    // 订阅撤销通知
+    UndoNotifier::Subscribe([this](const wxString& name, bool canUndo) {
+        this->OnUndoStackChanged();
+        });
 }
 
 MainFrame::~MainFrame()
 {
     m_auiMgr.UnInit();   // 必须手动反初始化
 }
-
-
-//void MainFrame::OnToolboxElement(wxCommandEvent& evt)
-//{
-//    MyLog("MainFrame: received <%s>\n", evt.GetString().ToUTF8().data());
-//
-//    wxString name = evt.GetString();
-//    auto it = std::find_if(g_elements.begin(), g_elements.end(),
-//        [&](const CanvasElement& e) { return e.GetName() == name; });
-//    if (it == g_elements.end()) return;
-//
-//    CanvasElement clone = *it;
-//    clone.SetPos(wxPoint(100, 100));   // 先放中央，后续用鼠标坐标
-//    m_canvas->AddElement(clone);        
-//}
 
 void MainFrame::OnToolboxElement(wxCommandEvent& evt)
 {
@@ -139,14 +128,6 @@ void MainFrame::DoFileNew() {
     // （可选）如果需要记录所有打开的窗口，可添加到窗口列表中
     // m_allFrames.push_back(newFrame);  // 需要在MainFrame类中声明m_allFrames
 }
-
-
-
-
-
-
-
-
 
 //保存文件的实现，包含后面四个方法
 void MainFrame::DoFileSave() {
@@ -206,13 +187,6 @@ bool MainFrame::SaveToFile(const wxString& filePath) {
     // 5. 验证写入结果
     return bytesWritten == xmlContent.Length();
 }
-
-
-
-
-
-
-
 
 wxString MainFrame::GenerateFileContent()
 {
@@ -277,14 +251,6 @@ wxString MainFrame::GenerateFileContent()
     doc.Save(strStream, wxXML_DOCUMENT_TYPE_NODE);
     return strStream.GetString();
 }
-
-
-
-
-
-
-
-
 
 void MainFrame::DoFileOpen(const wxString& path)
 {
