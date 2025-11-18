@@ -20,8 +20,11 @@ struct WireAnchor {
 };
 
 
+
 class CanvasPanel : public wxPanel
 {
+    std::vector<CmdMoveElement::Anchor> m_undoAnchors;
+    wxPoint m_dragStartElemPos;        // 拖动前元件左上角
 public:
     CanvasPanel(wxWindow* parent);
     void AddElement(const CanvasElement& elem);
@@ -67,7 +70,7 @@ public:
         Refresh();
     }
 
-
+    void CollectUndoAnchor(size_t elemIdx, std::vector<CmdMoveElement::Anchor>& out);
 
     // 暴露连线容器，供外部仿真/导出使用
     const std::vector<Wire>& GetWires() const { return m_wires; }

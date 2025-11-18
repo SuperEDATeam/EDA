@@ -33,21 +33,53 @@ CanvasPanel::CanvasPanel(wxWindow* parent)
     MyLog("CanvasPanel: constructed\n");
 }
 
-void CanvasPanel::OnLeftDown(wxMouseEvent& evt) {
-    wxPoint rawScreenPos = evt.GetPosition();
-    wxPoint rawCanvasPos = ScreenToCanvas(rawScreenPos);
+//void CanvasPanel::OnLeftDown(wxMouseEvent& evt)
+//{
+//    wxPoint rawCanvasPos = ScreenToCanvas(evt.GetPosition());
+//
+//    MainFrame* mf = wxDynamicCast(GetParent(), MainFrame);
+//    if (mf && mf->GetToolManager()) {
+//        mf->GetToolManager()->OnCanvasLeftDown(rawCanvasPos);
+//        if (mf->GetToolManager()->IsEventHandled()) return;
+//    }
+//
+//    int idx = HitTest(rawCanvasPos);
+//    if (idx != -1) {
+//        m_selectedIndex = idx;
+//        m_dragStartElemPos = m_elements[idx].GetPos();   // 元件旧位置
+//        CollectUndoAnchor(idx, m_undoAnchors);         // 导线旧坐标
+//        m_isDragging = true;
+//    }
+//    else {
+//        ClearSelection();
+//    }
+//    evt.Skip();
+//}
+void CanvasPanel::OnLeftDown(wxMouseEvent& evt)
+{
+    wxPoint rawCanvasPos = ScreenToCanvas(evt.GetPosition());
 
-    // 交给工具管理器处理
-    MainFrame* mainFrame = wxDynamicCast(GetParent(), MainFrame);
-    if (mainFrame && mainFrame->GetToolManager()) {
-        mainFrame->GetToolManager()->OnCanvasLeftDown(rawCanvasPos);
-        if (mainFrame->GetToolManager()->IsEventHandled()) {
-            return; // 工具管理器已处理事件
-        }
+    // 1. 先判断点击位置，无论ToolManager是否处理，CanvasPanel都需要记录状态
+    int idx = HitTest(rawCanvasPos);
+    if (idx != -1) {
+        m_selectedIndex = idx;
+        m_dragStartElemPos = m_elements[idx].GetPos(); // 记录元件起始位置
+        CollectUndoAnchor(idx, m_undoAnchors);         // 记录导线锚点
+        m_isDragging = true;                           // 关键：必须在这里设置标志
     }
 
-    // 如果工具管理器没有处理，保留原有的导线控制点点击逻辑
-    // 这个逻辑现在应该由工具管理器处理，所以这里理论上不会执行
+    // 2. 再交给ToolManager处理（它会实际移动元件和导线）
+    MainFrame* mf = wxDynamicCast(GetParent(), MainFrame);
+    if (mf && mf->GetToolManager()) {
+        mf->GetToolManager()->OnCanvasLeftDown(rawCanvasPos);
+        // 注意：不再根据IsEventHandled()提前返回
+    }
+
+    // 3. 如果没有点击元件且ToolManager没处理，清除选择
+    if (idx == -1 && mf->GetToolManager() && !mf->GetToolManager()->IsEventHandled()) {
+        ClearSelection();
+    }
+
     evt.Skip();
 }
 
@@ -67,18 +99,73 @@ void CanvasPanel::OnMouseMove(wxMouseEvent& evt) {
     evt.Skip();
 }
 
+//void CanvasPanel::OnLeftUp(wxMouseEvent& evt) {
+//    wxLogDebug("OnLeftUp entered");
+//    // 交给工具管理器处理
+//    wxPoint screenpos = evt.GetPosition();
+//	wxPoint canvasPos = ScreenToCanvas(screenpos);
+//    MainFrame* mainFrame = wxDynamicCast(GetParent(), MainFrame);
+//    if (mainFrame && mainFrame->GetToolManager()) {
+//        mainFrame->GetToolManager()->OnCanvasLeftUp(canvasPos);
+//        wxLogDebug("ToolManager handled=%d", mainFrame->GetToolManager()->IsEventHandled());
+//        if (mainFrame->GetToolManager()->IsEventHandled()) {
+//            return; // 工具管理器已处理事件
+//        }
+//    }
+//    wxLogDebug("m_isDragging=%d, m_selectedIndex=%d", m_isDragging, m_selectedIndex);
+//    if (m_isDragging && m_selectedIndex != -1) {
+//        const wxPoint& newPos = m_elements[m_selectedIndex].GetPos();
+//        if (newPos != m_dragStartElemPos) {
+//            m_undoStack.Push(std::make_unique<CmdMoveElement>(
+//                m_selectedIndex,
+//                m_dragStartElemPos,
+//                m_undoAnchors));          // 3 字段，类型匹配
+//            wxLogDebug("Undo name after Push: %s", m_undoStack.GetUndoName());
+//            MainFrame* mf = wxDynamicCast(GetParent(), MainFrame);
+//            if (mf) mf->OnUndoStackChanged();   // ← 刷新菜单文字 & 状态
+//        }
+//        m_isDragging = false;
+//    }
+//    evt.Skip();
+//}
+// CanvasPanel.cpp - 修改 OnLeftUp 函数
 void CanvasPanel::OnLeftUp(wxMouseEvent& evt) {
-    // 交给工具管理器处理
     wxPoint screenpos = evt.GetPosition();
-	wxPoint canvasPos = ScreenToCanvas(screenpos);
+    wxPoint canvasPos = ScreenToCanvas(screenpos);
+
+    // 在ToolManager处理前保存拖动状态（关键）
+    bool wasDragging = m_isDragging;
+    int draggedIndex = m_selectedIndex;
+    wxPoint startPos = m_dragStartElemPos;
+    auto anchors = m_undoAnchors; // 复制锚点信息，避免ToolManager清除后丢失
+
+    wxLogDebug("OnLeftUp: wasDragging=%d, idx=%d", wasDragging, draggedIndex); // 调试用
+
+    // 交给ToolManager处理（会实际更新元件和导线位置）
     MainFrame* mainFrame = wxDynamicCast(GetParent(), MainFrame);
     if (mainFrame && mainFrame->GetToolManager()) {
         mainFrame->GetToolManager()->OnCanvasLeftUp(canvasPos);
-        if (mainFrame->GetToolManager()->IsEventHandled()) {
-            return; // 工具管理器已处理事件
+    }
+
+    // 根据CanvasPanel记录的拖动状态生成撤销命令
+    if (wasDragging && draggedIndex != -1 && draggedIndex < m_elements.size()) {
+        const wxPoint& newPos = m_elements[draggedIndex].GetPos();
+        wxLogDebug("Pos: start=(%d,%d), new=(%d,%d)", startPos.x, startPos.y, newPos.x, newPos.y);
+
+        if (newPos != startPos) {
+            m_undoStack.Push(std::make_unique<CmdMoveElement>(
+                draggedIndex,
+                startPos,
+                anchors));
+            wxLogDebug("Pushed Move command, undo name: %s", m_undoStack.GetUndoName().c_str());
+
+            MainFrame* mf = wxDynamicCast(GetParent(), MainFrame);
+            if (mf) mf->OnUndoStackChanged();
         }
     }
 
+    // 重置拖动状态
+    m_isDragging = false;
     evt.Skip();
 }
 
@@ -550,4 +637,27 @@ void CanvasPanel::DeleteSelectedElement() {
             }
         }
         evt.Skip();
+    }
+
+    void CanvasPanel::CollectUndoAnchor(size_t elemIdx,
+        std::vector<CmdMoveElement::Anchor>& out)
+    {
+        out.clear();
+        if (elemIdx >= m_elements.size()) return;
+
+        const auto& elem = m_elements[elemIdx];
+        auto collect = [&](const auto& pins) {
+            for (const auto& pin : pins) {
+                wxPoint pinWorld = elem.GetPos() + wxPoint(pin.pos.x, pin.pos.y);
+                for (size_t w = 0; w < m_wires.size(); ++w) {
+                    const auto& wire = m_wires[w];
+                    if (!wire.pts.empty() && wire.pts.front().pos == pinWorld)
+                        out.emplace_back(CmdMoveElement::Anchor{ w, 0, pinWorld });
+                    if (wire.pts.size() > 1 && wire.pts.back().pos == pinWorld)
+                        out.emplace_back(CmdMoveElement::Anchor{ w, wire.pts.size() - 1, pinWorld });
+                }
+            }
+            };
+        collect(elem.GetInputPins());
+        collect(elem.GetOutputPins());
     }
