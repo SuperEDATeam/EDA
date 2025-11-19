@@ -41,33 +41,6 @@ wxString UndoStack::GetUndoName() const
     return CanUndo() ? m_stack.back()->GetName() : wxString("Can't Undo");
 }
 
-//void CmdMoveElement::undo(CanvasPanel* canvas)
-//{
-//    /* 1. 恢复元件本身 */
-//    if (m_index < canvas->m_elements.size())
-//    {
-//        canvas->m_elements[m_index].SetPos(m_oldPos);
-//        canvas->m_selectedIndex = static_cast<int>(m_index);
-//    }
-//
-//    /* 2. 恢复所有吸附的导线端点 */
-//    for (const auto& a : m_anchors)
-//    {
-//        if (a.wireIdx < canvas->m_wires.size() &&
-//            a.ptIdx < canvas->m_wires[a.wireIdx].pts.size())
-//        {
-//            canvas->m_wires[a.wireIdx].pts[a.ptIdx].pos = a.oldPos;
-//            // 重新生成走线 & 小格子
-//            canvas->m_wires[a.wireIdx].pts =
-//                Wire::RouteOrtho(canvas->m_wires[a.wireIdx].pts.front(),
-//                    canvas->m_wires[a.wireIdx].pts.back(),
-//                    PinDirection::Right,
-//                    PinDirection::Left);
-//            canvas->m_wires[a.wireIdx].GenerateCells();
-//        }
-//    }
-//    canvas->Refresh();
-//}
 void CmdMoveElement::undo(CanvasPanel* canvas)
 {
     if (m_index >= canvas->m_elements.size()) return;

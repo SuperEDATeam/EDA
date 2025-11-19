@@ -37,22 +37,27 @@ CanvasPanel::CanvasPanel(wxWindow* parent)
 //{
 //    wxPoint rawCanvasPos = ScreenToCanvas(evt.GetPosition());
 //
-//    MainFrame* mf = wxDynamicCast(GetParent(), MainFrame);
-//    if (mf && mf->GetToolManager()) {
-//        mf->GetToolManager()->OnCanvasLeftDown(rawCanvasPos);
-//        if (mf->GetToolManager()->IsEventHandled()) return;
-//    }
-//
+//    // 1. 先判断点击位置，无论ToolManager是否处理，CanvasPanel都需要记录状态
 //    int idx = HitTest(rawCanvasPos);
 //    if (idx != -1) {
 //        m_selectedIndex = idx;
-//        m_dragStartElemPos = m_elements[idx].GetPos();   // 元件旧位置
-//        CollectUndoAnchor(idx, m_undoAnchors);         // 导线旧坐标
-//        m_isDragging = true;
+//        m_dragStartElemPos = m_elements[idx].GetPos(); // 记录元件起始位置
+//        CollectUndoAnchor(idx, m_undoAnchors);         // 记录导线锚点
+//        m_isDragging = true;                           // 关键：必须在这里设置标志
 //    }
-//    else {
+//
+//    // 2. 再交给ToolManager处理（它会实际移动元件和导线）
+//    MainFrame* mf = wxDynamicCast(GetParent(), MainFrame);
+//    if (mf && mf->GetToolManager()) {
+//        mf->GetToolManager()->OnCanvasLeftDown(rawCanvasPos);
+//        // 注意：不再根据IsEventHandled()提前返回
+//    }
+//
+//    // 3. 如果没有点击元件且ToolManager没处理，清除选择
+//    if (idx == -1 && mf->GetToolManager() && !mf->GetToolManager()->IsEventHandled()) {
 //        ClearSelection();
 //    }
+//
 //    evt.Skip();
 //}
 void CanvasPanel::OnLeftDown(wxMouseEvent& evt)
@@ -68,14 +73,17 @@ void CanvasPanel::OnLeftDown(wxMouseEvent& evt)
         m_isDragging = true;                           // 关键：必须在这里设置标志
     }
 
-    // 2. 再交给ToolManager处理（它会实际移动元件和导线）
+    // 2. 保存操作前的导线数量（用于检测是否新增导线）
+    m_wireCountBeforeOperation = m_wires.size();
+
+    // 3. 再交给ToolManager处理（它会实际移动元件和导线）
     MainFrame* mf = wxDynamicCast(GetParent(), MainFrame);
     if (mf && mf->GetToolManager()) {
         mf->GetToolManager()->OnCanvasLeftDown(rawCanvasPos);
         // 注意：不再根据IsEventHandled()提前返回
     }
 
-    // 3. 如果没有点击元件且ToolManager没处理，清除选择
+    // 4. 如果没有点击元件且ToolManager没处理，清除选择
     if (idx == -1 && mf->GetToolManager() && !mf->GetToolManager()->IsEventHandled()) {
         ClearSelection();
     }
@@ -100,46 +108,56 @@ void CanvasPanel::OnMouseMove(wxMouseEvent& evt) {
 }
 
 //void CanvasPanel::OnLeftUp(wxMouseEvent& evt) {
-//    wxLogDebug("OnLeftUp entered");
-//    // 交给工具管理器处理
 //    wxPoint screenpos = evt.GetPosition();
-//	wxPoint canvasPos = ScreenToCanvas(screenpos);
+//    wxPoint canvasPos = ScreenToCanvas(screenpos);
+//
+//    // 在ToolManager处理前保存拖动状态（关键）
+//    bool wasDragging = m_isDragging;
+//    int draggedIndex = m_selectedIndex;
+//    wxPoint startPos = m_dragStartElemPos;
+//    auto anchors = m_undoAnchors; // 复制锚点信息，避免ToolManager清除后丢失
+//
+//    wxLogDebug("OnLeftUp: wasDragging=%d, idx=%d", wasDragging, draggedIndex); // 调试用
+//
+//    // 交给ToolManager处理（会实际更新元件和导线位置）
 //    MainFrame* mainFrame = wxDynamicCast(GetParent(), MainFrame);
 //    if (mainFrame && mainFrame->GetToolManager()) {
 //        mainFrame->GetToolManager()->OnCanvasLeftUp(canvasPos);
-//        wxLogDebug("ToolManager handled=%d", mainFrame->GetToolManager()->IsEventHandled());
-//        if (mainFrame->GetToolManager()->IsEventHandled()) {
-//            return; // 工具管理器已处理事件
-//        }
 //    }
-//    wxLogDebug("m_isDragging=%d, m_selectedIndex=%d", m_isDragging, m_selectedIndex);
-//    if (m_isDragging && m_selectedIndex != -1) {
-//        const wxPoint& newPos = m_elements[m_selectedIndex].GetPos();
-//        if (newPos != m_dragStartElemPos) {
+//
+//    // 根据CanvasPanel记录的拖动状态生成撤销命令
+//    if (wasDragging && draggedIndex != -1 && draggedIndex < m_elements.size()) {
+//        const wxPoint& newPos = m_elements[draggedIndex].GetPos();
+//        wxLogDebug("Pos: start=(%d,%d), new=(%d,%d)", startPos.x, startPos.y, newPos.x, newPos.y);
+//
+//        if (newPos != startPos) {
 //            m_undoStack.Push(std::make_unique<CmdMoveElement>(
-//                m_selectedIndex,
-//                m_dragStartElemPos,
-//                m_undoAnchors));          // 3 字段，类型匹配
-//            wxLogDebug("Undo name after Push: %s", m_undoStack.GetUndoName());
+//                draggedIndex,
+//                startPos,
+//                anchors));
+//            wxLogDebug("Pushed Move command, undo name: %s", m_undoStack.GetUndoName().c_str());
+//
 //            MainFrame* mf = wxDynamicCast(GetParent(), MainFrame);
-//            if (mf) mf->OnUndoStackChanged();   // ← 刷新菜单文字 & 状态
+//            if (mf) mf->OnUndoStackChanged();
 //        }
-//        m_isDragging = false;
 //    }
+//
+//    // 重置拖动状态
+//    m_isDragging = false;
 //    evt.Skip();
 //}
-// CanvasPanel.cpp - 修改 OnLeftUp 函数
 void CanvasPanel::OnLeftUp(wxMouseEvent& evt) {
     wxPoint screenpos = evt.GetPosition();
     wxPoint canvasPos = ScreenToCanvas(screenpos);
 
-    // 在ToolManager处理前保存拖动状态（关键）
+    // 保存拖动状态（元件移动用）
     bool wasDragging = m_isDragging;
     int draggedIndex = m_selectedIndex;
     wxPoint startPos = m_dragStartElemPos;
     auto anchors = m_undoAnchors; // 复制锚点信息，避免ToolManager清除后丢失
 
-    wxLogDebug("OnLeftUp: wasDragging=%d, idx=%d", wasDragging, draggedIndex); // 调试用
+    // 保存导线绘制状态（关键）
+    bool wasDrawingWire = (m_wireMode == WireMode::DragNew);
 
     // 交给ToolManager处理（会实际更新元件和导线位置）
     MainFrame* mainFrame = wxDynamicCast(GetParent(), MainFrame);
@@ -147,24 +165,32 @@ void CanvasPanel::OnLeftUp(wxMouseEvent& evt) {
         mainFrame->GetToolManager()->OnCanvasLeftUp(canvasPos);
     }
 
-    // 根据CanvasPanel记录的拖动状态生成撤销命令
+    // 检测是否新增了导线（核心逻辑）
+    if (m_wires.size() > m_wireCountBeforeOperation) {
+        // 导线绘制完成，压入撤销命令
+        size_t newWireIndex = m_wires.size() - 1;
+        m_undoStack.Push(std::make_unique<CmdAddWire>(newWireIndex));
+
+        MainFrame* mf = wxDynamicCast(GetParent(), MainFrame);
+        if (mf) mf->OnUndoStackChanged();
+    }
+
+    // 元件移动撤销（保持原有逻辑）
     if (wasDragging && draggedIndex != -1 && draggedIndex < m_elements.size()) {
         const wxPoint& newPos = m_elements[draggedIndex].GetPos();
-        wxLogDebug("Pos: start=(%d,%d), new=(%d,%d)", startPos.x, startPos.y, newPos.x, newPos.y);
-
         if (newPos != startPos) {
             m_undoStack.Push(std::make_unique<CmdMoveElement>(
                 draggedIndex,
                 startPos,
                 anchors));
-            wxLogDebug("Pushed Move command, undo name: %s", m_undoStack.GetUndoName().c_str());
 
-            MainFrame* mf = wxDynamicCast(GetParent(), MainFrame);
-            if (mf) mf->OnUndoStackChanged();
+            if (mainFrame) {
+                mainFrame->OnUndoStackChanged();
+            }
         }
     }
 
-    // 重置拖动状态
+    // 重置状态
     m_isDragging = false;
     evt.Skip();
 }

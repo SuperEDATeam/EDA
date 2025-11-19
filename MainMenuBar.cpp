@@ -83,21 +83,6 @@ EVT_MENU(wxID_HIGHEST + 502, MainMenuBar::OnLibraryRef)
 EVT_MENU(wxID_ABOUT, MainMenuBar::OnAbout)
 wxEND_EVENT_TABLE()
 
-//MainMenuBar::MainMenuBar(MainFrame* owner)
-//    : wxMenuBar(), m_owner(owner)
-//{
-//    // 创建六大菜单，目前只有 File 有内容
-//    Append(CreateFileMenu(), "&File");
-//    Append(CreateEditMenu(), "&Edit");
-//    Append(CreateProjectMenu(), "&Project");
-//    Append(CreateSimulateMenu(), "&Simulate");
-//    Append(CreateWindowMenu(), "&Window");
-//    Append(CreateHelpMenu(), "&Help");
-//
-//    // 加载最近文件列表
-//    LoadHistory();
-//}
-
 MainMenuBar::MainMenuBar(MainFrame* owner)
     : wxMenuBar(),
     m_owner(owner),
@@ -185,7 +170,9 @@ wxMenu* MainMenuBar::CreateEditMenu()
 {
     wxMenu* m = new wxMenu;
 
-    m->Append(wxID_UNDO, "&Can't Undo\tCtrl+Z");
+    wxMenuItem* undoItem = new wxMenuItem(m, wxID_UNDO, "&Can't Undo\tCtrl+Z");
+    undoItem->Enable(false);  // ← 关键：初始时禁用
+    m->Append(undoItem);
     m->AppendSeparator();
 
     m->Append(wxID_CUT, "Cu&t\tCtrl+X");

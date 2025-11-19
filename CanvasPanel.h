@@ -25,6 +25,7 @@ class CanvasPanel : public wxPanel
 {
     std::vector<CmdMoveElement::Anchor> m_undoAnchors;
     wxPoint m_dragStartElemPos;        // 拖动前元件左上角
+    size_t m_wireCountBeforeOperation = 0;  // 操作前的导线数量
 public:
     CanvasPanel(wxWindow* parent);
     void AddElement(const CanvasElement& elem);
