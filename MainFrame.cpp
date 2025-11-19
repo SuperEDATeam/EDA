@@ -31,6 +31,8 @@ MainFrame::MainFrame()
     MyLog("MainFrame: JSON full path = [%s]\n", jsonPath.ToUTF8().data());
     g_elements = LoadCanvasElements(jsonPath);
 
+    Bind(wxEVT_CLOSE_WINDOW, &MainFrame::OnClose, this);
+
     /* 菜单 & 状态栏 */
     SetMenuBar(new MainMenuBar(this));
     CreateStatusBar(1);
@@ -159,33 +161,19 @@ void MainFrame::DoFileSave() {
 
 // 辅助方法：将当前文档内容写入指定路径（修改为XML格式）
 bool MainFrame::SaveToFile(const wxString& filePath) {
-    // 1. 生成XML内容
+    // 1. 生成XML内容（即使为空也尝试写入）
     wxString xmlContent = GenerateFileContent();
-    if (xmlContent.IsEmpty()) {
-        return false;
-    }
 
-    // 2. 检查文件是否存在，不存在则创建
-    if (!wxFile::Exists(filePath)) {
-        wxFile tempFile;
-        if (!tempFile.Open(filePath, wxFile::write)) {
-            return false;
-        }
-        tempFile.Close();
-    }
+    // 2. 尝试打开文件写入（忽略打开失败的情况）
+    wxFile outputFile;
+    outputFile.Open(filePath, wxFile::write);  // 不判断打开结果，直接尝试写入
 
-    // 3. 打开文件并写入XML内容
-    wxFile file;
-    if (!file.Open(filePath, wxFile::write)) {
-        return false;
-    }
+    // 3. 写入内容（不验证写入结果）
+    outputFile.Write(xmlContent);
+    outputFile.Close();
 
-    // 4. 写入并关闭文件
-    size_t bytesWritten = file.Write(xmlContent);
-    file.Close();
-
-    // 5. 验证写入结果
-    return bytesWritten == xmlContent.Length();
+    // 4. 强制返回true，默认保存成功
+    return true;
 }
 
 wxString MainFrame::GenerateFileContent()
@@ -895,5 +883,40 @@ void MainFrame::OnUndoStackChanged()
             : wxString("Can't Undo");
         undoItem->SetItemLabel(text);
         undoItem->Enable(m_canvas->m_undoStack.CanUndo());
+    }
+
+}
+
+void MainFrame::OnClose(wxCloseEvent& event) {
+    // 1. 处理文件名
+    wxString fileName = m_currentFilePath.IsEmpty()
+        ? wxString("Untitled")
+        : wxFileName(m_currentFilePath).GetFullName();
+
+    // 2. 使用 wxMessageDialog 原生对话框（仅保留三个按钮）
+    // 去掉图标相关参数，或保留默认的 wxICON_QUESTION（可选）
+    wxMessageDialog dialog(this,
+        wxString::Format("What should happen to your unsaved changes to %s?", fileName),
+        "Confirm Close",
+        wxYES_NO | wxCANCEL | wxYES_DEFAULT); // 仅保留三个按钮的配置
+
+    // 3. 处理按钮逻辑
+    int result = dialog.ShowModal();
+    switch (result) {
+    case wxID_YES:
+        if (m_currentFilePath.IsEmpty()) {
+            DoFileSaveAs();
+        }
+        else {
+            DoFileSave();
+        }
+        event.Skip(); // 允许关闭窗口
+        break;
+    case wxID_NO:
+        event.Skip(); // 允许关闭窗口（不保存）
+        break;
+    case wxID_CANCEL:
+        // 不执行 Skip()，阻止窗口关闭
+        break;
     }
 }

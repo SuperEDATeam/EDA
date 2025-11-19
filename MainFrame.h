@@ -35,6 +35,8 @@ private:
     void AddWireNode(wxXmlNode* parent, const wxString& from, const wxString& to);
     bool SaveAsNodeFile(const wxString& filePath);
     bool SaveAsNetFile(const wxString& filePath);
+    // 新增：关闭事件处理函数声明
+    void OnClose(wxCloseEvent& event);
     // ...
 
 public:
