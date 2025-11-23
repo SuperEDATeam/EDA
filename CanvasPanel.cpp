@@ -7,6 +7,8 @@
 #include <wx/dcgraph.h>  
 #include <wx/graphics.h> 
 #include "CanvasTextElement.h"
+#include "HandyToolKit.h"
+#include "ToolStateMachine.h"
 
 
 wxBEGIN_EVENT_TABLE(CanvasPanel, wxPanel)
@@ -24,21 +26,24 @@ EVT_KILL_FOCUS(CanvasPanel::OnKillFocus)
 EVT_TIMER(wxID_ANY, CanvasPanel::OnClickTimer)  // 添加定时器事件
 wxEND_EVENT_TABLE()
 
-CanvasPanel::CanvasPanel(wxWindow* parent)
+CanvasPanel::CanvasPanel(MainFrame* parent)
     : wxPanel(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize,
-        wxFULL_REPAINT_ON_RESIZE | wxBORDER_NONE | wxWANTS_CHARS | wxTAB_TRAVERSAL),
+        wxFULL_REPAINT_ON_RESIZE | wxBORDER_NONE),
+    m_mainFrame(parent),
     m_offset(0, 0), m_isPanning(false), m_scale(1.0f),
-    m_wireMode(WireMode::Idle), m_selectedIndex(-1), m_isDragging(false),
-    m_hoverPinIdx(-1), m_hoverCellIdx(-1), m_hoverCellWire(-1), m_hasFocus(false),
-    m_hiddenTextCtrl(nullptr), 
+    m_wireMode(WireMode::Idle), m_selectedIndex(-1), m_isDragging(false), m_hoverInfo{}, m_hasFocus(false),
+    m_hiddenTextCtrl(nullptr),
     m_isUsingHiddenCtrl(false), m_currentEditingTextIndex(-1) {
 
-    SetupHiddenTextCtrl();
-    //m_clickTimer(this)；  // 初始化定时器
+    // 工具状态机
+    m_toolStateMachine = new ToolStateMachine(this);
 
     // 快捷工具栏
-    m_quickToolBar = new QuickToolBar(this);
+    m_HandyToolKit = new HandyToolKit(this, m_toolStateMachine);
     m_cursorTimer.Start(100);
+
+	// 工具管理器
+	m_CanvasEventHandler = new CanvasEventHandler(this, m_toolStateMachine);
 
     SetBackgroundStyle(wxBG_STYLE_PAINT);
     SetBackgroundColour(*wxWHITE);
@@ -101,10 +106,9 @@ void CanvasPanel::OnLeftDown(wxMouseEvent& evt)
     EnsureFocus();
 
     // 交给工具管理器处理
-    MainFrame* mainFrame = wxDynamicCast(GetParent(), MainFrame);
-    if (mainFrame && mainFrame->GetToolManager()) {
-        mainFrame->GetToolManager()->OnCanvasLeftDown(rawCanvasPos);
-        if (mainFrame->GetToolManager()->IsEventHandled()) {
+    if (m_CanvasEventHandler) {
+        m_CanvasEventHandler->OnCanvasLeftDown(rawCanvasPos);
+        if (m_CanvasEventHandler->IsEventHandled()) {
             return; // 工具管理器已处理事件
         }
     }
@@ -113,13 +117,12 @@ void CanvasPanel::OnLeftDown(wxMouseEvent& evt)
     m_wireCountBeforeOperation = m_wires.size();
 
     // 3. 交给ToolManager处理
-    MainFrame* mf = wxDynamicCast(GetParent(), MainFrame);
-    if (mf && mf->GetToolManager()) {
-        mf->GetToolManager()->OnCanvasLeftDown(rawCanvasPos);
+    if (m_CanvasEventHandler) {
+        m_CanvasEventHandler->OnCanvasLeftDown(rawCanvasPos);
     }
 
     // 4. 如果没有点击元件且ToolManager没处理，清除选择
-    if (idx == -1 && mf->GetToolManager() && !mf->GetToolManager()->IsEventHandled()) {
+    if (idx == -1 && m_CanvasEventHandler && !m_CanvasEventHandler->IsEventHandled()) {
         ClearSelection();
     }
 
@@ -191,16 +194,17 @@ void CanvasPanel::OnMouseMove(wxMouseEvent& evt) {
 
     wxPoint rawScreenPos = evt.GetPosition();
     wxPoint rawCanvasPos = ScreenToCanvas(rawScreenPos);
+	UpdateHoverInfo(rawCanvasPos);
 
     // 交给工具管理器处理
-    MainFrame* mainFrame = wxDynamicCast(GetParent(), MainFrame);
-    if (mainFrame && mainFrame->GetToolManager()) {
-        mainFrame->GetToolManager()->OnCanvasMouseMove(rawCanvasPos);
-        if (mainFrame->GetToolManager()->IsEventHandled()) {
-            return;
+        // 交给工具管理器处理
+    if (m_CanvasEventHandler) {
+        m_CanvasEventHandler->OnCanvasMouseMove(rawCanvasPos);
+        if (m_CanvasEventHandler->IsEventHandled()) {
+            return; // 工具管理器已处理事件
         }
     }
-
+    
     evt.Skip();
 }
 
@@ -267,8 +271,8 @@ void CanvasPanel::OnLeftUp(wxMouseEvent& evt)
     EnsureFocus();
 
     MainFrame* mainFrame = wxDynamicCast(GetParent(), MainFrame);
-    if (mainFrame && mainFrame->GetToolManager()) {
-        mainFrame->GetToolManager()->OnCanvasLeftUp(canvasPos);
+    if (m_CanvasEventHandler) {
+        m_CanvasEventHandler->OnCanvasLeftUp(canvasPos);
     }
 
     // 检测是否新增了导线
@@ -292,20 +296,27 @@ void CanvasPanel::OnLeftUp(wxMouseEvent& evt)
             if (mainFrame) {
                 mainFrame->OnUndoStackChanged();
             }
+            wxPoint canvasPos = ScreenToCanvas(screenpos);
+
+            if (m_CanvasEventHandler) {
+                m_CanvasEventHandler->OnCanvasLeftUp(canvasPos);
+                if (m_CanvasEventHandler->IsEventHandled()) {
+                    return; // 工具管理器已处理事件
+                }
+            }
+
+            // 重置拖动状态
+            m_isDragging = false;
+            evt.Skip();
         }
     }
-
-    // 重置拖动状态
-    m_isDragging = false;
-    evt.Skip();
 }
 
 void CanvasPanel::OnKeyDown(wxKeyEvent& evt) {
     // 交给工具管理器处理
-    MainFrame* mainFrame = wxDynamicCast(GetParent(), MainFrame);
-    if (mainFrame && mainFrame->GetToolManager()) {
-        mainFrame->GetToolManager()->OnCanvasKeyDown(evt);
-        if (mainFrame->GetToolManager()->IsEventHandled()) {
+    if (m_CanvasEventHandler) {
+        m_CanvasEventHandler->OnCanvasKeyDown(evt);
+        if (m_CanvasEventHandler->IsEventHandled()) {
             return; // 工具管理器已处理事件
         }
     }
@@ -338,10 +349,9 @@ void CanvasPanel::OnKeyDown(wxKeyEvent& evt) {
 
 void CanvasPanel::OnMouseWheel(wxMouseEvent& evt) {
     // 交给工具管理器处理
-    MainFrame* mainFrame = wxDynamicCast(GetParent(), MainFrame);
-    if (mainFrame && mainFrame->GetToolManager()) {
-        mainFrame->GetToolManager()->OnCanvasMouseWheel(evt);
-        if (mainFrame->GetToolManager()->IsEventHandled()) {
+    if (m_CanvasEventHandler){
+        m_CanvasEventHandler->OnCanvasMouseWheel(evt);
+        if (m_CanvasEventHandler->IsEventHandled()) {
             return; // 工具管理器已处理事件
         }
     }
@@ -468,16 +478,16 @@ void CanvasPanel::OnPaint(wxPaintEvent&) {
         if (m_wireMode == WireMode::DragNew) m_tempWire.Draw(*gcdc);
 
         // 4. 悬停引脚高亮（绿色空心圆）
-        if (m_hoverPinIdx != -1) {
+        if (m_hoverInfo.pinIndex != -1) {
             gc->SetBrush(*wxTRANSPARENT_BRUSH);
             gc->SetPen(wxPen(wxColour(0, 255, 0), 1.0 / m_scale));
-            gc->DrawEllipse(m_hoverPinPos.x - 3, m_hoverPinPos.y - 3, 6, 6);
+            gc->DrawEllipse(m_hoverInfo.pinWorldPos.x - 3, m_hoverInfo.pinWorldPos.y - 3, 6, 6);
         }
 
-        if (m_hoverCellIdx != -1) {
+        if (m_hoverInfo.cellIndex != -1) {
             gc->SetBrush(*wxTRANSPARENT_BRUSH);
             gc->SetPen(wxPen(wxColour(0, 255, 0), 1.0 / m_scale));
-            gc->DrawEllipse(m_hoverCellPos.x - 3, m_hoverCellPos.y - 3, 6, 6);
+            gc->DrawEllipse(m_hoverInfo.cellWorldPos.x - 3, m_hoverInfo.cellWorldPos.y - 3, 6, 6);
         }
 
         // 5. 绘制文本元素 - 修改为使用 unique_ptr
@@ -522,21 +532,20 @@ void CanvasPanel::OnPaint(wxPaintEvent&) {
         if (m_wireMode == WireMode::DragNew) m_tempWire.Draw(dc);
 
         // 4. 悬停引脚：绿色空心圆
-        if (m_hoverPinIdx != -1) {
+        if (m_hoverInfo.pinIndex != -1) {
             dc.SetBrush(*wxTRANSPARENT_BRUSH);              // 不填充 → 空心
             dc.SetPen(wxPen(wxColour(0, 255, 0), 1));       // 绿色边框，线宽 2
-            dc.DrawCircle(m_hoverPinPos, 3);                // 半径 3 像素
+            dc.DrawCircle(m_hoverInfo.pinWorldPos, 3);                // 半径 3 像素
         }
 
-        if (m_hoverCellIdx != -1) {
+        if (m_hoverInfo.cellIndex != -1) {
             /*MyLog("DRAW GREEN CELL: wire=%zu cell=%zu  pos=(%d,%d)\n",
                 m_hoverCellWire, m_hoverCellIdx,
                 m_hoverCellPos.x, m_hoverCellPos.y);*/
             dc.SetBrush(*wxTRANSPARENT_BRUSH);
             dc.SetPen(wxPen(wxColour(0, 255, 0), 1));
-            dc.DrawCircle(m_hoverCellPos, 3);
+            dc.DrawCircle(m_hoverInfo.cellWorldPos, 3);
         }
-
         // 5. 绘制文本元素 - 修改为使用 unique_ptr
         for (auto& textElem : m_textElements) {
             textElem.Draw(dc);
@@ -780,34 +789,106 @@ bool CanvasPanel::IsClickOnEmptyAreaPublic(const wxPoint& canvasPos) {
     return IsClickOnEmptyArea(canvasPos);
 }
 
-void CanvasPanel::OnRightDown(wxMouseEvent& evt) {
-    // 右键按下时也触发左键抬起事件
-    wxPoint rawScreenPos = evt.GetPosition();
-    wxPoint rawCanvasPos = ScreenToCanvas(rawScreenPos);
-    // 交给工具管理器处理
-    MainFrame* mainFrame = wxDynamicCast(GetParent(), MainFrame);
-    if (mainFrame && mainFrame->GetToolManager()) {
-        mainFrame->GetToolManager()->OnCanvasRightDown(rawScreenPos);
-        if (mainFrame->GetToolManager()->IsEventHandled()) {
-            return; // 工具管理器已处理事件
+    void CanvasPanel::OnRightDown(wxMouseEvent& evt) {
+        // 右键按下时也触发左键抬起事件
+        wxPoint rawScreenPos = evt.GetPosition();
+        wxPoint rawCanvasPos = ScreenToCanvas(rawScreenPos);
+        // 交给工具管理器处理
+
+        if (m_CanvasEventHandler) {
+            m_CanvasEventHandler->OnCanvasRightDown(rawScreenPos);
+            if (m_CanvasEventHandler->IsEventHandled()) {
+                return; // 工具管理器已处理事件
+            }
         }
-    }
-    evt.Skip();
-}
+        evt.Skip();
+	}
 
     void CanvasPanel::OnRightUp(wxMouseEvent& evt) {
         // 右键按下时也触发左键抬起事件
         wxPoint rawScreenPos = evt.GetPosition();
         wxPoint rawCanvasPos = ScreenToCanvas(rawScreenPos);
         // 交给工具管理器处理
-        MainFrame* mainFrame = wxDynamicCast(GetParent(), MainFrame);
-        if (mainFrame && mainFrame->GetToolManager()) {
-            mainFrame->GetToolManager()->OnCanvasRightUp(rawCanvasPos);
-            if (mainFrame->GetToolManager()->IsEventHandled()) {
+        if (m_CanvasEventHandler) {
+            m_CanvasEventHandler->OnCanvasRightUp(rawScreenPos);
+            if (m_CanvasEventHandler->IsEventHandled()) {
                 return; // 工具管理器已处理事件
             }
         }
+
         evt.Skip();
+    }
+
+    void CanvasPanel::SetStatus(wxString status) {
+		wxString hover = "";
+        if (m_hoverInfo.IsOverPin()) {
+            hover = (wxString::Format("悬停于: %sPin[%d]",
+                m_hoverInfo.isInputPin ? "Input" : "Output", m_hoverInfo.pinIndex));
+        }
+        else if (m_hoverInfo.IsOverCell()) {
+            hover = (wxString::Format("悬停于: Wire[%d] Cell[%d]",
+                m_hoverInfo.wireIndex, m_hoverInfo.cellIndex));
+        }
+        else if (m_hoverInfo.IsOverElement()) {
+            hover =(wxString::Format("悬停于: Component[%s]",
+                m_hoverInfo.elementName));
+        }
+        else {
+            hover = wxString::Format("悬停于: 无悬停对象");
+        }
+
+        wxString cursor = wxString::Format("指针位置: (%d, %d)", m_hoverInfo.pos.x, m_hoverInfo.pos.y);
+
+        wxString zoom = wxString::Format("缩放：%d%%", int(m_scale*100));
+
+        m_mainFrame->SetStatusText(status, 0);
+        m_mainFrame->SetStatusText(cursor, 1);
+        m_mainFrame->SetStatusText(hover, 2);
+        m_mainFrame->SetStatusText(zoom, 3);
+    }
+
+    void CanvasPanel::SetCurrentTool(ToolType tool) {
+		m_toolStateMachine->SetCurrentTool(tool);
+    }
+
+    void CanvasPanel::SetCurrentComponent(const wxString& componentName) {
+        if (m_toolStateMachine->GetCurrentTool() != ToolType::COMPONENT_TOOL) {
+            m_toolStateMachine->SetCurrentTool(ToolType::COMPONENT_TOOL);
+		}
+		m_CanvasEventHandler->SetCurrentComponent(componentName);
+    }
+
+    void CanvasPanel::UpdateHoverInfo(const wxPoint& canvasPos) {
+        m_hoverInfo.pos = canvasPos;
+
+        // 悬停引脚信息检测
+        bool isInput = false;
+        wxPoint pinWorldPos;
+		int pinIdx = HitHoverPin(canvasPos, &isInput, &pinWorldPos);
+
+		// 导线控制点信息检测
+        int cellWire = -1;
+        int cellIdx = -1;
+		wxPoint cellWorldPos;
+		int hitCellIdx = HitHoverCell(canvasPos, &cellWire, &cellIdx, &cellWorldPos);
+
+		// 悬停元件信息检测
+        int elementIndex = HitTestPublic(canvasPos);
+
+        // 更新信息
+        m_hoverInfo.pinIndex = pinIdx;
+		m_hoverInfo.isInputPin = isInput;
+		m_hoverInfo.pinWorldPos = pinWorldPos;
+
+        m_hoverInfo.cellIndex = cellIdx;
+        m_hoverInfo.wireIndex = cellWire;
+		m_hoverInfo.cellWorldPos = cellWorldPos;
+
+        m_hoverInfo.elementIndex = elementIndex;
+        if (elementIndex != -1) m_hoverInfo.elementName = m_elements[elementIndex].GetName();
+        else m_hoverInfo.elementName = "";
+        
+		Refresh(); // 触发重绘以显示悬停效果
     }
 
     void CanvasPanel::CollectUndoAnchor(size_t elemIdx,
@@ -925,6 +1006,7 @@ void CanvasPanel::CreateTextElement(const wxPoint& position) {
 
     // 立即开始编辑
     int newIndex = static_cast<int>(m_textElements.size() - 1);
+    SetupHiddenTextCtrl();
     AttachHiddenTextCtrlToElement(newIndex);
 }
 

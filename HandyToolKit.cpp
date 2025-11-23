@@ -1,21 +1,21 @@
-// QuickToolbar.cpp
-#include "QuickToolbar.h"
+// HandyToolKit.cpp
+#include "HandyToolKit.h"
 #include <wx/dcbuffer.h>
 #include "MainFrame.h"
 #include <wx/wx.h>
 #include <wx/graphics.h>
 
-wxBEGIN_EVENT_TABLE(QuickToolBar, wxPopupWindow)
-EVT_PAINT(QuickToolBar::OnPaint)
-EVT_MOTION(QuickToolBar::OnMouseMove)
-EVT_RIGHT_UP(QuickToolBar::OnRightUp)
-EVT_LEFT_UP(QuickToolBar::OnLeftDown)
-EVT_KILL_FOCUS(QuickToolBar::OnKillFocus)
+wxBEGIN_EVENT_TABLE(HandyToolKit, wxPopupWindow)
+EVT_PAINT(HandyToolKit::OnPaint)
+EVT_MOTION(HandyToolKit::OnMouseMove)
+EVT_RIGHT_UP(HandyToolKit::OnRightUp)
+EVT_KILL_FOCUS(HandyToolKit::OnKillFocus)
 wxEND_EVENT_TABLE()
 
-QuickToolBar::QuickToolBar(wxWindow* parent)
-    : wxPopupWindow(parent, wxBORDER_SIMPLE | wxPU_CONTAINS_CONTROLS),
-    m_selectedTool(-1), m_hoveredTool(-1)
+HandyToolKit::HandyToolKit(CanvasPanel* parent, ToolStateMachine* toolstate)
+    : wxPopupWindow(parent, wxBORDER_SIMPLE),
+	m_canvas(parent),
+	m_selectedTool(-1), m_hoveredTool(-1), m_toolStateMachine(toolstate)
 {   
     wxInitAllImageHandlers();
     SetBackgroundStyle(wxBG_STYLE_PAINT);
@@ -27,7 +27,7 @@ QuickToolBar::QuickToolBar(wxWindow* parent)
     SetSize(wxSize(96, 24));
 }
 
-void QuickToolBar::CreateTools()
+void HandyToolKit::CreateTools()
 {
     // 创建工具列表
     m_tools.clear();
@@ -42,14 +42,14 @@ void QuickToolBar::CreateTools()
     text.Rescale(text, wxSize(24, 24));
     wxBitmap wire("res\\icons\\wiring.png", wxBITMAP_TYPE_PNG);
     wire.Rescale(wire, wxSize(24, 24));
-    m_tools.push_back({ "Drag", drag, wxRect(0, 0, 24, 24), [this](void) {GetMainFrame(this)->GetToolManager()->SetCurrentTool(ToolType::DRAG_TOOL); } });
-    m_tools.push_back({ "Choose", choose, wxRect(24, 0, 24, 24), [this](void) {GetMainFrame(this)->GetToolManager()->SetCurrentTool(ToolType::SELECT_TOOL); } });
-    m_tools.push_back({ "Text", text, wxRect(48, 0, 24, 24), [this](void) {GetMainFrame(this)->GetToolManager()->SetCurrentTool(ToolType::TEXT_TOOL); } });
-    m_tools.push_back({ "Wire", wire, wxRect(72, 0, 24, 24), [this](void) {GetMainFrame(this)->GetToolManager()->SetCurrentTool(ToolType::WIRE_TOOL); } });
+    m_tools.push_back({ "Drag", drag, wxRect(0, 0, 24, 24), [this](void) {m_toolStateMachine->SetCurrentTool(ToolType::DRAG_TOOL); } });
+    m_tools.push_back({ "Choose", choose, wxRect(24, 0, 24, 24), [this](void) {m_toolStateMachine->SetCurrentTool(ToolType::SELECT_TOOL); } });
+    m_tools.push_back({ "Text", text, wxRect(48, 0, 24, 24), [this](void) {m_toolStateMachine->SetCurrentTool(ToolType::TEXT_TOOL); } });
+    m_tools.push_back({ "Wire", wire, wxRect(72, 0, 24, 24), [this](void) {m_toolStateMachine->SetCurrentTool(ToolType::WIRE_TOOL); } });
 
 }
 
-void QuickToolBar::OnPaint(wxPaintEvent& event)
+void HandyToolKit::OnPaint(wxPaintEvent& event)
 {
     wxAutoBufferedPaintDC dc(this);
     dc.Clear();
@@ -83,7 +83,7 @@ void QuickToolBar::OnPaint(wxPaintEvent& event)
 }
 
 // 绘制工具按钮的基础样式和悬停效果
-void QuickToolBar::DrawToolButton(wxDC& dc, const wxRect& rect, bool isHovered)
+void HandyToolKit::DrawToolButton(wxDC& dc, const wxRect& rect, bool isHovered)
 {
     // 基础按钮样式
     wxColour buttonColor(240, 240, 240);
@@ -110,7 +110,7 @@ void QuickToolBar::DrawToolButton(wxDC& dc, const wxRect& rect, bool isHovered)
 }
 
 // 绘制半透明覆盖层
-void QuickToolBar::DrawSemiTransparentOverlay(wxDC& dc, const wxRect& rect, const wxColour& color, int alpha)
+void HandyToolKit::DrawSemiTransparentOverlay(wxDC& dc, const wxRect& rect, const wxColour& color, int alpha)
 {
 //#if wxUSE_GRAPHICS_CONTEXT
     //// 使用图形上下文（推荐）
@@ -131,7 +131,7 @@ void QuickToolBar::DrawSemiTransparentOverlay(wxDC& dc, const wxRect& rect, cons
 }
 
 //// 可选：绘制发光边框效果
-void QuickToolBar::DrawGlowBorder(wxDC& dc, const wxRect& rect, const wxColour& color, int glowWidth)
+void HandyToolKit::DrawGlowBorder(wxDC& dc, const wxRect& rect, const wxColour& color, int glowWidth)
 {
 //#if wxUSE_GRAPHICS_CONTEXT
 //    wxGraphicsContext* gc = wxGraphicsContext::Create(dc);
@@ -157,7 +157,7 @@ void QuickToolBar::DrawGlowBorder(wxDC& dc, const wxRect& rect, const wxColour& 
 //}
 //
 //// 可选：绘制渐变高亮效果
-void QuickToolBar::DrawGradientHighlight(wxDC& dc, const wxRect& rect, const wxColour& startColor, const wxColour& endColor)
+void HandyToolKit::DrawGradientHighlight(wxDC& dc, const wxRect& rect, const wxColour& startColor, const wxColour& endColor)
 {
 //#if wxUSE_GRAPHICS_CONTEXT
 //    wxGraphicsContext* gc = wxGraphicsContext::Create(dc);
@@ -176,7 +176,7 @@ void QuickToolBar::DrawGradientHighlight(wxDC& dc, const wxRect& rect, const wxC
     }
 //#endif
 //}
-void QuickToolBar::OnMouseMove(wxMouseEvent& event)
+void HandyToolKit::OnMouseMove(wxMouseEvent& event)
 {
     wxPoint pos = event.GetPosition();
     int oldHovered = m_hoveredTool;
@@ -185,7 +185,7 @@ void QuickToolBar::OnMouseMove(wxMouseEvent& event)
     // 检查鼠标在哪个工具上
     for (size_t i = 0; i < m_tools.size(); i++) {
         if (m_tools[i].rect.Contains(pos)) {
-			GetMainFrame(this)->GetStatusBar()->SetStatusText(wxString::Format("工具: %s", m_tools[i].name.ToUTF8().data()));
+			m_canvas->SetStatus(wxString::Format("工具: %s", m_tools[i].name.ToUTF8().data()));
             m_hoveredTool = i;
             break;
         }
@@ -198,7 +198,7 @@ void QuickToolBar::OnMouseMove(wxMouseEvent& event)
     event.Skip();
 }
 
-void QuickToolBar::OnRightUp(wxMouseEvent& event)
+void HandyToolKit::OnRightUp(wxMouseEvent& event)
 {
     wxPoint pos = event.GetPosition();
 
@@ -226,7 +226,7 @@ void QuickToolBar::OnRightUp(wxMouseEvent& event)
 //    event.Skip();
 //}
 
-void QuickToolBar::OnKillFocus(wxFocusEvent& event) {
+void HandyToolKit::OnKillFocus(wxFocusEvent& event) {
     wxWindow* focused = wxWindow::FindFocus();
 
     // 只有当焦点转移到非父窗口时才隐藏
@@ -238,42 +238,7 @@ void QuickToolBar::OnKillFocus(wxFocusEvent& event) {
     event.Skip();
 }
 
-MainFrame* QuickToolBar::GetMainFrame(wxWindow* window)
-{
-    wxWindow* parent = window;
-    while (parent) {
-        MainFrame* mainFrame = dynamic_cast<MainFrame*>(parent);
-        if (mainFrame) {
-            return mainFrame;
-        }
-        parent = parent->GetParent();
-    }
-    return nullptr;
-}
-
-void QuickToolBar::PassFocusToCanvas() {
-    // 获取父窗口（应该是CanvasPanel）并设置焦点
-    wxWindow* parent = GetParent();
-    if (parent) {
-        parent->SetFocus();
-        //MyLog("QuickToolBar: Focus passed back to CanvasPanel\n");
-    }
-}
-
-void QuickToolBar::OnLeftDown(wxMouseEvent& event) {
-    wxPoint pos = event.GetPosition();
-
-    // 确定选择了哪个工具
-    for (size_t i = 0; i < m_tools.size(); i++) {
-        if (m_tools[i].rect.Contains(pos)) {
-            m_selectedTool = i;
-            // 执行工具的动作
-            m_tools[i].action();
-
-            // 选择工具后立即将焦点传回画布
-            PassFocusToCanvas();
-            break;
-        }
-    }
-    Hide();
+void HandyToolKit::PassFocusToCanvas() {
+	// 将焦点传递回画布
+	m_canvas->SetFocus();
 }

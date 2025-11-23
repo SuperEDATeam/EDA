@@ -1,4 +1,5 @@
 #include "Wire.h"
+#include "CanvasPanel.h"
 
 void Wire::Draw(wxDC& dc) const {
     if (pts.size() < 2) return;

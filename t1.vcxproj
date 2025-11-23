@@ -28,13 +28,14 @@
     <ClCompile Include="MainFrame.cpp" />
     <ClCompile Include="MainMenuBar.cpp" />
     <ClCompile Include="PropertyPanel.cpp" />
-    <ClCompile Include="QuickToolBar.cpp" />
+    <ClCompile Include="HandyToolKit.cpp" />
     <ClCompile Include="ToolBars.cpp" />
     <ClCompile Include="ToolboxModel.cpp" />
     <ClCompile Include="ToolboxPanel.cpp" />
-    <ClCompile Include="ToolManager.cpp" />
     <ClCompile Include="UndoNotifier.cpp" />
     <ClCompile Include="UndoStack.cpp" />
+    <ClCompile Include="CanvasEventHandler.cpp" />
+    <ClCompile Include="ToolStateMachine.cpp" />
     <ClCompile Include="Wire.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -46,12 +47,13 @@
     <ClInclude Include="MainFrame.h" />
     <ClInclude Include="MainMenuBar.h" />
     <ClInclude Include="my_log.h" />
-    <ClInclude Include="QuickToolBar.h" />
+    <ClInclude Include="HandyToolKit.h" />
     <ClInclude Include="PropertyPanel.h" />
     <ClInclude Include="ToolBars.h" />
     <ClInclude Include="ToolboxModel.h" />
     <ClInclude Include="ToolboxPanel.h" />
-    <ClInclude Include="ToolManager.h" />
+    <ClInclude Include="CanvasEventHandler.h" />
+    <ClInclude Include="ToolStateMachine.h" />
     <ClInclude Include="UndoNotifier.h" />
     <ClInclude Include="UndoStack.h" />
     <ClInclude Include="Wire.h" />

@@ -8,12 +8,10 @@
 #include <wx/xml/xml.h>
 #include <wx/mstream.h>
 #include "ToolBars.h"
-#include "ToolManager.h"
 
-class ToolManager; // 前向声明
 class ToolBars;   // 前向声明
 class CanvasPanel; // 前向声明
-class QuickToolBar;
+class HandyToolKit;
 
 class MainFrame : public wxFrame
 {
@@ -112,13 +110,6 @@ public:
     // 工具栏样式
     ToolBars* m_toolBars;
     void AddToolBarsToAuiManager();
-
-	// 工具管理器
-    ToolManager* m_toolManager;
-    ToolManager* GetToolManager() const { return m_toolManager; }
-    void InitializeTools();
-
-	
 
 private:
     wxAuiManager m_auiMgr;
