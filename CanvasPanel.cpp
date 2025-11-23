@@ -434,8 +434,24 @@ void CanvasPanel::PlaceElement(const wxString& name, const wxPoint& pos)
         [&](const CanvasElement& e) { return e.GetName() == name; });
     if (it == g_elements.end()) return;
     CanvasElement clone = *it;
-    Pin standardPin = clone.GetOutputPins()[0];
-    wxPoint standardpos = pos - wxPoint(standardPin.pos.x, standardPin.pos.y);
+
+    // 修复：检查引脚是否存在
+    wxPoint standardpos = pos;
+    const auto& outputPins = clone.GetOutputPins();
+    const auto& inputPins = clone.GetInputPins();
+
+    if (!outputPins.empty()) {
+        // 优先使用输出引脚
+        Pin standardPin = outputPins[0];
+        standardpos = pos - wxPoint(standardPin.pos.x, standardPin.pos.y);
+    }
+    else if (!inputPins.empty()) {
+        // 如果没有输出引脚，使用输入引脚
+        Pin standardPin = inputPins[0];
+        standardpos = pos - wxPoint(standardPin.pos.x, standardPin.pos.y);
+    }
+    // 如果都没有引脚，直接使用原位置
+
     clone.SetPos(standardpos);
     AddElement(clone);
 }
