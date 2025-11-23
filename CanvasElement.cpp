@@ -81,6 +81,56 @@ void CanvasElement::DrawVector(wxGCDC& gcdc) const
                     return; // 跳过原始绘制
                 }
             }
+            // 绘制Pin_Output元件，根据状态显示不同内容
+            // 在CanvasElement.cpp的DrawVector方法中，在Pin_Input的绘制逻辑后添加Pin_Output的处理：
+
+            // 绘制Pin_Output元件，根据状态显示不同内容
+            if (m_id == "Pin_Output") {
+                if constexpr (std::is_same_v<T, Circle>) {
+                    // 根据状态选择颜色
+                    wxColour circleColor, fillColor;
+                    wxString displayText;
+
+                    switch (m_outputState) {
+                    case 1: // 状态0
+                        circleColor = wxColour(0, 255, 0); // 绿色
+                        fillColor = wxColour(0, 255, 0);
+                        displayText = "0";
+                        break;
+                    case 2: // 状态1
+                        circleColor = wxColour(0, 128, 0); // 深绿色
+                        fillColor = wxColour(0, 128, 0);
+                        displayText = "1";
+                        break;
+                    default: // 状态X（默认）
+                        circleColor = wxColour(0xCC, 0xE0, 0x99); // #CCE099
+                        fillColor = wxColour(0xCC, 0xE0, 0x99);
+                        displayText = "X";
+                        break;
+                    }
+
+                    gc->SetPen(wxPen(circleColor, 3.0));
+                    gc->SetBrush(wxBrush(fillColor));
+                    gc->DrawEllipse(s.center.x - s.radius, s.center.y - s.radius,
+                        s.radius * 2, s.radius * 2);
+                    return; // 跳过原始绘制
+                }
+                else if constexpr (std::is_same_v<T, Text>) {
+                    wxString displayText;
+                    switch (m_outputState) {
+                    case 1: displayText = "0"; break;
+                    case 2: displayText = "1"; break;
+                    default: displayText = "X"; break;
+                    }
+
+                    wxFont font(s.fontSize, wxFONTFAMILY_DEFAULT,
+                        wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL);
+                    gc->SetFont(font, *wxWHITE);
+                    gc->DrawText(displayText, s.pos.x, s.pos.y);
+                    return; // 跳过原始绘制
+                }
+            }
+
 
             // 分支1：Line
             if constexpr (std::is_same_v<T, Line>) {
@@ -189,6 +239,56 @@ void CanvasElement::DrawFallback(wxDC& dc) const
                 }
                 else if constexpr (std::is_same_v<T, Text>) {
                     wxString displayText = m_state ? "1" : "0";
+                    dc.SetTextForeground(*wxWHITE);
+                    dc.SetFont(wxFont(arg.fontSize, wxFONTFAMILY_DEFAULT,
+                        wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL));
+                    dc.DrawText(displayText, off(arg.pos));
+                    return;
+                }
+            }
+
+            // 在DrawFallback方法中，在Pin_Input的处理后添加Pin_Output的处理：
+            if (m_id == "Pin_Output") {
+                if constexpr (std::is_same_v<T, Circle>) {
+                    wxColour circleColor, fillColor;
+                    wxString displayText;
+
+                    switch (m_outputState) {
+                    case 1: // 状态0
+                        circleColor = wxColour(0, 255, 0);
+                        fillColor = wxColour(0, 255, 0);
+                        displayText = "0";
+                        break;
+                    case 2: // 状态1
+                        circleColor = wxColour(0, 128, 0);
+                        fillColor = wxColour(0, 128, 0);
+                        displayText = "1";
+                        break;
+                    default: // 状态X
+                        circleColor = wxColour(0xCC, 0xE0, 0x99);
+                        fillColor = wxColour(0xCC, 0xE0, 0x99);
+                        displayText = "X";
+                        break;
+                    }
+
+                    if (arg.fill) {
+                        dc.SetBrush(wxBrush(fillColor));
+                    }
+                    else {
+                        dc.SetBrush(*wxTRANSPARENT_BRUSH);
+                    }
+                    dc.SetPen(wxPen(circleColor, 1));
+                    dc.DrawCircle(off(arg.center), arg.radius);
+                    return;
+                }
+                else if constexpr (std::is_same_v<T, Text>) {
+                    wxString displayText;
+                    switch (m_outputState) {
+                    case 1: displayText = "0"; break;
+                    case 2: displayText = "1"; break;
+                    default: displayText = "X"; break;
+                    }
+
                     dc.SetTextForeground(*wxWHITE);
                     dc.SetFont(wxFont(arg.fontSize, wxFONTFAMILY_DEFAULT,
                         wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL));
@@ -411,4 +511,21 @@ wxRect CanvasElement::GetBounds() const
     }
 
     return wxRect(minX, minY, maxX - minX + 1, maxY - minY + 1);
+}
+
+void CanvasElement::SetOutputState(int state)
+{
+    if (state >= 0 && state <= 2) {
+        m_outputState = state;
+    }
+}
+
+// 设置Pin_Output状态的示例代码：
+void SetPinOutputState(CanvasElement& pinOutput, int state) {
+    pinOutput.SetOutputState(state);
+}
+
+// 获取Pin_Output状态的示例代码：
+int GetPinOutputState(const CanvasElement& pinOutput) {
+    return pinOutput.GetOutputState();
 }

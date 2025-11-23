@@ -120,6 +120,10 @@ public:
     void SetId(const wxString& id) { m_id = id; }
     const wxString& GetId() const { return m_id; }
 
+    // 状态控制方法
+    void SetOutputState(int state);  // 0:X, 1:0, 2:1
+    int GetOutputState() const { return m_outputState; }
+
 private:
     wxString m_name;
     wxPoint m_pos;
@@ -137,4 +141,5 @@ private:
     // 添加状态和ID成员
     bool m_state = false; // 默认状态为0/false
     wxString m_id;        // 元件ID
+    int m_outputState = 0; // Pin_Output状态：0=X, 1=0, 2=1
 };

@@ -133,19 +133,29 @@ void CanvasPanel::OnLeftDoubleClick(wxMouseEvent& evt)
         m_clickTimer.Stop();
     }
 
-    // 检查是否双击了Pin_Input元件
+    // 检查是否双击了Pin_Input或Pin_Output元件
     int idx = HitTest(rawCanvasPos);
-    if (idx != -1 && idx < m_elements.size() && m_elements[idx].GetId() == "Pin_Input") {
-        // 切换Pin_Input的状态
-        m_elements[idx].ToggleState();
-        Refresh();
+    if (idx != -1 && idx < m_elements.size()) {
+        wxString elementId = m_elements[idx].GetId();
 
-        // 不进行拖动操作
-        m_isDragging = false;
-
-        // 标记事件已处理
-        evt.Skip(false);
-        return;
+        if (elementId == "Pin_Input") {
+            // 切换Pin_Input的状态
+            m_elements[idx].ToggleState();
+            Refresh();
+            m_isDragging = false;
+            evt.Skip(false);
+            return;
+        }
+        else if (elementId == "Pin_Output") {
+            // 切换Pin_Output的状态（循环切换：X->0->1->X）
+            int currentState = m_elements[idx].GetOutputState();
+            int newState = (currentState + 1) % 3; // 0->1->2->0
+            m_elements[idx].SetOutputState(newState);
+            Refresh();
+            m_isDragging = false;
+            evt.Skip(false);
+            return;
+        }
     }
 
     // 对于其他元件，继续正常处理
