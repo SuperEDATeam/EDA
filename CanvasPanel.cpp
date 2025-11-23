@@ -66,6 +66,13 @@ void CanvasPanel::OnLeftDown(wxMouseEvent& evt)
 
     // 1. 先判断点击位置，无论ToolManager是否处理，CanvasPanel都需要记录状态
     int idx = HitTest(rawCanvasPos);
+    // 检查是否点击了Pin_Input元件
+    if (idx != -1 && m_elements[idx].GetId() == "Pin_Input") {
+        // 切换Pin_Input的状态
+        m_elements[idx].ToggleState();
+        Refresh(); // 刷新显示
+        return;    // 直接返回，不进行其他处理
+    }
     if (idx != -1) {
         m_selectedIndex = idx;
         m_dragStartElemPos = m_elements[idx].GetPos(); // 记录元件起始位置

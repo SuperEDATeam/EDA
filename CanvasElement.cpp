@@ -58,6 +58,30 @@ void CanvasElement::DrawVector(wxGCDC& gcdc) const
         std::visit([&](auto&& s) {
             using T = std::decay_t<decltype(s)>;
 
+            // 对于Pin_Input元件，根据状态修改绘制
+            if (m_id == "Pin_Input") {
+                if constexpr (std::is_same_v<T, Circle>) {
+                    // 根据状态选择颜色
+                    wxColour circleColor = m_state ? wxColour(0, 128, 0) : wxColour(0, 255, 0); // 深绿色 : 绿色
+                    wxColour fillColor = m_state ? wxColour(0, 128, 0) : wxColour(0, 255, 0);
+
+                    gc->SetPen(wxPen(circleColor, 3.0));
+                    gc->SetBrush(wxBrush(fillColor));
+                    gc->DrawEllipse(s.center.x - s.radius, s.center.y - s.radius,
+                        s.radius * 2, s.radius * 2);
+                    return; // 跳过原始绘制
+                }
+                else if constexpr (std::is_same_v<T, Text>) {
+                    // 根据状态显示不同的文本
+                    wxString displayText = m_state ? "1" : "0";
+                    wxFont font(s.fontSize, wxFONTFAMILY_DEFAULT,
+                        wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL);
+                    gc->SetFont(font, *wxWHITE); // 保持白色文本
+                    gc->DrawText(displayText, s.pos.x, s.pos.y);
+                    return; // 跳过原始绘制
+                }
+            }
+
             // 分支1：Line
             if constexpr (std::is_same_v<T, Line>) {
                 gc->SetPen(wxPen(s.color, 3.0));
@@ -146,6 +170,32 @@ void CanvasElement::DrawFallback(wxDC& dc) const
     {
         auto visitor = [&](const auto& arg) {
             using T = std::decay_t<decltype(arg)>;
+
+            // 对于Pin_Input元件，根据状态修改绘制
+            if (m_id == "Pin_Input") {
+                if constexpr (std::is_same_v<T, Circle>) {
+                    wxColour circleColor = m_state ? wxColour(0, 128, 0) : wxColour(0, 255, 0);
+                    wxColour fillColor = m_state ? wxColour(0, 128, 0) : wxColour(0, 255, 0);
+
+                    if (arg.fill) {
+                        dc.SetBrush(wxBrush(fillColor));
+                    }
+                    else {
+                        dc.SetBrush(*wxTRANSPARENT_BRUSH);
+                    }
+                    dc.SetPen(wxPen(circleColor, 1));
+                    dc.DrawCircle(off(arg.center), arg.radius);
+                    return;
+                }
+                else if constexpr (std::is_same_v<T, Text>) {
+                    wxString displayText = m_state ? "1" : "0";
+                    dc.SetTextForeground(*wxWHITE);
+                    dc.SetFont(wxFont(arg.fontSize, wxFONTFAMILY_DEFAULT,
+                        wxFONTSTYLE_NORMAL, wxFONTWEIGHT_NORMAL));
+                    dc.DrawText(displayText, off(arg.pos));
+                    return;
+                }
+            }
 
             if constexpr (std::is_same_v<T, PolyShape>) {
                 std::vector<wxPoint> pts;
