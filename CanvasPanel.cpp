@@ -34,11 +34,8 @@ CanvasPanel::CanvasPanel(wxWindow* parent)
     m_isUsingHiddenCtrl(false), m_currentEditingTextIndex(-1) {
 
     SetupHiddenTextCtrl();
+    //m_clickTimer(this)；  // 初始化定时器
 
-
-    m_hoverPinIdx(-1), m_hoverCellIdx(-1), m_hoverCellWire(-1),
-    m_clickTimer(this)  // 初始化定时器
-{
     // 快捷工具栏
     m_quickToolBar = new QuickToolBar(this);
     m_cursorTimer.Start(100);
@@ -267,9 +264,6 @@ void CanvasPanel::OnLeftUp(wxMouseEvent& evt)
     // 保存导线绘制状态
     bool wasDrawingWire = (m_wireMode == WireMode::DragNew);
 
-    // 交给ToolManager处理
-	wxPoint canvasPos = ScreenToCanvas(screenpos);
-
     EnsureFocus();
 
     MainFrame* mainFrame = wxDynamicCast(GetParent(), MainFrame);
@@ -413,8 +407,7 @@ void CanvasPanel::AddElement(const CanvasElement& elem)
 }
 
 //================= 绘制 =================
-void CanvasPanel::OnPaint(wxPaintEvent&)
-{
+void CanvasPanel::OnPaint(wxPaintEvent&) {
     wxAutoBufferedPaintDC dc(this);
     dc.Clear();
 
@@ -438,14 +431,16 @@ void CanvasPanel::OnPaint(wxPaintEvent&)
         double dpiScale = GetContentScaleFactor();
         gc->Scale(dpiScale, dpiScale);
 
+
+
         // 1. 绘制网格（逻辑坐标，线宽随缩放自适应）
         const int grid = 20;
         const wxColour gridColor(240, 240, 240);
         gc->SetPen(wxPen(gridColor, 1.0 / m_scale)); // 笔宽在逻辑坐标下调整
 
         wxSize sz = GetClientSize();
-        int maxX = static_cast<int>(sz.x / (m_scale * dpiScale));
-        int maxY = static_cast<int>(sz.y / (m_scale * dpiScale));
+        int maxX = static_cast<int>(sz.x);
+        int maxY = static_cast<int>(sz.y);
 
         for (int x = 0; x < maxX; x += grid) {
             gc->StrokeLine(x, 0, x, maxY);
@@ -485,6 +480,10 @@ void CanvasPanel::OnPaint(wxPaintEvent&)
             gc->DrawEllipse(m_hoverCellPos.x - 3, m_hoverCellPos.y - 3, 6, 6);
         }
 
+        // 5. 绘制文本元素 - 修改为使用 unique_ptr
+        for (auto& textElem : m_textElements) {
+            textElem.Draw(*gcdc);
+        }
         delete gcdc; // 释放资源
     }
     else {
@@ -499,8 +498,8 @@ void CanvasPanel::OnPaint(wxPaintEvent&)
         dc.SetPen(wxPen(c, 1));
         // 计算可见区域的网格范围（基于缩放后的画布大小）
         wxSize sz = GetClientSize();
-        int maxX = static_cast<int>(sz.x / m_scale);  // 转换为画布坐标
-        int maxY = static_cast<int>(sz.y / m_scale);
+        int maxX = static_cast<int>(sz.x);  // 转换为画布坐标
+        int maxY = static_cast<int>(sz.y);
         for (int x = 0; x < maxX; x += grid)
             dc.DrawLine(x, 0, x, maxY);
         for (int y = 0; y < maxY; y += grid)
@@ -529,24 +528,24 @@ void CanvasPanel::OnPaint(wxPaintEvent&)
             dc.DrawCircle(m_hoverPinPos, 3);                // 半径 3 像素
         }
 
-    if (m_hoverCellIdx != -1) {
-        /*MyLog("DRAW GREEN CELL: wire=%zu cell=%zu  pos=(%d,%d)\n",
-            m_hoverCellWire, m_hoverCellIdx,
-            m_hoverCellPos.x, m_hoverCellPos.y);*/
-        dc.SetBrush(*wxTRANSPARENT_BRUSH);
-        dc.SetPen(wxPen(wxColour(0, 255, 0), 1));
-        dc.DrawCircle(m_hoverCellPos, 3);
-    }
+        if (m_hoverCellIdx != -1) {
+            /*MyLog("DRAW GREEN CELL: wire=%zu cell=%zu  pos=(%d,%d)\n",
+                m_hoverCellWire, m_hoverCellIdx,
+                m_hoverCellPos.x, m_hoverCellPos.y);*/
+            dc.SetBrush(*wxTRANSPARENT_BRUSH);
+            dc.SetPen(wxPen(wxColour(0, 255, 0), 1));
+            dc.DrawCircle(m_hoverCellPos, 3);
+        }
 
-    // 5. 绘制文本元素 - 修改为使用 unique_ptr
-    for (auto& textElem : m_textElements) {
+        // 5. 绘制文本元素 - 修改为使用 unique_ptr
+        for (auto& textElem : m_textElements) {
             textElem.Draw(dc);
+        }
     }
 }
 
 //================= 放置元件 =================
-void CanvasPanel::PlaceElement(const wxString& name, const wxPoint& pos)
-{
+void CanvasPanel::PlaceElement(const wxString& name, const wxPoint& pos){
     extern std::vector<CanvasElement> g_elements;
     auto it = std::find_if(g_elements.begin(), g_elements.end(),
         [&](const CanvasElement& e) { return e.GetName() == name; });
@@ -833,20 +832,6 @@ void CanvasPanel::OnRightDown(wxMouseEvent& evt) {
         collect(elem.GetInputPins());
         collect(elem.GetOutputPins());
     }
-void CanvasPanel::OnRightUp(wxMouseEvent& evt) {
-    // 右键按下时也触发左键抬起事件
-    wxPoint rawScreenPos = evt.GetPosition();
-    wxPoint rawCanvasPos = ScreenToCanvas(rawScreenPos);
-    // 交给工具管理器处理
-    MainFrame* mainFrame = wxDynamicCast(GetParent(), MainFrame);
-    if (mainFrame && mainFrame->GetToolManager()) {
-        mainFrame->GetToolManager()->OnCanvasRightUp(rawCanvasPos);
-        if (mainFrame->GetToolManager()->IsEventHandled()) {
-            return; // 工具管理器已处理事件
-        }
-    }
-    evt.Skip();
-}
 
 void CanvasPanel::OnCursorTimer(wxTimerEvent& event) {
     // 转发到toolmanager
