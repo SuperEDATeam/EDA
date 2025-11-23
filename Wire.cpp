@@ -72,3 +72,30 @@ void Wire::GenerateCells()
         }
     }
 }
+
+std::vector<ControlPoint> Wire::RouteBranch(
+    const ControlPoint& branchStart,    // 分支起点（导线上的点）
+    const ControlPoint& branchEnd,      // 分支终点
+    PinDirection endDir) {
+
+    std::vector<ControlPoint> out;
+
+    // 添加分支起点
+    out.push_back({ branchStart.pos, CPType::Bend });
+
+    // 分支路由策略：先垂直偏移一段距离，再水平连接到目标
+    int offsetY = 20; // 垂直偏移量
+
+    // 第一个中间点：垂直偏移
+    wxPoint mid1(branchStart.pos.x, branchStart.pos.y + offsetY);
+    out.push_back({ mid1, CPType::Bend });
+
+    // 第二个中间点：水平对齐到终点
+    wxPoint mid2(branchEnd.pos.x, branchStart.pos.y + offsetY);
+    out.push_back({ mid2, CPType::Bend });
+
+    // 添加终点
+    out.push_back({ branchEnd.pos, CPType::Bend });
+
+    return out;
+}

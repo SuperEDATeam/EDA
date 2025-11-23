@@ -15,14 +15,6 @@ class MainFrame;
 class CanvasTextElement;
 class ToolStateMachine;
 
-/* 新增：拖动时需要更新的连线索引 + 对应引脚信息 */
-struct WireAnchor {
-    size_t wireIdx;   // 哪条线
-    size_t ptIdx;     // 该线第几个控制点（0 或 最后）
-    bool   isInput;   // 元件侧是输入还是输出引脚
-    size_t pinIdx;    // 元件侧引脚索引
-};
-
 struct HoverInfo {
     wxPoint pos;
 
@@ -57,7 +49,7 @@ struct HoverInfo {
 
 class CanvasPanel : public wxPanel
 {
-    std::vector<CmdMoveElement::Anchor> m_undoAnchors;
+    std::vector<WireAnchor> m_undoAnchors;
     wxPoint m_dragStartElemPos;        // 拖动前元件左上角
     size_t m_wireCountBeforeOperation = 0;  // 操作前的导线数量
 public:
@@ -108,7 +100,7 @@ public:
         Refresh();
     }
 
-    void CollectUndoAnchor(size_t elemIdx, std::vector<CmdMoveElement::Anchor>& out);
+    void CollectUndoAnchor(size_t elemIdx, std::vector<WireAnchor>& out);
 
     // 暴露连线容器，供外部仿真/导出使用
     const std::vector<Wire>& GetWires() const { return m_wires; }
@@ -154,7 +146,7 @@ public:
 
     std::vector<Wire> m_wires;   // 已定型的连线
     Wire m_tempWire;             // 正在拖动/预览的连线
-    enum class WireMode { Idle, DragNew, DragMove };
+    enum class WireMode { Idle, DragNew, DragMove, DragBranch};
     WireMode m_wireMode = WireMode::Idle;
 
     ControlPoint m_startCP;      // 连线起点
@@ -172,6 +164,8 @@ public:
     wxPoint Snap(const wxPoint& raw, bool* snapped);
 
     std::vector<WireAnchor> m_movingWires;
+    std::vector<WireAnchor> m_movingbranchWires;
+    std::vector<WireAnchor> m_branchWires;
 
     int  HitHoverPin(const wxPoint& raw, bool* isInput, wxPoint* worldPos);
 
@@ -224,6 +218,28 @@ public:
     void StartTextEditing(int index);
 
     wxTextCtrl* m_sharedTextCtrl;
+
+private:
+        // ... 现有成员 ...
+
+        // 分支管理
+        std::vector<WireBranch> m_allBranches;  // 所有分支关系
+        // 分支拖动状态
+        struct BranchDragState {
+            size_t parentWire;
+            size_t parentCell;
+            wxPoint branchStartPos;
+        } m_branchDragState;
+public:
+    // 分支相关方法
+    bool CanCreateBranchFromWire(size_t wireIdx, size_t cellIdx) const;
+    size_t CreateBranchFromWire(size_t wireIdx, size_t cellIdx, const wxPoint& startPos);
+    void UpdateWireBranches(size_t wireIdx);
+    void DeleteWireWithBranches(size_t wireIdx);
+    void StartBranchFromWire(size_t wireIdx, size_t cellIdx, const wxPoint& startPos);
+    void CompleteBranchConnection();
+    void EstablishBranchConnection(size_t parentWire, size_t parentCell, size_t branchWire);
+    void RemoveBranchConnection(size_t parentWire, size_t branchWire);
 
     wxDECLARE_EVENT_TABLE();
 };

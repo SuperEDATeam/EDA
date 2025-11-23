@@ -27,9 +27,16 @@ enum class PinDirection {
     Down     // 引脚朝下
 };
 
+struct WireBranch {
+    size_t parentWire;    // 父导线索引
+    size_t parentCell;    // 父导线上的控制点索引
+    size_t branchWire;    // 分支导线索引
+};
+
 class Wire {
 public:
     std::vector<ControlPoint> pts;
+	std::vector<WireWireAnchor> anchors;
 
     Wire() = default;
     explicit Wire(std::vector<ControlPoint> v) : pts(std::move(v)) {}
@@ -50,6 +57,22 @@ public:
         PinDirection endDir);
     std::vector<wxPoint> cells;          // 每 2 px 小格中心
     void GenerateCells();                // 一次性切分
-private:
+public:
+    // ... 现有成员 ...
+
+    // 分支相关
+    std::vector<WireBranch> branches;  // 该导线的所有分支
+    bool isBranch = false;             // 标记是否为分支导线
+    size_t parentWire = -1;            // 如果是分支，指向父导线
+    size_t parentCell = -1;            // 父导线上的连接点
+
+    // 分支管理方法
+    void AddBranch(size_t branchWireIdx, size_t cellIdx);
+    void RemoveBranch(size_t branchWireIdx);
+    bool HasBranches() const { return !branches.empty(); }
+    static std::vector<ControlPoint> RouteBranch(
+        const ControlPoint& branchStart,    // 分支起点（导线上的点）
+        const ControlPoint& branchEnd,      // 分支终点
+        PinDirection endDir);
 
 };

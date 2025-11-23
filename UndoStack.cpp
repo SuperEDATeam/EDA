@@ -2,6 +2,9 @@
 #include "CanvasPanel.h"
 #include "UndoNotifier.h"
 
+class CanvasElement;
+class Wire;
+
 /* ---------------- CmdAddElement ---------------- */
 void CmdAddElement::undo(CanvasPanel* canvas)
 {
@@ -69,5 +72,15 @@ void CmdAddWire::undo(CanvasPanel* canvas)
     {
         canvas->m_wires.erase(canvas->m_wires.begin() + m_wireIdx);
         canvas->Refresh();
+    }
+}
+
+void CmdAddBranchWire::undo(CanvasPanel* canvas) {
+    // 删除分支关系 - 撤销操作
+    if (canvas && m_parentWire < canvas->GetWires().size() &&
+        m_branchWire < canvas->GetWires().size()) {
+
+        // 调用 CanvasPanel 的方法来移除分支连接
+        canvas->RemoveBranchConnection(m_parentWire, m_branchWire);
     }
 }

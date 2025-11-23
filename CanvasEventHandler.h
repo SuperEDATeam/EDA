@@ -25,6 +25,8 @@ private:
     wxPoint m_wireStartPos;
     ControlPoint m_startCP;
 
+    ControlPoint m_startBP;
+
     wxPoint m_panStartPos;
     wxPoint m_fakeStartPos;
 
@@ -114,5 +116,8 @@ public:
     void FinishElementDragging();
 
     void SetCurrentComponent(const wxString& componentName);
-    void HandleHoverFeedback(const wxPoint& canvasPos);
+
+    void StartBranchFromWire(size_t wireIdx, size_t cellIdx, const wxPoint& startPos);
+    void UpdateElementBranching(const wxPoint& currentPos);
+    void CompleteBranchConnection();
 };

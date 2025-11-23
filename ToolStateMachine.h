@@ -51,7 +51,8 @@ enum class ComponentToolState {
 enum class WireToolState {
     IDLE,
     WIRE_DRAWING,           // 导线绘制中
-    WIRE_EDITING
+	WIRE_EDITING,		   // 导线编辑中
+    WIRE_BRANCHING
 };
 
 // 绘图工具状态
