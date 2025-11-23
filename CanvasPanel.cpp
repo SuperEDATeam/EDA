@@ -34,16 +34,19 @@ CanvasPanel::CanvasPanel(MainFrame* parent)
     m_wireMode(WireMode::Idle), m_selectedIndex(-1), m_isDragging(false), m_hoverInfo{}, m_hasFocus(false),
     m_hiddenTextCtrl(nullptr),
     m_isUsingHiddenCtrl(false), m_currentEditingTextIndex(-1) {
+    SetupHiddenTextCtrl();
 
     // 工具状态机
     m_toolStateMachine = new ToolStateMachine(this);
 
-    // 快捷工具栏
-    m_HandyToolKit = new HandyToolKit(this, m_toolStateMachine);
+
     m_cursorTimer.Start(100);
 
 	// 工具管理器
 	m_CanvasEventHandler = new CanvasEventHandler(this, m_toolStateMachine);
+
+    // 快捷工具栏
+    m_HandyToolKit = new HandyToolKit(this, m_CanvasEventHandler);
 
     SetBackgroundStyle(wxBG_STYLE_PAINT);
     SetBackgroundColour(*wxWHITE);
@@ -104,14 +107,6 @@ void CanvasPanel::OnLeftDown(wxMouseEvent& evt)
         }
     }
     EnsureFocus();
-
-    // 交给工具管理器处理
-    if (m_CanvasEventHandler) {
-        m_CanvasEventHandler->OnCanvasLeftDown(rawCanvasPos);
-        if (m_CanvasEventHandler->IsEventHandled()) {
-            return; // 工具管理器已处理事件
-        }
-    }
 
     // 2. 保存操作前的导线数量
     m_wireCountBeforeOperation = m_wires.size();
@@ -1006,7 +1001,6 @@ void CanvasPanel::CreateTextElement(const wxPoint& position) {
 
     // 立即开始编辑
     int newIndex = static_cast<int>(m_textElements.size() - 1);
-    SetupHiddenTextCtrl();
     AttachHiddenTextCtrlToElement(newIndex);
 }
 

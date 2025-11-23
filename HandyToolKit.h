@@ -2,15 +2,15 @@
 // HandyToolKit.h
 #include <wx/wx.h>
 #include <wx/popupwin.h>
-#include "ToolStateMachine.h"
+#include "CanvasEventHandler.h"
 #include "CanvasPanel.h"
 
-class ToolStateMachine;
+class CanvasEventHandler;
 
 class HandyToolKit : public wxPopupWindow
 {
 public:
-    HandyToolKit(CanvasPanel* parent, ToolStateMachine* toolstate);
+    HandyToolKit(CanvasPanel* parent, CanvasEventHandler* ce);
     ~HandyToolKit() = default;
 
     void CreateTools();
@@ -41,7 +41,8 @@ private:
     std::vector<ToolInfo> m_tools;
     int m_selectedTool;
     int m_hoveredTool;
-	ToolStateMachine* m_toolStateMachine;
+	
+	CanvasEventHandler* m_CanvasEventHandler;
 
 	CanvasPanel* m_canvas;
 

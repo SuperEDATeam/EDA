@@ -22,6 +22,11 @@ void CanvasEventHandler::SetCurrentTool4Bar(ToolType tool) {
 }
 
 void CanvasEventHandler::SetCurrentTool(ToolType tool) {
+	TextToolState textState = m_toolStateMachine->GetTextState();
+    if (textState != TextToolState::IDLE) {
+        FinishTextEditing();
+    }
+
     m_toolStateMachine->SetCurrentTool(tool);
 
     // 设置适当的光标
@@ -135,16 +140,25 @@ void CanvasEventHandler::OnCanvasLeftDown(const wxPoint& canvasPos) {
         }
     }
 
-    // 4. 检查是否点击了现有文本元素
+    // 4. 检查是否在点击了现有文本元素
     bool clickedExisting = false;
     int textIndex = m_canvas->inWhichTextBox(canvasPos);
     if (textIndex != -1) {
+        m_previousTool = currentTool;
         m_isTemporaryAction = true;
         SetCurrentTool(ToolType::TEXT_TOOL);
         StartTextEditing(textIndex);
         clickedExisting = true;
         return;
     }
+
+	// 5. 在临时文本模式下，点击空白区域退回上个工具
+    if (m_isTemporaryAction && currentTool == ToolType::TEXT_TOOL) {
+        SetCurrentTool(m_previousTool);
+        currentTool = m_previousTool;
+        m_isTemporaryAction = false;
+        m_eventHandled = true;
+	}
 
 
     // 4. 按工具类型处理其他情况
@@ -926,6 +940,7 @@ bool CanvasEventHandler::IsCharacterKey(const wxKeyEvent& event) {
 
 void CanvasEventHandler::CreateTextElement(const wxPoint& position) {
     // 创建新文本元素
+    m_toolStateMachine->SetTextState(TextToolState::CANVAS_TEXT_EDITING);
 	m_canvas->CreateTextElement(position);
 
 }
@@ -936,6 +951,8 @@ void CanvasEventHandler::StartTextEditing(int index) {
     if (m_editingTextIndex != -1) {
         FinishTextEditing();
     }
+
+    m_toolStateMachine->SetTextState(TextToolState::CANVAS_TEXT_EDITING);
 
     // 开始新的编辑
     m_editingTextIndex = index;
@@ -954,14 +971,8 @@ void CanvasEventHandler::FinishTextEditing() {
     if (m_canvas) {
         m_canvas->DetachHiddenTextCtrl();
     }
-
+    m_toolStateMachine->SetTextState(TextToolState::IDLE);
     m_editingTextIndex = -1;
-
-    if (m_isTemporaryAction) {
-        SetCurrentTool(m_previousTool);
-        m_isTemporaryAction = false;
-    }
-
 
     m_canvas->SetStatus("文本编辑完成");
     
