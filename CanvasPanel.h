@@ -79,6 +79,15 @@ public:
 
     void DeleteSelectedElement();
 
+    // 添加双击事件处理
+    void OnLeftDoubleClick(wxMouseEvent& evt);
+
+    // 添加定时器相关成员（用于区分单击和双击）
+    wxTimer m_clickTimer;
+    wxPoint m_clickPos;
+    int m_clickElementIndex = -1;
+    void OnClickTimer(wxTimerEvent& evt);
+
 
 public:
     /* ---------- 原有元件相关 ---------- */
