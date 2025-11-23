@@ -9,7 +9,6 @@
 #include "my_log.h"
 #include <wx/filename.h> 
 #include <wx/sstream.h>
-#include "ToolManager.h"
 #include "HandyToolKit.h"
 
 extern std::vector<CanvasElement> g_elements;
@@ -32,7 +31,11 @@ MainFrame::MainFrame()
     /* 菜单 & 状态栏 */
     SetMenuBar(new MainMenuBar(this));
     CreateStatusBar(1);
-    SetStatusText("Ready");
+    int widths[] = { 400, 200, 200, 100 };
+	int style[] = { wxSB_NORMAL, wxSB_NORMAL, wxSB_FLAT, wxSB_FLAT };
+    GetStatusBar()->SetFieldsCount(4, widths);
+	GetStatusBar()->SetStatusStyles(4, style);
+
     SetTitle("Untitled");
     static_cast<MainMenuBar*>(GetMenuBar())->SetCurrentDocInWindowList("Untitled");
 
@@ -46,11 +49,6 @@ MainFrame::MainFrame()
     // 工具栏
     m_toolBars = new ToolBars(this);
     AddToolBarsToAuiManager();
-
-    // 工具管理器
-    m_toolManager = new ToolManager(this, m_toolBars, m_canvas);
-	m_toolManager->SetCurrentTool(ToolType::DRAG_TOOL);
-
 
     /* 创建侧边栏 + 属性表（上下叠放） */
     wxPanel* sidePanel = new wxPanel(this);  // 外壳
@@ -96,30 +94,19 @@ MainFrame::~MainFrame()
 }
 
 
-//void MainFrame::OnToolboxElement(wxCommandEvent& evt)
-//{
-//    MyLog("MainFrame: received <%s>\n", evt.GetString().ToUTF8().data());
-//
-//    wxString name = evt.GetString();
-//    auto it = std::find_if(g_elements.begin(), g_elements.end(),
-//        [&](const CanvasElement& e) { return e.GetName() == name; });
-//    if (it == g_elements.end()) return;
-//
-//    CanvasElement clone = *it;
-//    clone.SetPos(wxPoint(100, 100));   // 先放中央，后续用鼠标坐标
-//    m_canvas->AddElement(clone);        
-//}
-
 void MainFrame::OnToolboxElement(wxCommandEvent& evt)
 {
-    wxString componentName = evt.GetString();
+    MyLog("MainFrame: received <%s>\n", evt.GetString().ToUTF8().data());
 
-    if (m_toolManager) {
-        m_toolManager->SetCurrentComponent(componentName);
-    }
-    else {
-        wxLogError("ToolManager is not initialized!");
-    }
+    wxString name = evt.GetString();
+    auto it = std::find_if(g_elements.begin(), g_elements.end(),
+        [&](const CanvasElement& e) { return e.GetName() == name; });
+    if (it == g_elements.end()) return;
+
+    CanvasElement clone = *it;
+    clone.SetPos(wxPoint(100, 100));   // 先放中央，后续用鼠标坐标
+    //m_canvas->AddElement(clone);     
+	m_canvas->SetCurrentComponent(name);  // 设置为当前拖拽元件  
 }
 
 //目前只修改了Mainframe。上面的私有变量，方法，以及json头文件
@@ -618,8 +605,4 @@ void MainFrame::AddToolBarsToAuiManager() {
         .BestSize(10000, 28));
     m_toolBars->ChoosePageOne_toolBar1(-1); // 初始化工具栏状态
     m_toolBars->ChoosePageOne_toolBar3(-1); // 初始化工具栏状态
-}
-
-void MainFrame::InitializeTools() {
-    m_toolManager = new ToolManager(this, m_toolBars, m_canvas);
 }

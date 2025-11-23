@@ -12,9 +12,10 @@ EVT_RIGHT_UP(HandyToolKit::OnRightUp)
 EVT_KILL_FOCUS(HandyToolKit::OnKillFocus)
 wxEND_EVENT_TABLE()
 
-HandyToolKit::HandyToolKit(wxWindow* parent)
+HandyToolKit::HandyToolKit(CanvasPanel* parent, ToolStateMachine* toolstate)
     : wxPopupWindow(parent, wxBORDER_SIMPLE),
-    m_selectedTool(-1), m_hoveredTool(-1)
+	m_canvas(parent),
+	m_selectedTool(-1), m_hoveredTool(-1), m_toolStateMachine(toolstate)
 {   
     wxInitAllImageHandlers();
     SetBackgroundStyle(wxBG_STYLE_PAINT);
@@ -39,10 +40,10 @@ void HandyToolKit::CreateTools()
     text.Rescale(text, wxSize(24, 24));
     wxBitmap wire("res\\icons\\wiring.png", wxBITMAP_TYPE_PNG);
     wire.Rescale(wire, wxSize(24, 24));
-    m_tools.push_back({ "Drag", drag, wxRect(0, 0, 24, 24), [this](void) {GetMainFrame(this)->GetToolManager()->SetCurrentTool(ToolType::DRAG_TOOL); } });
-    m_tools.push_back({ "Choose", choose, wxRect(24, 0, 24, 24), [this](void) {GetMainFrame(this)->GetToolManager()->SetCurrentTool(ToolType::SELECT_TOOL); } });
-    m_tools.push_back({ "Text", text, wxRect(48, 0, 24, 24), [this](void) {GetMainFrame(this)->GetToolManager()->SetCurrentTool(ToolType::TEXT_TOOL); } });
-    m_tools.push_back({ "Wire", wire, wxRect(72, 0, 24, 24), [this](void) {GetMainFrame(this)->GetToolManager()->SetCurrentTool(ToolType::WIRE_TOOL); } });
+    m_tools.push_back({ "Drag", drag, wxRect(0, 0, 24, 24), [this](void) {m_toolStateMachine->SetCurrentTool(ToolType::DRAG_TOOL); } });
+    m_tools.push_back({ "Choose", choose, wxRect(24, 0, 24, 24), [this](void) {m_toolStateMachine->SetCurrentTool(ToolType::SELECT_TOOL); } });
+    m_tools.push_back({ "Text", text, wxRect(48, 0, 24, 24), [this](void) {m_toolStateMachine->SetCurrentTool(ToolType::TEXT_TOOL); } });
+    m_tools.push_back({ "Wire", wire, wxRect(72, 0, 24, 24), [this](void) {m_toolStateMachine->SetCurrentTool(ToolType::WIRE_TOOL); } });
 
 }
 
@@ -182,7 +183,7 @@ void HandyToolKit::OnMouseMove(wxMouseEvent& event)
     // 检查鼠标在哪个工具上
     for (size_t i = 0; i < m_tools.size(); i++) {
         if (m_tools[i].rect.Contains(pos)) {
-			GetMainFrame(this)->GetStatusBar()->SetStatusText(wxString::Format("工具: %s", m_tools[i].name.ToUTF8().data()));
+			m_canvas->SetStatus(wxString::Format("工具: %s", m_tools[i].name.ToUTF8().data()));
             m_hoveredTool = i;
             break;
         }
@@ -220,17 +221,4 @@ void HandyToolKit::OnKillFocus(wxFocusEvent& event)
     // 失去焦点时自动关闭
     Hide();
     event.Skip();
-}
-
-MainFrame* HandyToolKit::GetMainFrame(wxWindow* window)
-{
-    wxWindow* parent = window;
-    while (parent) {
-        MainFrame* mainFrame = dynamic_cast<MainFrame*>(parent);
-        if (mainFrame) {
-            return mainFrame;
-        }
-        parent = parent->GetParent();
-    }
-    return nullptr;
 }

@@ -2,71 +2,66 @@
 #include <wx/wx.h>
 #include "ToolBars.h"
 #include "CanvasPanel.h"
+#include "ToolStateMachine.h" // 包含状态机头文件
 
-class MainFrame; // 前向声明
-class CanvasPanel; // 前向声明
-class ToolBars;   // 前向声明
+class MainFrame;
+class CanvasPanel;
+class ToolBars;
+// class ToolStateMachine; // 不需要前向声明了，因为已经 include 了
 
-enum class ToolType {
-    DEFAULT_TOOL,    // 默认工具（包含导线绘制、平移等）
-    SELECT_TOOL,     // 选中工具
-    TEXT_TOOL,       // 文本工具
-    COMPONENT_TOOL,  // 元件工具
-    WIRE_TOOL,       // 专门的导线工具
-    DRAG_TOOL         // 拖拽工具
-};
+// 删除 ToolType 枚举定义，直接使用 ToolStateMachine.h 中的定义
 
-class ToolManager {
+class CanvasEventHandler {
 private:
-    ToolType m_currentTool;
-	ToolType m_previousTool;
-    bool m_tempTool;
-    ToolBars* m_toolBars;
     CanvasPanel* m_canvas;
-    MainFrame* m_mainFrame;
-    wxString m_currentComponent;
     bool m_eventHandled;
 
-    // 导线绘制相关状态
-    bool m_isDrawingWire;
+    // 保存一个标记，用于判断是否是从其他工具临时切换过来的（例如在默认模式下临时画线）
+    // 如果你想完全依赖状态机，可以去掉这个，但为了保留你原有的交互体验（画完一根线自动切回），建议保留这个逻辑变量
+    bool m_isTemporaryAction;
+    ToolType m_previousTool;
+
+    // 具体的绘制/操作数据仍然需要保留，因为状态机只管“状态”，不管“数据”
     wxPoint m_wireStartPos;
     ControlPoint m_startCP;
-    wxPoint m_fixedStartPos;
 
-    // 平移相关状态
-    bool m_isPanning;
     wxPoint m_panStartPos;
-	wxPoint m_fakeStartPos;
+    wxPoint m_fakeStartPos;
 
-    // 导线编辑相关状态
-    bool m_isEditingWire;
     int m_editingWireIndex;
     int m_editingPointIndex;
     wxPoint m_editStartPos;
 
-    // 元件拖动相关状态
-    bool m_isDraggingElement;
     int m_draggingElementIndex;
     wxPoint m_elementDragStartPos;
     wxPoint m_elementStartCanvasPos;
 
-public:
-    ToolManager(MainFrame* mainFrame, ToolBars* toolBars, CanvasPanel* canvas);
+    // 当前选中的元件名（用于放置）
+    wxString m_currentComponent;
 
+    // 核心：持有状态机指针
+    ToolStateMachine* m_toolStateMachine;
+
+public:
+    
+    
+    
+    
+    CanvasEventHandler(CanvasPanel* canvas, ToolStateMachine* toolstate);
+
+    // 代理状态机的 SetCurrentTool，并处理一些本地逻辑
     void SetCurrentTool(ToolType tool);
-    ToolType GetCurrentTool() const { return m_currentTool; }
-    void SetCurrentComponent(const wxString& componentName);
 
     bool IsEventHandled() const { return m_eventHandled; }
     void ResetEventHandled() { m_eventHandled = false; }
 
     // 工具行为方法
-    void HandleDefaultTool(const wxPoint& canvasPos);
     void HandleSelectTool(const wxPoint& canvasPos);
     void HandleTextTool(const wxPoint& canvasPos);
     void HandleComponentTool(const wxPoint& canvasPos);
     void HandleWireTool(const wxPoint& canvasPos);
     void HandleDragTool(const wxPoint& canvasPos);
+    // HandleDefaultTool 可以移除，逻辑并入 OnCanvasLeftDown 的 DRAG_TOOL 处理中
 
     // 画布事件转发
     void OnCanvasLeftDown(const wxPoint& canvasPos);
@@ -77,37 +72,25 @@ public:
     void OnCanvasRightDown(const wxPoint& canvasPos);
     void OnCanvasRightUp(const wxPoint& canvasPos);
 
-    // 导线绘制方法
+    // 动作开启/更新/结束方法
     void StartWireDrawing(const wxPoint& startPos, bool fromPin);
     void UpdateWireDrawing(const wxPoint& currentPos);
     void FinishWireDrawing(const wxPoint& endPos);
     void CancelWireDrawing();
 
-    // 平移方法
     void StartPanning(const wxPoint& startPos);
     void UpdatePanning(const wxPoint& currentPos);
     void FinishPanning(const wxPoint& currentPos);
 
-    // 状态获取
-    bool IsDrawingWire() const { return m_isDrawingWire; }
-    bool IsPanning() const { return m_isPanning; }
-    ControlPoint GetStartControlPoint() const { return m_startCP; }
-
-    // 导线编辑方法
     void StartWireEditing(int wireIndex, int pointIndex, const wxPoint& startPos);
     void UpdateWireEditing(const wxPoint& currentPos);
     void FinishWireEditing();
     void CancelWireEditing();
 
-    // 元件拖动方法
     void StartElementDragging(int elementIndex, const wxPoint& startPos);
     void UpdateElementDragging(const wxPoint& currentPos);
     void FinishElementDragging();
 
-    // 状态获取
-    bool IsEditingWire() const { return m_isEditingWire; }
-    bool IsDraggingElement() const { return m_isDraggingElement; }
-
+    void SetCurrentComponent(const wxString& componentName);
     void HandleHoverFeedback(const wxPoint& canvasPos);
-
 };

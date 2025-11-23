@@ -4,10 +4,13 @@
 #include "CanvasElement.h"
 #include "Wire.h"          // ← 新增：连线数据
 #include "HandyToolKit.h"
+#include "ToolStateMachine.h"
+#include "CanvasEventHandler.h"
 
 class HandyToolKit;
-class ToolManager;
+class CanvasEventHandler;
 class MainFrame;
+class ToolStateMachine;
 
 /* 新增：拖动时需要更新的连线索引 + 对应引脚信息 */
 struct WireAnchor {
@@ -17,13 +20,46 @@ struct WireAnchor {
     size_t pinIdx;    // 元件侧引脚索引
 };
 
+struct HoverInfo {
+    wxPoint pos;
+
+    // -----------------
+    // 1. 引脚 (Pin) 悬停信息
+    // -----------------
+    int pinIndex = -1;         // 悬停引脚的索引。-1 表示没有悬停在任何引脚上。
+	bool isInputPin = false;   // 悬停引脚是否为输入引脚。
+    wxPoint pinWorldPos;       // 悬停引脚在世界坐标系中的位置。
+
+    // -----------------
+    // 2. 导线控制点 (Cell/Wire Control Point) 悬停信息
+    // -----------------
+    int cellIndex = -1;        // 悬停导线控制点的索引。-1 表示没有悬停在控制点上。
+    int wireIndex = -1;        // 控制点所属导线的索引。
+    wxPoint cellWorldPos;      // 控制点在世界坐标系中的位置。
+
+    // -----------------
+    // 3. 元件 (Element) 悬停信息 (用于状态栏反馈)
+    // -----------------
+    int elementIndex = -1;     // 悬停元件的索引。-1 表示没有悬停在任何元件上。
+    wxString elementName;      // 悬停元件的名称。
+
+    // 辅助函数，判断是否悬停在某个具体对象上
+    bool IsOverPin() const { return pinIndex != -1; }
+    bool IsOverCell() const { return cellIndex != -1; }
+    bool IsOverElement() const { return elementIndex != -1; }
+
+    // 构造函数
+	HoverInfo() : pinIndex(-1), isInputPin(false), cellIndex(-1), wireIndex(-1), elementIndex(-1) {}
+};
 
 class CanvasPanel : public wxPanel
 {
 public:
-    CanvasPanel(wxWindow* parent);
+    CanvasPanel(MainFrame* parent);
     void AddElement(const CanvasElement& elem);
     void PlaceElement(const wxString& name, const wxPoint& pos);
+
+    MainFrame* m_mainFrame;
 
 
     // 缩放相关方法
@@ -109,14 +145,8 @@ public:
 
     std::vector<WireAnchor> m_movingWires;
 
-    int m_hoverPinIdx=-1;
-    bool m_hoverIsInput=false;
-    wxPoint m_hoverPinPos;
     int  HitHoverPin(const wxPoint& raw, bool* isInput, wxPoint* worldPos);
 
-    int  m_hoverCellWire = -1;   // 哪条线
-    int  m_hoverCellIdx = -1;   // 哪一格
-    wxPoint m_hoverCellPos;
     int HitHoverCell(const wxPoint& raw, int* wireIdx, int* cellIdx, wxPoint* cellPos);
 
 	// 工具管理器需要的接口
@@ -128,6 +158,29 @@ public:
 
     // 快捷工具栏
     HandyToolKit* m_HandyToolKit;
+
+    // 工具状态机
+	ToolStateMachine* m_toolStateMachine;
+
+	// 工具管理器
+	
+    
+    
+    
+    CanvasEventHandler* m_CanvasEventHandler;
+
+    // 更新状态栏方法
+    void SetStatus(wxString status);
+
+	// 对外的工具状态接口
+	void SetCurrentTool(ToolType tool);
+	void SetCurrentComponent(const wxString& componentName);
+
+    // 悬停信息
+	HoverInfo m_hoverInfo;
+
+    // 悬停信息检测
+    void UpdateHoverInfo(const wxPoint& canvasPos);
 
     std::vector<WireWireAnchor> m_wireWireAnchors;// 导线<->导线小方块（新增）
     wxDECLARE_EVENT_TABLE();

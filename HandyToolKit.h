@@ -2,14 +2,15 @@
 // HandyToolKit.h
 #include <wx/wx.h>
 #include <wx/popupwin.h>
-#include "MainFrame.h"
+#include "ToolStateMachine.h"
+#include "CanvasPanel.h"
 
-class MainFrame;
+class ToolStateMachine;
 
 class HandyToolKit : public wxPopupWindow
 {
 public:
-    HandyToolKit(wxWindow* parent);
+    HandyToolKit(CanvasPanel* parent, ToolStateMachine* toolstate);
     ~HandyToolKit() = default;
 
     void CreateTools();
@@ -26,8 +27,6 @@ private:
     void DrawGradientHighlight(wxDC& dc, const wxRect& rect, const wxColour& startColor, const wxColour& endColor);
     void DrawToolButton(wxDC& dc, const wxRect& rect, bool isHovered);
 
-    MainFrame* GetMainFrame(wxWindow* window);
-
     struct ToolInfo {
         wxString name;
         wxBitmap icon;
@@ -38,6 +37,9 @@ private:
     std::vector<ToolInfo> m_tools;
     int m_selectedTool;
     int m_hoveredTool;
+	ToolStateMachine* m_toolStateMachine;
+
+	CanvasPanel* m_canvas;
 
     wxDECLARE_EVENT_TABLE();
 };

@@ -31,7 +31,8 @@
     <ClCompile Include="ToolBars.cpp" />
     <ClCompile Include="ToolboxModel.cpp" />
     <ClCompile Include="ToolboxPanel.cpp" />
-    <ClCompile Include="ToolManager.cpp" />
+    <ClCompile Include="CanvasEventHandler.cpp" />
+    <ClCompile Include="ToolStateMachine.cpp" />
     <ClCompile Include="Wire.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -47,7 +48,8 @@
     <ClInclude Include="ToolBars.h" />
     <ClInclude Include="ToolboxModel.h" />
     <ClInclude Include="ToolboxPanel.h" />
-    <ClInclude Include="ToolManager.h" />
+    <ClInclude Include="CanvasEventHandler.h" />
+    <ClInclude Include="ToolStateMachine.h" />
     <ClInclude Include="Wire.h" />
   </ItemGroup>
   <ItemGroup>
