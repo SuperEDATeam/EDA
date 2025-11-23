@@ -47,6 +47,8 @@ private:
     void OnFileClose(wxCommandEvent&);
     void OnFileSave(wxCommandEvent&);
     void OnFileSaveAs(wxCommandEvent&);
+    void OnSaveAsNode(wxCommandEvent& event);  // 处理.node保存事件
+    void OnSaveAsNet(wxCommandEvent& event);   // 处理.net保存事件
     void OnFileHistory(wxCommandEvent&);
     void OnExportImage(wxCommandEvent&);
     void OnPrint(wxCommandEvent&);

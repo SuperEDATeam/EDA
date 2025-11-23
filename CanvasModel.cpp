@@ -46,6 +46,9 @@ std::vector<CanvasElement> LoadCanvasElements(const wxString& jsonPath)
         wxPoint  pos(elem["anchorPoint"][0].asInt(), elem["anchorPoint"][1].asInt());
         CanvasElement ce(name, pos);
 
+        // 设置元件ID
+        ce.SetId(id);
+
         // ������
         for (const auto& pin : elem["inputPins"])
             ce.AddInputPin({ pin["x"].asInt(), pin["y"].asInt() }, wxString::FromUTF8(pin["name"].asString()));

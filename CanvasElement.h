@@ -1,5 +1,8 @@
 #pragma once
+
 #include <wx/wx.h>
+#include <wx/dcgraph.h>  
+#include <wx/graphics.h>  
 #include <vector>
 #include <variant>
 
@@ -108,12 +111,35 @@ public:
 
     wxRect GetBounds() const;
 
+    // 添加状态管理方法
+    void ToggleState() { m_state = !m_state; }
+    bool GetState() const { return m_state; }
+    void SetState(bool state) { m_state = state; }
+
+    // 设置元件ID用于识别Pin_Input
+    void SetId(const wxString& id) { m_id = id; }
+    const wxString& GetId() const { return m_id; }
+
+    // 状态控制方法
+    void SetOutputState(int state);  // 0:X, 1:0, 2:1
+    int GetOutputState() const { return m_outputState; }
+
 private:
     wxString m_name;
     wxPoint m_pos;
     std::vector<Shape> m_shapes;
     std::vector<Pin> m_inputPins;
     std::vector<Pin> m_outputPins;
-
+    void DrawVector(wxGCDC& gcdc) const;
     std::vector<wxPoint> CalculateBezier(const Point& p0, const Point& p1, const Point& p2, int segments = 16) const;
+    // 回退绘制方法
+    void DrawFallback(wxDC& dc) const;
+    // 1. 正确声明 wxGCDC 版本的 DrawPathFallback（别注释！）
+    void DrawPathFallback(wxGCDC& gcdc, const Path& arg, std::function<wxPoint(const Point&)> off) const;
+    // 2. 保留 wxDC 版本的 DrawPathFallback
+    void DrawPathFallback(wxDC& dc, const Path& arg, std::function<wxPoint(const Point&)> off) const;
+    // 添加状态和ID成员
+    bool m_state = false; // 默认状态为0/false
+    wxString m_id;        // 元件ID
+    int m_outputState = 0; // Pin_Output状态：0=X, 1=0, 2=1
 };

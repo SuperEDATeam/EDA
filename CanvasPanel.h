@@ -1,9 +1,11 @@
 #pragma once
 #include <wx/wx.h>
 #include <vector>
+#include <wx/graphics.h>
 #include "CanvasElement.h"
 #include "Wire.h"          // ← 新增：连线数据
 #include "QuickToolBar.h"
+#include "UndoStack.h"
 
 class QuickToolBar;
 class ToolManager;
@@ -18,13 +20,18 @@ struct WireAnchor {
 };
 
 
+
 class CanvasPanel : public wxPanel
 {
+    std::vector<CmdMoveElement::Anchor> m_undoAnchors;
+    wxPoint m_dragStartElemPos;        // 拖动前元件左上角
+    size_t m_wireCountBeforeOperation = 0;  // 操作前的导线数量
 public:
     CanvasPanel(wxWindow* parent);
     void AddElement(const CanvasElement& elem);
     void PlaceElement(const wxString& name, const wxPoint& pos);
 
+    UndoStack m_undoStack;
 
     // 缩放相关方法
     float GetScale() const { return m_scale; }  // 获取当前缩放比例
@@ -52,7 +59,6 @@ public:
     void OnRightUp(wxMouseEvent& evt);
 
     const std::vector<CanvasElement>& GetElements() const { return m_elements; }
-    // 添加清空画布的方法
     void ClearAll() {
         m_elements.clear();
         m_wires.clear();
@@ -60,19 +66,27 @@ public:
         Refresh();
     }
 
-    // 添加添加导线的方法
     void AddWire(const Wire& wire) {
         m_wires.push_back(wire);
         Refresh();
     }
 
-
+    void CollectUndoAnchor(size_t elemIdx, std::vector<CmdMoveElement::Anchor>& out);
 
     // 暴露连线容器，供外部仿真/导出使用
     const std::vector<Wire>& GetWires() const { return m_wires; }
 
 
     void DeleteSelectedElement();
+
+    // 添加双击事件处理
+    void OnLeftDoubleClick(wxMouseEvent& evt);
+
+    // 添加定时器相关成员（用于区分单击和双击）
+    wxTimer m_clickTimer;
+    wxPoint m_clickPos;
+    int m_clickElementIndex = -1;
+    void OnClickTimer(wxTimerEvent& evt);
 
 
 public:
@@ -87,7 +101,6 @@ public:
     void ClearElementWires(size_t elemIndex);
 
 
-    /* ---------- 新增连线相关 ---------- */
     std::vector<Wire> m_wires;   // 已定型的连线
     Wire m_tempWire;             // 正在拖动/预览的连线
     enum class WireMode { Idle, DragNew, DragMove };
@@ -96,14 +109,14 @@ public:
     ControlPoint m_startCP;      // 连线起点
     wxPoint m_curSnap;           // 当前吸附/预览点
 
-    // 新增：缩放因子（默认1.0，即100%）
+
     float m_scale = 1.0f;
 
-    /* ---------- 原有函数 ---------- */
+
     void OnPaint(wxPaintEvent& evt);
     int  HitTest(const wxPoint& pt);
 
-    /* ---------- 新增辅助 ---------- */
+
     // 吸附：网格 + 引脚
     wxPoint Snap(const wxPoint& raw, bool* snapped);
 

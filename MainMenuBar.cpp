@@ -4,7 +4,9 @@
 
 enum
 {
-    idExportImage = wxID_HIGHEST + 1
+    idExportImage = wxID_HIGHEST + 1,
+    idSaveAsNode = wxID_HIGHEST + 2,  // 保存.node文件
+    idSaveAsNet = wxID_HIGHEST + 3    // 保存.net文件
 };
 
 wxBEGIN_EVENT_TABLE(MainMenuBar, wxMenuBar)
@@ -14,6 +16,8 @@ EVT_MENU(wxID_OPEN, MainMenuBar::OnFileOpen)
 EVT_MENU(wxID_CLOSE, MainMenuBar::OnFileClose)
 EVT_MENU(wxID_SAVE, MainMenuBar::OnFileSave)
 EVT_MENU(wxID_SAVEAS, MainMenuBar::OnFileSaveAs)
+EVT_MENU(idSaveAsNode, MainMenuBar::OnSaveAsNode)
+EVT_MENU(idSaveAsNet, MainMenuBar::OnSaveAsNet)
 EVT_MENU(idExportImage, MainMenuBar::OnExportImage)
 EVT_MENU(wxID_PRINT, MainMenuBar::OnPrint)
 EVT_MENU(wxID_PREFERENCES, MainMenuBar::OnPreferences)
@@ -78,21 +82,6 @@ EVT_MENU(wxID_HIGHEST + 501, MainMenuBar::OnUserGuide)
 EVT_MENU(wxID_HIGHEST + 502, MainMenuBar::OnLibraryRef)
 EVT_MENU(wxID_ABOUT, MainMenuBar::OnAbout)
 wxEND_EVENT_TABLE()
-
-//MainMenuBar::MainMenuBar(MainFrame* owner)
-//    : wxMenuBar(), m_owner(owner)
-//{
-//    // 创建六大菜单，目前只有 File 有内容
-//    Append(CreateFileMenu(), "&File");
-//    Append(CreateEditMenu(), "&Edit");
-//    Append(CreateProjectMenu(), "&Project");
-//    Append(CreateSimulateMenu(), "&Simulate");
-//    Append(CreateWindowMenu(), "&Window");
-//    Append(CreateHelpMenu(), "&Help");
-//
-//    // 加载最近文件列表
-//    LoadHistory();
-//}
 
 MainMenuBar::MainMenuBar(MainFrame* owner)
     : wxMenuBar(),
@@ -162,6 +151,9 @@ wxMenu* MainMenuBar::CreateFileMenu()
     menu->Append(wxID_SAVE, "&Save\tCtrl+S", "Save current circuit");
     menu->Append(wxID_SAVEAS, "Save &As...\tCtrl+Shift+S", "Save with new name");
 
+    menu->Append(idSaveAsNode, "Save as .node", "Save nodes to .node file");
+    menu->Append(idSaveAsNet, "Save as .net", "Save network to .net file");
+
     menu->AppendSeparator();
     menu->Append(idExportImage, "Export Image...", "Export canvas to PNG/JPEG");
     menu->Append(wxID_PRINT, "&Print...\tCtrl+P", "Print circuit");
@@ -178,7 +170,9 @@ wxMenu* MainMenuBar::CreateEditMenu()
 {
     wxMenu* m = new wxMenu;
 
-    m->Append(wxID_UNDO, "&Can't Undo\tCtrl+Z");
+    wxMenuItem* undoItem = new wxMenuItem(m, wxID_UNDO, "&Can't Undo\tCtrl+Z");
+    undoItem->Enable(false);  // ← 关键：初始时禁用
+    m->Append(undoItem);
     m->AppendSeparator();
 
     m->Append(wxID_CUT, "Cu&t\tCtrl+X");
@@ -364,6 +358,17 @@ void MainMenuBar::OnFileSave(wxCommandEvent&)
 void MainMenuBar::OnFileSaveAs(wxCommandEvent&)
 {
     m_owner->DoFileSaveAs();
+}
+void MainMenuBar::OnSaveAsNode(wxCommandEvent&)
+{
+    if (m_owner)
+        m_owner->DoFileSaveAsNode();
+}
+
+void MainMenuBar::OnSaveAsNet(wxCommandEvent&)
+{
+    if (m_owner)
+        m_owner->DoFileSaveAsNet();
 }
 void MainMenuBar::OnExportImage(wxCommandEvent&)
 {

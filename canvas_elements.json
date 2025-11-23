@@ -1,611 +1,466 @@
-
 [
   {
     "id": "AND_Gate",
     "name": "AND Gate",
-    "anchorPoint": [64, 64],
+    "anchorPoint": [80, 60],
     "inputPins": [
-      {"name": "Input A", "x": 36, "y": 44},
-
-      {"name": "Input B", "x": 36, "y": 84}
+      {"name": "Input A", "x": 40, "y": 40},
+      {"name": "Input B", "x": 40, "y": 80}
     ],
-    "outputPins": [{"name": "Output", "x": 96, "y": 64}],
+    "outputPins": [{"name": "Output", "x": 120, "y": 60}],
     "shapes": [
-      {"type": "line", "start": {"x": 36, "y": 32},"end": {"x": 36, "y": 96},"color": "#333333"},
-      {"type": "line","start": {"x": 36, "y": 96},"end": {"x": 64, "y": 96},"color": "#333333"},
-      {"type": "line","start": {"x": 36, "y": 32},"end": {"x": 64, "y": 32},"color": "#333333"},
-      {"type": "ArcShape","center": {"x": 64, "y": 64},"radius": 32,"startAngle": -90,"endAngle": 90,"color": "#333333"}
-    ]
-  },
-  {
-    "id": "Buffer_Gate",
-    "name": "Buffer Gate",
-    "anchorPoint": [64, 64],
-    "inputPins": [{"name": "Input A" , "x": 32, "y": 48}],
-    "outputPins": [{"name": "Output", "x": 64, "y": 48}],
-    "shapes": [
-        {"type": "line","start": {"x": 32, "y": 32},"end": {"x": 32, "y": 64},"color": "#333333"},
-        {"type": "line","start": {"x": 32, "y": 32},"end": {"x": 64, "y": 48},"color": "#333333"},
-        {"type": "line","start": {"x": 32, "y": 64},"end": {"x": 64, "y": 48},"color": "#333333"}
+      {"type": "line", "start": {"x": 40, "y": 20}, "end": {"x": 40, "y": 100}, "color": "#333333"},
+      {"type": "line", "start": {"x": 40, "y": 100}, "end": {"x": 80, "y": 100}, "color": "#333333"},
+      {"type": "line", "start": {"x": 40, "y": 20}, "end": {"x": 80, "y": 20}, "color": "#333333"},
+      {"type": "ArcShape", "center": {"x": 80, "y": 60}, "radius": 40, "startAngle": -90, "endAngle": 90, "color": "#333333"}
     ]
   },
   {
     "id": "AND_Gate_Rect",
     "name": "AND Gate (Rect)",
-    "anchorPoint": [64, 64],
+    "anchorPoint": [80, 60],
     "inputPins": [
-      {"name": "Input A", "x": 20, "y": 59},
-      {"name": "Input B", "x": 20, "y": 79}
+      {"name": "Input A", "x": 80, "y": 40},
+      {"name": "Input B", "x": 80, "y": 80}
     ],
-    "outputPins": [{"name": "Output", "x": 55, "y": 69}],
+    "outputPins": [{"name": "Output", "x": 120, "y": 60}],
     "shapes": [
-      {"type": "line", "start": {"x": 20, "y": 44}, "end": {"x": 20, "y": 94}, "color": "#333333"},
-      {"type": "line", "start": {"x": 20, "y": 44}, "end": {"x": 55, "y": 44}, "color": "#333333"},
-      {"type": "line", "start": {"x": 20, "y": 94}, "end": {"x": 55, "y": 94}, "color": "#333333"},
-      {"type": "line", "start": {"x": 55, "y": 44}, "end": {"x": 55, "y": 94}, "color": "#333333"},
-      {"type": "text", "x": 35, "y": 54, "text": "&", "fontSize": 16, "color": "#333333"}
+      {"type": "line", "start": {"x": 80, "y": 20}, "end": {"x": 80, "y": 100}, "color": "#333333"},
+      {"type": "line", "start": {"x": 80, "y": 20}, "end": {"x": 120, "y": 20}, "color": "#333333"},
+      {"type": "line", "start": {"x": 80, "y": 100}, "end": {"x": 120, "y": 100}, "color": "#333333"},
+      {"type": "line", "start": {"x": 120, "y": 20}, "end": {"x": 120, "y": 100}, "color": "#333333"},
+      {"type": "text", "x": 85, "y": 55, "text": "&", "fontSize": 16, "color": "#333333"}
     ]
   },
   {
     "id": "NAND_Gate",
     "name": "NAND Gate",
-    "anchorPoint": [64, 64],
+    "anchorPoint": [80, 60],
     "inputPins": [
-      {"name": "Input A", "x": 32, "y": 40},
-      {"name": "Input B", "x": 32, "y": 88}
+      {"name": "Input A", "x": 40, "y": 40},
+      {"name": "Input B", "x": 40, "y": 80}
     ],
-    "outputPins": [{"name": "Output", "x": 100, "y": 64}],
+    "outputPins": [{"name": "Output", "x": 124, "y": 60}],
     "shapes": [
-      {"type": "line", "start": {"x": 32, "y": 32},"end": {"x": 32, "y": 96},"color": "#333333"},
-      {"type": "line","start": {"x": 32, "y": 96},"end": {"x": 64, "y": 96},"color": "#333333"},
-      {"type": "line","start": {"x": 32, "y": 32},"end": {"x": 64, "y": 32},"color": "#333333"},
-      {"type": "ArcShape","center": {"x": 64, "y": 64},"radius": 32,"startAngle": -90,"endAngle": 90,"color": "#333333"},
-      {
-        "type": "circle", 
-        "x": 98, 
-        "y": 64, 
-        "r": 4, 
-        "color": "#333333",
-        "fill": true,
-        "fillColor": "#808080"
-      }
+      {"type": "line", "start": {"x": 40, "y": 20}, "end": {"x": 40, "y": 100}, "color": "#333333"},
+      {"type": "line", "start": {"x": 40, "y": 100}, "end": {"x": 80, "y": 100}, "color": "#333333"},
+      {"type": "line", "start": {"x": 40, "y": 20}, "end": {"x": 80, "y": 20}, "color": "#333333"},
+      {"type": "ArcShape", "center": {"x": 80, "y": 60}, "radius": 40, "startAngle": -90, "endAngle": 90, "color": "#333333"},
+      {"type": "circle", "x": 122, "y": 60, "r": 4, "color": "#333333", "fill": true, "fillColor": "#808080"}
     ]
   },
   {
     "id": "NAND_Gate_Rect",
     "name": "NAND Gate (Rect)",
-    "anchorPoint": [64, 64],
+    "anchorPoint": [80, 60],
     "inputPins": [
-      {"name": "Input A", "x": 20, "y": 59},
-      {"name": "Input B", "x": 20, "y": 79}
+      {"name": "Input A", "x": 80, "y": 40},
+      {"name": "Input B", "x": 80, "y": 80}
     ],
-    "outputPins": [{"name": "Output", "x": 59, "y": 69}],
+    "outputPins": [{"name": "Output", "x": 124, "y": 60}],
     "shapes": [
-      {"type": "line", "start": {"x": 20, "y": 44}, "end": {"x": 20, "y": 94}, "color": "#333333"},
-      {"type": "line", "start": {"x": 20, "y": 44}, "end": {"x": 55, "y": 44}, "color": "#333333"},
-      {"type": "line", "start": {"x": 20, "y": 94}, "end": {"x": 55, "y": 94}, "color": "#333333"},
-      {"type": "line", "start": {"x": 55, "y": 44}, "end": {"x": 55, "y": 94}, "color": "#333333"},
-      {"type": "text", "x": 35, "y": 54, "text": "&", "fontSize": 16, "color": "#333333"},
-      {
-        "type": "circle", 
-        "x": 57, 
-        "y": 69, 
-        "r": 4, 
-        "color": "#333333",
-        "fill": true,
-        "fillColor": "#808080"
-      }
+      {"type": "line", "start": {"x": 80, "y": 20}, "end": {"x": 80, "y": 100}, "color": "#333333"},
+      {"type": "line", "start": {"x": 80, "y": 20}, "end": {"x": 120, "y": 20}, "color": "#333333"},
+      {"type": "line", "start": {"x": 80, "y": 100}, "end": {"x": 120, "y": 100}, "color": "#333333"},
+      {"type": "line", "start": {"x": 120, "y": 20}, "end": {"x": 120, "y": 100}, "color": "#333333"},
+      {"type": "text", "x": 85, "y": 55, "text": "&", "fontSize": 16, "color": "#333333"},
+      {"type": "circle", "x": 122, "y": 60, "r": 4, "color": "#333333", "fill": true, "fillColor": "#808080"}
     ]
   },
   {
-  "id": "OR_Gate",
-  "name": "OR Gate",
-  "anchorPoint": [64, 64],
-  "inputPins": [
-    {"name": "Input A", "x": 23, "y": 32},
-    {"name": "Input B", "x": 23, "y": 96}
-  ],
-  "outputPins": [{"name": "Output", "x": 90, "y": 64}],
-  "shapes": [
-    {
-      "type": "BezierShape",
-      "p0": {"x": 23, "y": 32},
-      "p1": {"x": 70, "y": 30},
-      "p2": {"x": 90, "y": 64},
-      "color": "#333333"
-    },
-    {
-      "type": "BezierShape",
-      "p0": {"x": 23, "y": 96},
-      "p1": {"x": 70, "y": 98},
-      "p2": {"x": 90, "y": 64},
-      "color": "#333333"
-    },
-    {
-      "type": "BezierShape",
-      "p0": {"x": 23, "y": 32},
-      "p1": {"x": 50, "y": 64},
-      "p2": {"x": 23, "y": 96},
-      "color": "#333333"
-    }
-  ]
-},
+    "id": "OR_Gate",
+    "name": "OR Gate",
+    "anchorPoint": [80, 60],
+    "inputPins": [
+      {"name": "Input A", "x": 40, "y": 40},
+      {"name": "Input B", "x": 40, "y": 80}
+    ],
+    "outputPins": [{"name": "Output", "x": 120, "y": 60}],  
+    "shapes": [
+      {"type": "BezierShape", "p0": {"x": 43, "y": 20}, "p1": {"x": 85, "y": 24}, "p2": {"x": 110, "y": 60}, "color": "#333333"},
+      {"type": "BezierShape", "p0": {"x": 43, "y": 100}, "p1": {"x": 85, "y": 96}, "p2": {"x": 110, "y": 60}, "color": "#333333"},
+      {"type": "BezierShape", "p0": {"x": 43, "y": 20}, "p1": {"x": 60, "y": 60}, "p2": {"x": 43, "y": 100}, "color": "#333333"}  
+    ]
+  },
   {
     "id": "OR_Gate_Rect",
     "name": "OR Gate (Rect)",
-    "anchorPoint": [64, 64],
+    "anchorPoint": [80, 60],
     "inputPins": [
-      {"name": "Input A", "x": 20, "y": 59},
-      {"name": "Input B", "x": 20, "y": 79}
+      {"name": "Input A", "x": 80, "y": 40},
+      {"name": "Input B", "x": 80, "y": 80}
     ],
-    "outputPins": [{"name": "Output", "x": 55, "y": 69}],
+    "outputPins": [{"name": "Output", "x": 120, "y": 60}],
     "shapes": [
-      {"type": "line", "start": {"x": 20, "y": 44}, "end": {"x": 20, "y": 94}, "color": "#333333"},
-      {"type": "line", "start": {"x": 20, "y": 44}, "end": {"x": 55, "y": 44}, "color": "#333333"},
-      {"type": "line", "start": {"x": 20, "y": 94}, "end": {"x": 55, "y": 94}, "color": "#333333"},
-      {"type": "line", "start": {"x": 55, "y": 44}, "end": {"x": 55, "y": 94}, "color": "#333333"},
-      {"type": "text", "x": 25, "y": 54, "text": "≥1", "fontSize": 16, "color": "#333333"}
+      {"type": "line", "start": {"x": 80, "y": 20}, "end": {"x": 80, "y": 100}, "color": "#333333"},
+      {"type": "line", "start": {"x": 80, "y": 20}, "end": {"x": 120, "y": 20}, "color": "#333333"},
+      {"type": "line", "start": {"x": 80, "y": 100}, "end": {"x": 120, "y": 100}, "color": "#333333"},
+      {"type": "line", "start": {"x": 120, "y": 20}, "end": {"x": 120, "y": 100}, "color": "#333333"},
+      {"type": "text", "x": 85, "y": 55, "text": "≥1", "fontSize": 16, "color": "#333333"}
     ]
   },
   {
     "id": "NOR_Gate",
     "name": "NOR Gate",
-    "anchorPoint": [64, 64],
+    "anchorPoint": [80, 60],
     "inputPins": [
-      {"name": "Input A", "x": 23, "y": 32},
-      {"name": "Input B", "x": 23, "y": 96}
+      {"name": "Input A", "x": 40, "y": 40},
+      {"name": "Input B", "x": 40, "y": 80}
     ],
-    "outputPins": [{"name": "Output", "x": 94, "y": 64}],
+    "outputPins": [{"name": "Output", "x": 114, "y": 60}],
     "shapes": [
-       {
-      "type": "BezierShape",
-      "p0": {"x": 23, "y": 32},
-      "p1": {"x": 70, "y": 30},
-      "p2": {"x": 90, "y": 64},
-      "color": "#333333"
-    },
-    {
-      "type": "BezierShape",
-      "p0": {"x": 23, "y": 96},
-      "p1": {"x": 70, "y": 98},
-      "p2": {"x": 90, "y": 64},
-      "color": "#333333"
-    },
-    {
-      "type": "BezierShape",
-      "p0": {"x": 23, "y": 32},
-      "p1": {"x": 50, "y": 64},
-      "p2": {"x": 23, "y": 96},
-      "color": "#333333"
-    },
-      {
-        "type": "circle", 
-        "x": 92, 
-        "y": 64, 
-        "r": 4, 
-        "color": "#333333",
-        "fill": true,
-        "fillColor": "#808080"
-      }
+      {"type": "BezierShape", "p0": {"x": 43, "y": 20}, "p1": {"x": 90, "y": 18}, "p2": {"x": 110, "y": 60}, "color": "#333333"},
+      {"type": "BezierShape", "p0": {"x": 43, "y": 100}, "p1": {"x": 90, "y": 102}, "p2": {"x": 110, "y": 60}, "color": "#333333"},
+      {"type": "BezierShape", "p0": {"x": 43, "y": 20}, "p1": {"x": 70, "y": 60}, "p2": {"x": 43, "y": 100}, "color": "#333333"},
+      {"type": "circle", "x": 112, "y": 60, "r": 4, "color": "#333333", "fill": true, "fillColor": "#808080"}
     ]
   },
   {
     "id": "NOR_Gate_Rect",
     "name": "NOR Gate (Rect)",
-    "anchorPoint": [64, 64],
+    "anchorPoint": [80, 60],
     "inputPins": [
-      {"name": "Input A", "x": 20, "y": 59},
-      {"name": "Input B", "x": 20, "y": 79}
+      {"name": "Input A", "x": 80, "y": 40},
+      {"name": "Input B", "x": 80, "y": 80}
     ],
-    "outputPins": [{"name": "Output", "x": 59, "y": 69}],
+    "outputPins": [{"name": "Output", "x": 124, "y": 60}],
     "shapes": [
-      {"type": "line", "start": {"x": 20, "y": 44}, "end": {"x": 20, "y": 94}, "color": "#333333"},
-      {"type": "line", "start": {"x": 20, "y": 44}, "end": {"x": 55, "y": 44}, "color": "#333333"},
-      {"type": "line", "start": {"x": 20, "y": 94}, "end": {"x": 55, "y": 94}, "color": "#333333"},
-      {"type": "line", "start": {"x": 55, "y": 44}, "end": {"x": 55, "y": 94}, "color": "#333333"},
-      {"type": "text", "x": 25, "y": 54, "text": "≥1", "fontSize": 16, "color": "#333333"},
-      {
-        "type": "circle", 
-        "x": 57, 
-        "y": 69, 
-        "r": 4, 
-        "color": "#333333",
-        "fill": true,
-        "fillColor": "#808080"
-      }
+      {"type": "line", "start": {"x": 80, "y": 20}, "end": {"x": 80, "y": 100}, "color": "#333333"},
+      {"type": "line", "start": {"x": 80, "y": 20}, "end": {"x": 120, "y": 20}, "color": "#333333"},
+      {"type": "line", "start": {"x": 80, "y": 100}, "end": {"x": 120, "y": 100}, "color": "#333333"},
+      {"type": "line", "start": {"x": 120, "y": 20}, "end": {"x": 120, "y": 100}, "color": "#333333"},
+      {"type": "text", "x": 85, "y": 55, "text": "≥1", "fontSize": 16, "color": "#333333"},
+      {"type": "circle", "x": 122, "y": 60, "r": 4, "color": "#333333", "fill": true, "fillColor": "#808080"}
     ]
   },
   {
     "id": "XOR_Gate",
     "name": "XOR Gate",
-    "anchorPoint": [64, 64],
+    "anchorPoint": [80, 60],
     "inputPins": [
-      {"name": "Input A", "x": 10, "y": 32},
-      {"name": "Input B", "x": 10, "y": 96}
+      {"name": "Input A", "x": 40, "y": 40},
+      {"name": "Input B", "x": 40, "y": 80}
     ],
-    "outputPins": [{"name": "Output", "x": 90, "y": 64}],
+    "outputPins": [{"name": "Output", "x": 120, "y": 60}],
     "shapes": [
-      {
-      "type": "BezierShape",
-      "p0": {"x": 23, "y": 32},
-      "p1": {"x": 70, "y": 30},
-      "p2": {"x": 90, "y": 64},
-      "color": "#333333"
-    },
-    {
-      "type": "BezierShape",
-      "p0": {"x": 23, "y": 96},
-      "p1": {"x": 70, "y": 98},
-      "p2": {"x": 90, "y": 64},
-      "color": "#333333"
-    },
-    {
-      "type": "BezierShape",
-      "p0": {"x": 23, "y": 32},
-      "p1": {"x": 50, "y": 64},
-      "p2": {"x": 23, "y": 96},
-      "color": "#333333"
-    },
-      {
-        "type": "BezierShape",
-        "p0": {"x": 10, "y": 32},
-        "p1": {"x": 32, "y": 64},
-        "p2": {"x": 10, "y": 96},
-        "color": "#333333"
-      }
+      {"type": "BezierShape", "p0": {"x": 43, "y": 20}, "p1": {"x": 90, "y": 18}, "p2": {"x": 110, "y": 60}, "color": "#333333"},
+      {"type": "BezierShape", "p0": {"x": 43, "y": 100}, "p1": {"x": 90, "y": 102}, "p2": {"x": 110, "y": 60}, "color": "#333333"},
+      {"type": "BezierShape", "p0": {"x": 43, "y": 20}, "p1": {"x": 70, "y": 60}, "p2": {"x": 43, "y": 100}, "color": "#333333"},
+      {"type": "BezierShape", "p0": {"x": 30, "y": 20}, "p1": {"x": 52, "y": 60}, "p2": {"x": 30, "y": 100}, "color": "#333333"}
     ]
   },
   {
     "id": "XOR_Gate_Rect",
     "name": "XOR Gate (Rect)",
-    "anchorPoint": [64, 64],
+    "anchorPoint": [80, 60],
     "inputPins": [
-      {"name": "Input A", "x": 20, "y": 59},
-      {"name": "Input B", "x": 20, "y": 79}
+      {"name": "Input A", "x": 80, "y": 40},
+      {"name": "Input B", "x": 80, "y": 80}
     ],
-    "outputPins": [{"name": "Output", "x": 55, "y": 69}],
+    "outputPins": [{"name": "Output", "x": 120, "y": 60}],
     "shapes": [
-      {"type": "line", "start": {"x": 20, "y": 44}, "end": {"x": 20, "y": 94}, "color": "#333333"},
-      {"type": "line", "start": {"x": 20, "y": 44}, "end": {"x": 55, "y": 44}, "color": "#333333"},
-      {"type": "line", "start": {"x": 20, "y": 94}, "end": {"x": 55, "y": 94}, "color": "#333333"},
-      {"type": "line", "start": {"x": 55, "y": 44}, "end": {"x": 55, "y": 94}, "color": "#333333"},
-      {"type": "text", "x": 35, "y": 54, "text": "=1", "fontSize": 16, "color": "#333333"}
+      {"type": "line", "start": {"x": 80, "y": 20}, "end": {"x": 80, "y": 100}, "color": "#333333"},
+      {"type": "line", "start": {"x": 80, "y": 20}, "end": {"x": 120, "y": 20}, "color": "#333333"},
+      {"type": "line", "start": {"x": 80, "y": 100}, "end": {"x": 120, "y": 100}, "color": "#333333"},
+      {"type": "line", "start": {"x": 120, "y": 20}, "end": {"x": 120, "y": 100}, "color": "#333333"},
+      {"type": "text", "x": 85, "y": 55, "text": "1", "fontSize": 16, "color": "#333333"}
+      
     ]
   },
   {
     "id": "XNOR_Gate",
     "name": "XNOR Gate",
-    "anchorPoint": [64, 64],
+    "anchorPoint": [80, 60],
     "inputPins": [
-      {"name": "Input A", "x": 10, "y": 32},
-      {"name": "Input B", "x": 10, "y": 96}
+      {"name": "Input A", "x": 40, "y": 40},
+      {"name": "Input B", "x": 40, "y": 80}
     ],
-    "outputPins": [{"name": "Output", "x": 94, "y": 64}],
+    "outputPins": [{"name": "Output", "x": 120, "y": 60}],
     "shapes": [
-      {
-      "type": "BezierShape",
-      "p0": {"x": 23, "y": 32},
-      "p1": {"x": 70, "y": 30},
-      "p2": {"x": 90, "y": 64},
-      "color": "#333333"
-    },
-    {
-      "type": "BezierShape",
-      "p0": {"x": 23, "y": 96},
-      "p1": {"x": 70, "y": 98},
-      "p2": {"x": 90, "y": 64},
-      "color": "#333333"
-    },
-    {
-      "type": "BezierShape",
-      "p0": {"x": 23, "y": 32},
-      "p1": {"x": 50, "y": 64},
-      "p2": {"x": 23, "y": 96},
-      "color": "#333333"
-    },
-      {
-        "type": "BezierShape",
-        "p0": {"x": 10, "y": 32},
-        "p1": {"x": 32, "y": 64},
-        "p2": {"x": 10, "y": 96},
-        "color": "#333333"
-      },
-      {
-        "type": "circle", 
-        "x": 92, 
-        "y": 64, 
-        "r": 4, 
-        "color": "#333333",
-        "fill": true,
-        "fillColor": "#808080"
-      }
+      {"type": "BezierShape", "p0": {"x": 43, "y": 20}, "p1": {"x": 90, "y": 18}, "p2": {"x": 110, "y": 60}, "color": "#333333"},
+      {"type": "BezierShape", "p0": {"x": 43, "y": 100}, "p1": {"x": 90, "y": 102}, "p2": {"x": 110, "y": 60}, "color": "#333333"},
+      {"type": "BezierShape", "p0": {"x": 43, "y": 20}, "p1": {"x": 70, "y": 60}, "p2": {"x": 43, "y": 100}, "color": "#333333"},
+      {"type": "BezierShape", "p0": {"x": 30, "y": 20}, "p1": {"x": 52, "y": 60}, "p2": {"x": 30, "y": 100}, "color": "#333333"},
+      {"type": "circle", "x": 120, "y": 60, "r": 4, "color": "#333333", "fill": true, "fillColor": "#808080"}
     ]
   },
   {
     "id": "XNOR_Gate_Rect",
     "name": "XNOR Gate (Rect)",
-    "anchorPoint": [64, 64],
+    "anchorPoint": [80, 60],
     "inputPins": [
-      {"name": "Input A", "x": 20, "y": 59},
-      {"name": "Input B", "x": 20, "y": 79}
+      {"name": "Input A", "x": 80, "y": 40},
+      {"name": "Input B", "x": 80, "y": 80}
     ],
-    "outputPins": [{"name": "Output", "x": 59, "y": 69}],
+    "outputPins": [{"name": "Output", "x": 124, "y": 60}],
     "shapes": [
-      {"type": "line", "start": {"x": 20, "y": 44}, "end": {"x": 20, "y": 94}, "color": "#333333"},
-      {"type": "line", "start": {"x": 20, "y": 44}, "end": {"x": 55, "y": 44}, "color": "#333333"},
-      {"type": "line", "start": {"x": 20, "y": 94}, "end": {"x": 55, "y": 94}, "color": "#333333"},
-      {"type": "line", "start": {"x": 55, "y": 44}, "end": {"x": 55, "y": 94}, "color": "#333333"},
-      {"type": "text", "x": 25, "y": 54, "text": "=1", "fontSize": 16, "color": "#333333"},
-      {
-        "type": "circle", 
-        "x": 57, 
-        "y": 69, 
-        "r": 4, 
-        "color": "#333333",
-        "fill": true,
-        "fillColor": "#808080"
-      }
+      {"type": "line", "start": {"x": 80, "y": 20}, "end": {"x": 80, "y": 100}, "color": "#333333"},
+      {"type": "line", "start": {"x": 80, "y": 20}, "end": {"x": 120, "y": 20}, "color": "#333333"},
+      {"type": "line", "start": {"x": 80, "y": 100}, "end": {"x": 120, "y": 100}, "color": "#333333"},
+      {"type": "line", "start": {"x": 120, "y": 20}, "end": {"x": 120, "y": 100}, "color": "#333333"},
+      {"type": "text", "x": 85, "y": 55, "text": "1", "fontSize": 16, "color": "#333333"},
+      {"type": "circle", "x": 122, "y": 60, "r": 4, "color": "#333333", "fill": true, "fillColor": "#808080"}
     ]
   },
   {
     "id": "2+X_Gate",
     "name": "2+X",
-    "anchorPoint": [64, 64],
+    "anchorPoint": [80, 60],
     "inputPins": [
-      {"name": "Input A", "x": 20, "y": 59},
-      {"name": "Input B", "x": 20, "y": 79}
+      {"name": "Input A", "x": 40, "y": 40},
+      {"name": "Input B", "x": 40, "y": 80}
     ],
-    "outputPins": [{"name": "Output", "x": 55, "y": 69}],
+    "outputPins": [{"name": "Output", "x": 120, "y": 60}],
     "shapes": [
-      {"type": "line", "start": {"x": 20, "y": 44}, "end": {"x": 20, "y": 94}, "color": "#333333"},
-      {"type": "line", "start": {"x": 20, "y": 44}, "end": {"x": 55, "y": 44}, "color": "#333333"},
-      {"type": "line", "start": {"x": 20, "y": 94}, "end": {"x": 55, "y": 94}, "color": "#333333"},
-      {"type": "line", "start": {"x": 55, "y": 44}, "end": {"x": 55, "y": 94}, "color": "#333333"},
-      {"type": "text", "x": 32, "y": 54, "text": "2+X", "fontSize": 14, "color": "#333333"}
+      {"type": "line", "start": {"x": 40, "y": 20}, "end": {"x": 40, "y": 100}, "color": "#333333"},
+      {"type": "line", "start": {"x": 40, "y": 20}, "end": {"x": 120, "y": 20}, "color": "#333333"},
+      {"type": "line", "start": {"x": 40, "y": 100}, "end": {"x": 120, "y": 100}, "color": "#333333"},
+      {"type": "line", "start": {"x": 120, "y": 20}, "end": {"x": 120, "y": 100}, "color": "#333333"},
+      {"type": "text", "x": 80, "y": 55, "text": "2+X", "fontSize": 14, "color": "#333333"}
     ]
   },
   {
     "id": "Odd_Parity_Gate",
     "name": "Odd Parity Gate",
-    "anchorPoint": [64, 64],
+   "anchorPoint": [80, 60],
     "inputPins": [
-      {"name": "Input A", "x": 20, "y": 59},
-      {"name": "Input B", "x": 20, "y": 79}
+      {"name": "Input A", "x": 80, "y": 40},
+      {"name": "Input B", "x": 80, "y": 80}
     ],
-    "outputPins": [{"name": "Output", "x": 55, "y": 69}],
+    "outputPins": [{"name": "Output", "x": 120, "y": 60}],
     "shapes": [
-      {"type": "line", "start": {"x": 20, "y": 44}, "end": {"x": 20, "y": 94}, "color": "#333333"},
-      {"type": "line", "start": {"x": 20, "y": 44}, "end": {"x": 55, "y": 44}, "color": "#333333"},
-      {"type": "line", "start": {"x": 20, "y": 94}, "end": {"x": 55, "y": 94}, "color": "#333333"},
-      {"type": "line", "start": {"x": 55, "y": 44}, "end": {"x": 55, "y": 94}, "color": "#333333"},
-      {"type": "text", "x": 23, "y": 54, "text": "2K+1", "fontSize": 12, "color": "#333333"}
+      {"type": "line", "start": {"x": 80, "y": 20}, "end": {"x": 80, "y": 100}, "color": "#333333"},
+      {"type": "line", "start": {"x": 80, "y": 20}, "end": {"x": 120, "y": 20}, "color": "#333333"},
+      {"type": "line", "start": {"x": 80, "y": 100}, "end": {"x": 120, "y": 100}, "color": "#333333"},
+      {"type": "line", "start": {"x": 120, "y": 20}, "end": {"x": 120, "y": 100}, "color": "#333333"},
+      {"type": "text", "x": 85, "y": 55, "text": "2K+1", "fontSize": 16, "color": "#333333"}
     ]
   },
   {
     "id": "Even_Parity_Gate",
     "name": "Even Parity Gate",
-    "anchorPoint": [64, 64],
+    "anchorPoint": [80, 60],
     "inputPins": [
-      {"name": "Input A", "x": 20, "y": 59},
-      {"name": "Input B", "x": 20, "y": 79}
+      {"name": "Input A", "x": 80, "y": 40},
+      {"name": "Input B", "x": 80, "y": 80}
     ],
-    "outputPins": [{"name": "Output", "x": 55, "y": 69}],
+    "outputPins": [{"name": "Output", "x": 120, "y": 60}],
     "shapes": [
-      {"type": "line", "start": {"x": 20, "y": 44}, "end": {"x": 20, "y": 94}, "color": "#333333"},
-      {"type": "line", "start": {"x": 20, "y": 44}, "end": {"x": 55, "y": 44}, "color": "#333333"},
-      {"type": "line", "start": {"x": 20, "y": 94}, "end": {"x": 55, "y": 94}, "color": "#333333"},
-      {"type": "line", "start": {"x": 55, "y": 44}, "end": {"x": 55, "y": 94}, "color": "#333333"},
-      {"type": "text", "x": 30, "y": 54, "text": "2K", "fontSize": 16, "color": "#333333"}
+      {"type": "line", "start": {"x": 80, "y": 20}, "end": {"x": 80, "y": 100}, "color": "#333333"},
+      {"type": "line", "start": {"x": 80, "y": 20}, "end": {"x": 120, "y": 20}, "color": "#333333"},
+      {"type": "line", "start": {"x": 80, "y": 100}, "end": {"x": 120, "y": 100}, "color": "#333333"},
+      {"type": "line", "start": {"x": 120, "y": 20}, "end": {"x": 120, "y": 100}, "color": "#333333"},
+      {"type": "text", "x": 85, "y": 55, "text": "2K", "fontSize": 16, "color": "#333333"}
+      
     ]
   },
   {
     "id": "Controlled_Buffer",
     "name": "Controlled Buffer",
-    "anchorPoint": [64, 64],
+    "anchorPoint": [80, 60],
     "inputPins": [
-      {"name": "Data In", "x": 32, "y": 32},
-      {"name": "Ctrl", "x": 32, "y": 64}
+      {"name": "Data In", "x": 40, "y": 40},
+      {"name": "Ctrl", "x": 40, "y": 80}
     ],
-    "outputPins": [{"name": "Data Out", "x": 64, "y": 48}],
+    "outputPins": [{"name": "Data Out", "x": 120, "y": 60}],
     "shapes": [
-       {"type": "line","start": {"x": 32, "y": 32},"end": {"x": 32, "y": 64},"color": "#333333"},
-        {"type": "line","start": {"x": 32, "y": 32},"end": {"x": 64, "y": 48},"color": "#333333"},
-        {"type": "line","start": {"x": 32, "y": 64},"end": {"x": 64, "y": 48},"color": "#333333"},
-        {"type": "line","start": {"x": 48, "y": 56},"end": {"x": 48, "y": 62},"color": "blue"}
+      {"type": "line", "start": {"x": 40, "y": 20}, "end": {"x": 40, "y": 60}, "color": "#333333"},
+      {"type": "line", "start": {"x": 40, "y": 20}, "end": {"x": 80, "y": 40}, "color": "#333333"},
+      {"type": "line", "start": {"x": 40, "y": 60}, "end": {"x": 80, "y": 40}, "color": "#333333"},
+      {"type": "line", "start": {"x": 60, "y": 50}, "end": {"x": 60, "y": 70}, "color": "blue"}
     ]
   },
   {
     "id": "Controlled_Inverter",
     "name": "Controlled Inverter",
-    "anchorPoint": [64, 64],
+    "anchorPoint": [80, 60],
     "inputPins": [
-      {"name": "Data In", "x": 32, "y": 32},
-      {"name": "Ctrl", "x": 32, "y": 64}    
+      {"name": "Data In", "x": 40, "y": 40},
+      {"name": "Ctrl", "x": 40, "y": 80}
     ],
-    "outputPins": [{"name": "Data Out", "x": 68, "y": 48}],
+    "outputPins": [{"name": "Data Out", "x": 120, "y": 60}],
     "shapes": [
-       {"type": "line","start": {"x": 32, "y": 32},"end": {"x": 32, "y": 64},"color": "#333333"},
-        {"type": "line","start": {"x": 32, "y": 32},"end": {"x": 64, "y": 48},"color": "#333333"},
-        {"type": "line","start": {"x": 32, "y": 64},"end": {"x": 64, "y": 48},"color": "#333333"},
-        {"type": "line","start": {"x": 48, "y": 56},"end": {"x": 48, "y": 62},"color": "blue"},
-      {
-        "type": "circle", 
-        "x": 66, 
-        "y": 48, 
-        "r": 4, 
-        "color": "#333333",
-        "fill": true,
-        "fillColor": "#808080"
-      }
+      {"type": "line", "start": {"x": 40, "y": 20}, "end": {"x": 40, "y": 60}, "color": "#333333"},
+      {"type": "line", "start": {"x": 40, "y": 20}, "end": {"x": 80, "y": 40}, "color": "#333333"},
+      {"type": "line", "start": {"x": 40, "y": 60}, "end": {"x": 80, "y": 40}, "color": "#333333"},
+      {"type": "line", "start": {"x": 60, "y": 50}, "end": {"x": 60, "y": 70}, "color": "blue"},
+      {"type": "circle", "x": 120, "y": 60, "r": 4, "color": "#333333", "fill": true, "fillColor": "#808080"}
     ]
   },
   {
     "id": "Wire",
     "name": "Wire",
-    "anchorPoint": [64, 64],
-    "inputPins": [{"name": "Input", "x": 16, "y": 64}],
-    "outputPins": [{"name": "Output", "x": 112, "y": 64}],
-    "shapes": [{"type": "line", "start": {"x": 16, "y": 64}, "end": {"x": 112, "y": 64}, "color": "#333333"}]
+    "anchorPoint": [80, 60],
+    "inputPins": [{"name": "Input", "x": 40, "y": 60}],
+    "outputPins": [{"name": "Output", "x": 120, "y": 60}],
+    "shapes": [{"type": "line", "start": {"x": 40, "y": 60}, "end": {"x": 120, "y": 60}, "color": "#333333"}]
   },
   {
     "id": "Splitter",
     "name": "Splitter",
-    "anchorPoint": [64, 64],
-    "inputPins": [{"name": "Input", "x": 16, "y": 64}],
+    "anchorPoint": [80, 60],
+    "inputPins": [{"name": "Input", "x": 40, "y": 60}],
     "outputPins": [
-      {"name": "Output A", "x": 112, "y": 48},
-      {"name": "Output B", "x": 112, "y": 64},
-      {"name": "Output C", "x": 112, "y": 80}
+      {"name": "Output A", "x": 120, "y": 40},
+      {"name": "Output B", "x": 120, "y": 60},
+      {"name": "Output C", "x": 120, "y": 80}
     ],
     "shapes": [
-      {"type": "line", "start": {"x": 16, "y": 64}, "end": {"x": 64, "y": 64}, "color": "#333333"},
-      {"type": "line", "start": {"x": 64, "y": 64}, "end": {"x": 112, "y": 48}, "color": "#333333"},
-      {"type": "line", "start": {"x": 64, "y": 64}, "end": {"x": 112, "y": 80}, "color": "#333333"}
+      {"type": "line", "start": {"x": 40, "y": 60}, "end": {"x": 80, "y": 60}, "color": "#333333"},
+      {"type": "line", "start": {"x": 80, "y": 60}, "end": {"x": 120, "y": 40}, "color": "#333333"},
+      {"type": "line", "start": {"x": 80, "y": 60}, "end": {"x": 120, "y": 80}, "color": "#333333"}
     ]
   },
   {
     "id": "Pin_Input",
     "name": "Pin (Input)",
-    "anchorPoint": [32, 32],
-    "inputPins": [{"name": "Input", "x": 8, "y": 32}],
+    "anchorPoint": [40, 40],
+    "inputPins": [{"name": "Input", "x": 60, "y": 40}],
     "outputPins": [],
     "shapes": [
-      {"type": "circle", "x": 32, "y": 32, "r": 6, "color": "#333333", "fill": true, "fillColor": "#333333"},
-      {"type": "text", "x": 40, "y": 36, "text": "IN", "fontSize": 12, "color": "#333333"}
+      {"type": "circle", "x": 40, "y": 40, "r": 13, "color": "green", "fill": true, "fillColor": "green"},
+      {"type": "line", "start": {"x": 20, "y": 20}, "end": {"x": 20, "y": 60}, "color": "#333333"},
+      {"type": "line", "start": {"x": 20, "y": 20}, "end": {"x": 60, "y": 20}, "color": "#333333"},
+      {"type": "line", "start": {"x": 20, "y": 60}, "end": {"x": 60, "y": 60}, "color": "#333333"},
+      {"type": "line", "start": {"x": 60, "y": 20}, "end": {"x": 60, "y": 60}, "color": "#333333"},
+      {"type": "text", "x": 30, "y": 30, "text": "0", "fontSize": 20, "color": "white"}
     ]
   },
   {
     "id": "Pin_Output",
     "name": "Pin (Output)",
-    "anchorPoint": [32, 32],
+    "anchorPoint": [40, 40],
     "inputPins": [],
-    "outputPins": [{"name": "Output", "x": 56, "y": 32}],
+    "outputPins": [{"name": "Output", "x": 20, "y": 40}],
     "shapes": [
-      {"type": "circle", "x": 32, "y": 32, "r": 6, "color": "#333333", "fill": true, "fillColor": "#333333"},
-      {"type": "text", "x": 40, "y": 36, "text": "OUT", "fontSize": 12, "color": "#333333"}
+      {"type": "circle", "x": 40, "y": 40, "r": 13, "color": "#CCE099", "fill": true, "fillColor": "#CCE099"},
+      {"type": "line", "start": {"x": 20, "y": 20}, "end": {"x": 20, "y": 60}, "color": "#333333"},
+      {"type": "line", "start": {"x": 20, "y": 20}, "end": {"x": 60, "y": 20}, "color": "#333333"},
+      {"type": "line", "start": {"x": 20, "y": 60}, "end": {"x": 60, "y": 60}, "color": "#333333"},
+      {"type": "line", "start": {"x": 60, "y": 20}, "end": {"x": 60, "y": 60}, "color": "#333333"},
+      {"type": "text", "x": 30, "y": 30, "text": "X", "fontSize": 20, "color": "white"}
     ]
   },
   {
     "id": "Probe",
     "name": "Probe",
-    "anchorPoint": [64, 64],
-    "inputPins": [{"name": "Input", "x": 16, "y": 64}],
+    "anchorPoint": [80, 60],
+    "inputPins": [{"name": "Input", "x": 40, "y": 60}],
     "outputPins": [],
     "shapes": [
-      {"type": "line", "start": {"x": 16, "y": 64}, "end": {"x": 32, "y": 64}, "color": "#333333"},
-      {"type": "circle", "x": 48, "y": 64, "r": 8, "color": "#333333", "fill": false},
-      {"type": "line", "start": {"x": 44, "y": 60}, "end": {"x": 52, "y": 68}, "color": "#333333"},
-      {"type": "line", "start": {"x": 44, "y": 68}, "end": {"x": 52, "y": 60}, "color": "#333333"}
+      {"type": "line", "start": {"x": 40, "y": 60}, "end": {"x": 60, "y": 60}, "color": "#333333"},
+      {"type": "circle", "x": 80, "y": 60, "r": 8, "color": "#333333", "fill": false},
+      {"type": "line", "start": {"x": 76, "y": 56}, "end": {"x": 84, "y": 64}, "color": "#333333"},
+      {"type": "line", "start": {"x": 76, "y": 64}, "end": {"x": 84, "y": 56}, "color": "#333333"}
     ]
   },
   {
     "id": "Tunnel",
     "name": "Tunnel",
-    "anchorPoint": [64, 64],
-    "inputPins": [{"name": "Input", "x": 16, "y": 64}],
-    "outputPins": [{"name": "Output", "x": 112, "y": 64}],
+    "anchorPoint": [80, 60],
+    "inputPins": [{"name": "Input", "x": 40, "y": 60}],
+    "outputPins": [{"name": "Output", "x": 120, "y": 60}],
     "shapes": [
-      {"type": "line", "start": {"x": 16, "y": 64}, "end": {"x": 32, "y": 64}, "color": "#333333"},
-      {"type": "line", "start": {"x": 32, "y": 48}, "end": {"x": 32, "y": 80}, "color": "#333333"},
-      {"type": "line", "start": {"x": 32, "y": 48}, "end": {"x": 96, "y": 48}, "color": "#333333"},
-      {"type": "line", "start": {"x": 32, "y": 80}, "end": {"x": 96, "y": 80}, "color": "#333333"},
-      {"type": "line", "start": {"x": 96, "y": 48}, "end": {"x": 96, "y": 80}, "color": "#333333"},
-      {"type": "line", "start": {"x": 96, "y": 64}, "end": {"x": 112, "y": 64}, "color": "#333333"}
+      {"type": "line", "start": {"x": 40, "y": 60}, "end": {"x": 60, "y": 60}, "color": "#333333"},
+      {"type": "line", "start": {"x": 60, "y": 40}, "end": {"x": 60, "y": 80}, "color": "#333333"},
+      {"type": "line", "start": {"x": 60, "y": 40}, "end": {"x": 100, "y": 40}, "color": "#333333"},
+      {"type": "line", "start": {"x": 60, "y": 80}, "end": {"x": 100, "y": 80}, "color": "#333333"},
+      {"type": "line", "start": {"x": 100, "y": 40}, "end": {"x": 100, "y": 80}, "color": "#333333"},
+      {"type": "line", "start": {"x": 100, "y": 60}, "end": {"x": 120, "y": 60}, "color": "#333333"}
     ]
   },
   {
     "id": "Pull_Resistor",
     "name": "Pull Resistor",
-    "anchorPoint": [64, 64],
-    "inputPins": [{"name": "Input", "x": 16, "y": 64}],
-    "outputPins": [{"name": "Output", "x": 112, "y": 64}],
+    "anchorPoint": [80, 60],
+    "inputPins": [{"name": "Input", "x": 40, "y": 60}],
+    "outputPins": [{"name": "Output", "x": 120, "y": 60}],
     "shapes": [
-      {"type": "line", "start": {"x": 16, "y": 64}, "end": {"x": 32, "y": 64}, "color": "#333333"},
-      {"type": "line", "start": {"x": 32, "y": 56}, "end": {"x": 48, "y": 72}, "color": "#333333"},
-      {"type": "line", "start": {"x": 32, "y": 72}, "end": {"x": 48, "y": 56}, "color": "#333333"},
-      {"type": "line", "start": {"x": 48, "y": 64}, "end": {"x": 64, "y": 64}, "color": "#333333"},
-      {"type": "line", "start": {"x": 64, "y": 56}, "end": {"x": 80, "y": 72}, "color": "#333333"},
-      {"type": "line", "start": {"x": 64, "y": 72}, "end": {"x": 80, "y": 56}, "color": "#333333"},
-      {"type": "line", "start": {"x": 80, "y": 64}, "end": {"x": 112, "y": 64}, "color": "#333333"}
+      {"type": "line", "start": {"x": 40, "y": 60}, "end": {"x": 60, "y": 60}, "color": "#333333"},
+      {"type": "line", "start": {"x": 60, "y": 50}, "end": {"x": 80, "y": 70}, "color": "#333333"},
+      {"type": "line", "start": {"x": 60, "y": 70}, "end": {"x": 80, "y": 50}, "color": "#333333"},
+      {"type": "line", "start": {"x": 80, "y": 60}, "end": {"x": 100, "y": 60}, "color": "#333333"},
+      {"type": "line", "start": {"x": 100, "y": 50}, "end": {"x": 120, "y": 70}, "color": "#333333"},
+      {"type": "line", "start": {"x": 100, "y": 70}, "end": {"x": 120, "y": 50}, "color": "#333333"},
+      {"type": "line", "start": {"x": 120, "y": 60}, "end": {"x": 140, "y": 60}, "color": "#333333"}
     ]
   },
   {
     "id": "Clock",
     "name": "Clock",
-    "anchorPoint": [64, 64],
+    "anchorPoint": [80, 60],
     "inputPins": [],
-    "outputPins": [{"name": "Output", "x": 112, "y": 64}],
+    "outputPins": [{"name": "Output", "x": 120, "y": 60}],
     "shapes": [
-      {"type": "circle", "x": 64, "y": 64, "r": 24, "color": "#333333", "fill": false},
-      {"type": "ArcShape", "center": {"x": 64, "y": 64}, "radius": 16, "startAngle": 45, "endAngle": 315, "color": "#333333"},
-      {"type": "line", "start": {"x": 64, "y": 48}, "end": {"x": 64, "y": 32}, "color": "#333333"},
-      {"type": "line", "start": {"x": 56, "y": 40}, "end": {"x": 64, "y": 32}, "color": "#333333"},
-      {"type": "line", "start": {"x": 72, "y": 40}, "end": {"x": 64, "y": 32}, "color": "#333333"},
-      {"type": "line", "start": {"x": 64, "y": 64}, "end": {"x": 112, "y": 64}, "color": "#333333"}
+      {"type": "circle", "x": 80, "y": 60, "r": 24, "color": "#333333", "fill": false},
+      {"type": "ArcShape", "center": {"x": 80, "y": 60}, "radius": 16, "startAngle": 45, "endAngle": 315, "color": "#333333"},
+      {"type": "line", "start": {"x": 80, "y": 40}, "end": {"x": 80, "y": 20}, "color": "#333333"},
+      {"type": "line", "start": {"x": 72, "y": 28}, "end": {"x": 80, "y": 20}, "color": "#333333"},
+      {"type": "line", "start": {"x": 88, "y": 28}, "end": {"x": 80, "y": 20}, "color": "#333333"},
+      {"type": "line", "start": {"x": 80, "y": 60}, "end": {"x": 120, "y": 60}, "color": "#333333"}
     ]
   },
   {
     "id": "Constant",
     "name": "Constant",
-    "anchorPoint": [64, 64],
+    "anchorPoint": [80, 60],
     "inputPins": [],
-    "outputPins": [{"name": "Output", "x": 112, "y": 64}],
+    "outputPins": [{"name": "Output", "x": 120, "y": 60}],
     "shapes": [
-      {"type": "line", "start": {"x": 32, "y": 48}, "end": {"x": 32, "y": 80}, "color": "#333333"},
-      {"type": "line", "start": {"x": 32, "y": 48}, "end": {"x": 96, "y": 48}, "color": "#333333"},
-      {"type": "line", "start": {"x": 32, "y": 80}, "end": {"x": 96, "y": 80}, "color": "#333333"},
-      {"type": "line", "start": {"x": 96, "y": 48}, "end": {"x": 96, "y": 80}, "color": "#333333"},
-      {"type": "text", "x": 52, "y": 64, "text": "CONST", "fontSize": 14, "color": "#333333"},
-      {"type": "line", "start": {"x": 96, "y": 64}, "end": {"x": 112, "y": 64}, "color": "#333333"}
+      {"type": "line", "start": {"x": 60, "y": 40}, "end": {"x": 60, "y": 80}, "color": "#333333"},
+      {"type": "line", "start": {"x": 60, "y": 40}, "end": {"x": 100, "y": 40}, "color": "#333333"},
+      {"type": "line", "start": {"x": 60, "y": 80}, "end": {"x": 100, "y": 80}, "color": "#333333"},
+      {"type": "line", "start": {"x": 100, "y": 40}, "end": {"x": 100, "y": 80}, "color": "#333333"},
+      {"type": "text", "x": 70, "y": 55, "text": "CONST", "fontSize": 14, "color": "#333333"},
+      {"type": "line", "start": {"x": 100, "y": 60}, "end": {"x": 120, "y": 60}, "color": "#333333"}
     ]
   },
   {
     "id": "Power",
     "name": "Power",
-    "anchorPoint": [32, 32],
+    "anchorPoint": [40, 40],
     "inputPins": [],
-    "outputPins": [{"name": "VCC", "x": 56, "y": 32}],
+    "outputPins": [{"name": "VCC", "x": 40, "y": 40}],
     "shapes": [
-      {"type": "line", "start": {"x": 16, "y": 16}, "end": {"x": 16, "y": 48}, "color": "#333333"},
-      {"type": "line", "start": {"x": 16, "y": 16}, "end": {"x": 48, "y": 16}, "color": "#333333"},
-      {"type": "line", "start": {"x": 24, "y": 24}, "end": {"x": 40, "y": 24}, "color": "#333333"},
-      {"type": "line", "start": {"x": 32, "y": 32}, "end": {"x": 32, "y": 40}, "color": "#333333"},
-      {"type": "line", "start": {"x": 32, "y": 40}, "end": {"x": 56, "y": 40}, "color": "#333333"}
+      {"type": "line", "start": {"x": 20, "y": 20}, "end": {"x": 20, "y": 60}, "color": "#333333"},
+      {"type": "line", "start": {"x": 20, "y": 20}, "end": {"x": 60, "y": 20}, "color": "#333333"},
+      {"type": "line", "start": {"x": 30, "y": 30}, "end": {"x": 50, "y": 30}, "color": "#333333"},
+      {"type": "line", "start": {"x": 40, "y": 40}, "end": {"x": 40, "y": 50}, "color": "#333333"},
+      {"type": "line", "start": {"x": 40, "y": 50}, "end": {"x": 60, "y": 50}, "color": "#333333"}
     ]
   },
   {
     "id": "Ground",
     "name": "Ground",
-    "anchorPoint": [32, 64],
+    "anchorPoint": [40, 60],
     "inputPins": [],
-    "outputPins": [{"name": "GND", "x": 56, "y": 64}],
+    "outputPins": [{"name": "GND", "x": 40, "y": 60}],
     "shapes": [
-      {"type": "line", "start": {"x": 16, "y": 64}, "end": {"x": 32, "y": 64}, "color": "#333333"},
-      {"type": "line", "start": {"x": 24, "y": 72}, "end": {"x": 40, "y": 72}, "color": "#333333"},
-      {"type": "line", "start": {"x": 20, "y": 80}, "end": {"x": 44, "y": 80}, "color": "#333333"},
-      {"type": "line", "start": {"x": 16, "y": 88}, "end": {"x": 48, "y": 88}, "color": "#333333"}
+      {"type": "line", "start": {"x": 20, "y": 60}, "end": {"x": 40, "y": 60}, "color": "#333333"},
+      {"type": "line", "start": {"x": 30, "y": 70}, "end": {"x": 50, "y": 70}, "color": "#333333"},
+      {"type": "line", "start": {"x": 25, "y": 80}, "end": {"x": 55, "y": 80}, "color": "#333333"},
+      {"type": "line", "start": {"x": 20, "y": 90}, "end": {"x": 60, "y": 90}, "color": "#333333"}
     ]
   },
   {
     "id": "Transmission_Gate_Bit_Extender",
     "name": "Transmission Gate Bit Extender",
-    "anchorPoint": [64, 64],
+    "anchorPoint": [80, 60],
     "inputPins": [
-      {"name": "Data In", "x": 16, "y": 56},
-      {"name": "Ctrl", "x": 16, "y": 72}
+      {"name": "Data In", "x": 40, "y": 40},
+      {"name": "Ctrl", "x": 40, "y": 80}
     ],
     "outputPins": [
-      {"name": "Data Out 0", "x": 112, "y": 48},
-      {"name": "Data Out 1", "x": 112, "y": 64},
-      {"name": "Data Out 2", "x": 112, "y": 80}
+      {"name": "Data Out 0", "x": 120, "y": 40},
+      {"name": "Data Out 1", "x": 120, "y": 60},
+      {"name": "Data Out 2", "x": 120, "y": 80}
     ],
     "shapes": [
-      {"type": "line", "start": {"x": 16, "y": 32}, "end": {"x": 16, "y": 96}, "color": "#333333"},
-      {"type": "line", "start": {"x": 16, "y": 32}, "end": {"x": 112, "y": 32}, "color": "#333333"},
-      {"type": "line", "start": {"x": 16, "y": 96}, "end": {"x": 112, "y": 96}, "color": "#333333"},
-      {"type": "line", "start": {"x": 112, "y": 32}, "end": {"x": 112, "y": 96}, "color": "#333333"},
-      {"type": "text", "x": 32, "y": 64, "text": "TG Extender", "fontSize": 14, "color": "#333333"}
+      {"type": "line", "start": {"x": 40, "y": 20}, "end": {"x": 40, "y": 100}, "color": "#333333"},
+      {"type": "line", "start": {"x": 40, "y": 20}, "end": {"x": 120, "y": 20}, "color": "#333333"},
+      {"type": "line", "start": {"x": 40, "y": 100}, "end": {"x": 120, "y": 100}, "color": "#333333"},
+      {"type": "line", "start": {"x": 120, "y": 20}, "end": {"x": 120, "y": 100}, "color": "#333333"},
+      {"type": "text", "x": 75, "y": 55, "text": "TG Extender", "fontSize": 14, "color": "#333333"}
     ]
-
   }
 ]

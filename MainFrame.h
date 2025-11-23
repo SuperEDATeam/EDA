@@ -33,17 +33,25 @@ private:
 private:
     void AddLibraryNode(wxXmlNode* parent, const wxString& name, const wxString& desc);
     void AddWireNode(wxXmlNode* parent, const wxString& from, const wxString& to);
-
+    bool SaveAsNodeFile(const wxString& filePath);
+    bool SaveAsNetFile(const wxString& filePath);
+    // 新增：关闭事件处理函数声明
+    void OnClose(wxCloseEvent& event);
     // ...
 
 public:
     MainFrame();
     ~MainFrame();
+
+    void OnUndoStackChanged();
+
     /* File 菜单业务接口 */
     void DoFileNew();
     void DoFileOpen(const wxString& path = {});
     void DoFileSave();
     void DoFileSaveAs();
+    void DoFileSaveAsNode();  // 保存为.node文件
+    void DoFileSaveAsNet();   // 保存为.net文件
     void OnQuit(wxCommandEvent&) { Close(true); }
     void OnAbout(wxCommandEvent&);
 

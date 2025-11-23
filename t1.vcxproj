@@ -32,6 +32,8 @@
     <ClCompile Include="ToolboxModel.cpp" />
     <ClCompile Include="ToolboxPanel.cpp" />
     <ClCompile Include="ToolManager.cpp" />
+    <ClCompile Include="UndoNotifier.cpp" />
+    <ClCompile Include="UndoStack.cpp" />
     <ClCompile Include="Wire.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -48,6 +50,8 @@
     <ClInclude Include="ToolboxModel.h" />
     <ClInclude Include="ToolboxPanel.h" />
     <ClInclude Include="ToolManager.h" />
+    <ClInclude Include="UndoNotifier.h" />
+    <ClInclude Include="UndoStack.h" />
     <ClInclude Include="Wire.h" />
   </ItemGroup>
   <ItemGroup>

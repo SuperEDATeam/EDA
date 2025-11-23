@@ -4,16 +4,21 @@
 #include <wx/dcbuffer.h>
 #include "CanvasElement.h"
 #include "my_log.h"
+#include <wx/dcgraph.h>  
+#include <wx/graphics.h> 
+
 
 wxBEGIN_EVENT_TABLE(CanvasPanel, wxPanel)
 EVT_PAINT(CanvasPanel::OnPaint)
 EVT_LEFT_DOWN(CanvasPanel::OnLeftDown)
 EVT_LEFT_UP(CanvasPanel::OnLeftUp)
+EVT_LEFT_DCLICK(CanvasPanel::OnLeftDoubleClick)  // 添加双击事件
 EVT_RIGHT_DOWN(CanvasPanel::OnRightDown) // 右键也触发左键抬起事件
 EVT_RIGHT_UP(CanvasPanel::OnRightUp)
 EVT_MOTION(CanvasPanel::OnMouseMove)
 EVT_KEY_DOWN(CanvasPanel::OnKeyDown)
 EVT_MOUSEWHEEL(CanvasPanel::OnMouseWheel)
+EVT_TIMER(wxID_ANY, CanvasPanel::OnClickTimer)  // 添加定时器事件
 wxEND_EVENT_TABLE()
 
 CanvasPanel::CanvasPanel(wxWindow* parent)
@@ -21,7 +26,9 @@ CanvasPanel::CanvasPanel(wxWindow* parent)
         wxFULL_REPAINT_ON_RESIZE | wxBORDER_NONE),
     m_offset(0, 0), m_isPanning(false), m_scale(1.0f),
     m_wireMode(WireMode::Idle), m_selectedIndex(-1), m_isDragging(false),
-    m_hoverPinIdx(-1), m_hoverCellIdx(-1), m_hoverCellWire(-1) {
+    m_hoverPinIdx(-1), m_hoverCellIdx(-1), m_hoverCellWire(-1),
+    m_clickTimer(this)  // 初始化定时器
+{
     // 快捷工具栏
     m_quickToolBar = new QuickToolBar(this);
 
@@ -30,25 +37,138 @@ CanvasPanel::CanvasPanel(wxWindow* parent)
     MyLog("CanvasPanel: constructed\n");
 }
 
-void CanvasPanel::OnLeftDown(wxMouseEvent& evt) {
-    wxPoint rawScreenPos = evt.GetPosition();
-    wxPoint rawCanvasPos = ScreenToCanvas(rawScreenPos);
+//void CanvasPanel::OnLeftDown(wxMouseEvent& evt)
+//{
+//    wxPoint rawCanvasPos = ScreenToCanvas(evt.GetPosition());
+//
+//    // 1. 先判断点击位置，无论ToolManager是否处理，CanvasPanel都需要记录状态
+//    int idx = HitTest(rawCanvasPos);
+//    if (idx != -1) {
+//        m_selectedIndex = idx;
+//        m_dragStartElemPos = m_elements[idx].GetPos(); // 记录元件起始位置
+//        CollectUndoAnchor(idx, m_undoAnchors);         // 记录导线锚点
+//        m_isDragging = true;                           // 关键：必须在这里设置标志
+//    }
+//
+//    // 2. 再交给ToolManager处理（它会实际移动元件和导线）
+//    MainFrame* mf = wxDynamicCast(GetParent(), MainFrame);
+//    if (mf && mf->GetToolManager()) {
+//        mf->GetToolManager()->OnCanvasLeftDown(rawCanvasPos);
+//        // 注意：不再根据IsEventHandled()提前返回
+//    }
+//
+//    // 3. 如果没有点击元件且ToolManager没处理，清除选择
+//    if (idx == -1 && mf->GetToolManager() && !mf->GetToolManager()->IsEventHandled()) {
+//        ClearSelection();
+//    }
+//
+//    evt.Skip();
+//}
+void CanvasPanel::OnLeftDown(wxMouseEvent& evt)
+{
+    wxPoint rawCanvasPos = ScreenToCanvas(evt.GetPosition());
 
-    // 交给工具管理器处理
-    MainFrame* mainFrame = wxDynamicCast(GetParent(), MainFrame);
-    if (mainFrame && mainFrame->GetToolManager()) {
-        mainFrame->GetToolManager()->OnCanvasLeftDown(rawCanvasPos);
-        if (mainFrame->GetToolManager()->IsEventHandled()) {
-            return; // 工具管理器已处理事件
+    // 1. 先判断点击位置
+    int idx = HitTest(rawCanvasPos);
+
+    // 记录点击信息用于区分单击和双击
+    m_clickPos = rawCanvasPos;
+    m_clickElementIndex = idx;
+
+    // 如果是Pin_Input元件，启动定时器等待可能的双击
+    if (idx != -1 && m_elements[idx].GetId() == "Pin_Input") {
+        m_clickTimer.Start(250, true); // 250ms后触发，单次定时器
+    }
+    else {
+        // 对于其他元件，正常处理单击
+        if (idx != -1) {
+            m_selectedIndex = idx;
+            m_dragStartElemPos = m_elements[idx].GetPos();
+            CollectUndoAnchor(idx, m_undoAnchors);
+            m_isDragging = true;
         }
     }
 
-    // 如果工具管理器没有处理，保留原有的导线控制点点击逻辑
-    // 这个逻辑现在应该由工具管理器处理，所以这里理论上不会执行
+    // 2. 保存操作前的导线数量
+    m_wireCountBeforeOperation = m_wires.size();
+
+    // 3. 交给ToolManager处理
+    MainFrame* mf = wxDynamicCast(GetParent(), MainFrame);
+    if (mf && mf->GetToolManager()) {
+        mf->GetToolManager()->OnCanvasLeftDown(rawCanvasPos);
+    }
+
+    // 4. 如果没有点击元件且ToolManager没处理，清除选择
+    if (idx == -1 && mf->GetToolManager() && !mf->GetToolManager()->IsEventHandled()) {
+        ClearSelection();
+    }
+
+    evt.Skip();
+}
+
+void CanvasPanel::OnClickTimer(wxTimerEvent& evt)
+{
+    // 定时器触发，说明没有发生双击，执行单击逻辑
+    if (m_clickElementIndex != -1 && m_clickElementIndex < m_elements.size()) {
+        // 对于Pin_Input元件，单击时正常选择（不切换状态）
+        if (m_elements[m_clickElementIndex].GetId() == "Pin_Input") {
+            m_selectedIndex = m_clickElementIndex;
+            m_dragStartElemPos = m_elements[m_clickElementIndex].GetPos();
+            CollectUndoAnchor(m_clickElementIndex, m_undoAnchors);
+            m_isDragging = true;
+            Refresh();
+        }
+    }
+
+    // 重置点击状态
+    m_clickElementIndex = -1;
+}
+
+void CanvasPanel::OnLeftDoubleClick(wxMouseEvent& evt)
+{
+    wxPoint rawCanvasPos = ScreenToCanvas(evt.GetPosition());
+
+    // 停止定时器，避免单击逻辑执行
+    if (m_clickTimer.IsRunning()) {
+        m_clickTimer.Stop();
+    }
+
+    // 检查是否双击了Pin_Input或Pin_Output元件
+    int idx = HitTest(rawCanvasPos);
+    if (idx != -1 && idx < m_elements.size()) {
+        wxString elementId = m_elements[idx].GetId();
+
+        if (elementId == "Pin_Input") {
+            // 切换Pin_Input的状态
+            m_elements[idx].ToggleState();
+            Refresh();
+            m_isDragging = false;
+            evt.Skip(false);
+            return;
+        }
+        else if (elementId == "Pin_Output") {
+            // 切换Pin_Output的状态（循环切换：X->0->1->X）
+            int currentState = m_elements[idx].GetOutputState();
+            int newState = (currentState + 1) % 3; // 0->1->2->0
+            m_elements[idx].SetOutputState(newState);
+            Refresh();
+            m_isDragging = false;
+            evt.Skip(false);
+            return;
+        }
+    }
+
+    // 对于其他元件，继续正常处理
     evt.Skip();
 }
 
 void CanvasPanel::OnMouseMove(wxMouseEvent& evt) {
+    // 如果定时器在运行，说明可能是Pin_Input的单击等待双击，暂时不处理拖动
+    if (m_clickTimer.IsRunning()) {
+        evt.Skip();
+        return;
+    }
+
     wxPoint rawScreenPos = evt.GetPosition();
     wxPoint rawCanvasPos = ScreenToCanvas(rawScreenPos);
 
@@ -57,25 +177,105 @@ void CanvasPanel::OnMouseMove(wxMouseEvent& evt) {
     if (mainFrame && mainFrame->GetToolManager()) {
         mainFrame->GetToolManager()->OnCanvasMouseMove(rawCanvasPos);
         if (mainFrame->GetToolManager()->IsEventHandled()) {
-            return; // 工具管理器已处理事件
+            return;
         }
     }
 
     evt.Skip();
 }
 
-void CanvasPanel::OnLeftUp(wxMouseEvent& evt) {
-    // 交给工具管理器处理
+//void CanvasPanel::OnLeftUp(wxMouseEvent& evt) {
+//    wxPoint screenpos = evt.GetPosition();
+//    wxPoint canvasPos = ScreenToCanvas(screenpos);
+//
+//    // 在ToolManager处理前保存拖动状态（关键）
+//    bool wasDragging = m_isDragging;
+//    int draggedIndex = m_selectedIndex;
+//    wxPoint startPos = m_dragStartElemPos;
+//    auto anchors = m_undoAnchors; // 复制锚点信息，避免ToolManager清除后丢失
+//
+//    wxLogDebug("OnLeftUp: wasDragging=%d, idx=%d", wasDragging, draggedIndex); // 调试用
+//
+//    // 交给ToolManager处理（会实际更新元件和导线位置）
+//    MainFrame* mainFrame = wxDynamicCast(GetParent(), MainFrame);
+//    if (mainFrame && mainFrame->GetToolManager()) {
+//        mainFrame->GetToolManager()->OnCanvasLeftUp(canvasPos);
+//    }
+//
+//    // 根据CanvasPanel记录的拖动状态生成撤销命令
+//    if (wasDragging && draggedIndex != -1 && draggedIndex < m_elements.size()) {
+//        const wxPoint& newPos = m_elements[draggedIndex].GetPos();
+//        wxLogDebug("Pos: start=(%d,%d), new=(%d,%d)", startPos.x, startPos.y, newPos.x, newPos.y);
+//
+//        if (newPos != startPos) {
+//            m_undoStack.Push(std::make_unique<CmdMoveElement>(
+//                draggedIndex,
+//                startPos,
+//                anchors));
+//            wxLogDebug("Pushed Move command, undo name: %s", m_undoStack.GetUndoName().c_str());
+//
+//            MainFrame* mf = wxDynamicCast(GetParent(), MainFrame);
+//            if (mf) mf->OnUndoStackChanged();
+//        }
+//    }
+//
+//    // 重置拖动状态
+//    m_isDragging = false;
+//    evt.Skip();
+//}
+void CanvasPanel::OnLeftUp(wxMouseEvent& evt)
+{
+    // 如果定时器还在运行，说明是Pin_Input的单击，但还未确定是否要拖动
+    // 我们让定时器自然触发来处理单击逻辑
+    if (m_clickTimer.IsRunning()) {
+        evt.Skip();
+        return;
+    }
+
     wxPoint screenpos = evt.GetPosition();
-	wxPoint canvasPos = ScreenToCanvas(screenpos);
+    wxPoint canvasPos = ScreenToCanvas(screenpos);
+
+    // 保存拖动状态（元件移动用）
+    bool wasDragging = m_isDragging;
+    int draggedIndex = m_selectedIndex;
+    wxPoint startPos = m_dragStartElemPos;
+    auto anchors = m_undoAnchors;
+
+    // 保存导线绘制状态
+    bool wasDrawingWire = (m_wireMode == WireMode::DragNew);
+
+    // 交给ToolManager处理
     MainFrame* mainFrame = wxDynamicCast(GetParent(), MainFrame);
     if (mainFrame && mainFrame->GetToolManager()) {
         mainFrame->GetToolManager()->OnCanvasLeftUp(canvasPos);
-        if (mainFrame->GetToolManager()->IsEventHandled()) {
-            return; // 工具管理器已处理事件
+    }
+
+    // 检测是否新增了导线
+    if (m_wires.size() > m_wireCountBeforeOperation) {
+        size_t newWireIndex = m_wires.size() - 1;
+        m_undoStack.Push(std::make_unique<CmdAddWire>(newWireIndex));
+
+        MainFrame* mf = wxDynamicCast(GetParent(), MainFrame);
+        if (mf) mf->OnUndoStackChanged();
+    }
+
+    // 元件移动撤销
+    if (wasDragging && draggedIndex != -1 && draggedIndex < m_elements.size()) {
+        const wxPoint& newPos = m_elements[draggedIndex].GetPos();
+        if (newPos != startPos) {
+            m_undoStack.Push(std::make_unique<CmdMoveElement>(
+                draggedIndex,
+                startPos,
+                anchors));
+
+            if (mainFrame) {
+                mainFrame->OnUndoStackChanged();
+            }
         }
     }
 
+    // 重置拖动状态
+    m_isDragging = false;
     evt.Skip();
 }
 
@@ -178,66 +378,135 @@ void CanvasPanel::AddElement(const CanvasElement& elem)
 {
     m_elements.push_back(elem);
     Refresh();
-    MyLog("CanvasPanel::AddElement: <%s> total=%zu\n",
-        elem.GetName().ToUTF8().data(), m_elements.size());
+
+    // 记录撤销
+    m_undoStack.Push(std::make_unique<CmdAddElement>(elem.GetName(), m_elements.size() - 1));
+    /*MyLog("CanvasPanel::AddElement: <%s> total=%zu\n",
+        elem.GetName().ToUTF8().data(), m_elements.size());*/
 }
 
 //================= 绘制 =================
-// 修改：绘图时应用缩放因子
 void CanvasPanel::OnPaint(wxPaintEvent&)
 {
     wxAutoBufferedPaintDC dc(this);
     dc.Clear();
 
-    // 应用缩放和偏移
-    dc.SetUserScale(m_scale, m_scale);
-    dc.SetDeviceOrigin(m_offset.x, m_offset.y);  // 设置设备原点偏移
+    wxGCDC* gcdc = nullptr;
+    wxGraphicsContext* gc = nullptr;
 
-    // 1. 绘制网格（网格大小随缩放自适应）
-    const int grid = 20;
-    const wxColour c(240, 240, 240);
-    dc.SetPen(wxPen(c, 1));
-    // 计算可见区域的网格范围（基于缩放后的画布大小）
-    wxSize sz = GetClientSize();
-    //int maxX = static_cast<int>(sz.x / m_scale);  // 转换为画布坐标
-    //int maxY = static_cast<int>(sz.y / m_scale);
-    int maxX = sz.x;
-    int maxY = sz.y;
-    for (int x = 0; x < maxX; x += grid)
-        dc.DrawLine(x, 0, x, maxY);
-    for (int y = 0; y < maxY; y += grid)
-        dc.DrawLine(0, y, maxX, y);
+    if (wxGraphicsRenderer::GetDefaultRenderer()) {
+        gcdc = new wxGCDC(dc);
+        gc = gcdc->GetGraphicsContext();
+    }
 
-    // 2. 绘制元素（元素坐标已在CanvasElement内部维护，缩放由DC自动处理）
-    for (size_t i = 0; i < m_elements.size(); ++i) {
-        m_elements[i].Draw(dc);
-        // 选中状态边框
-        if ((int)i == m_selectedIndex) {
-            wxRect b = m_elements[i].GetBounds();
-            dc.SetPen(wxPen(*wxRED, 2, wxPENSTYLE_DOT));
-            dc.SetBrush(*wxTRANSPARENT_BRUSH);
-            dc.DrawRectangle(b);
+    if (gc) {
+        // 启用高质量抗锯齿
+        gc->SetAntialiasMode(wxANTIALIAS_DEFAULT);
+
+        // 应用缩放和偏移（逻辑坐标 -> 设备坐标）
+        gc->Scale(m_scale, m_scale);
+        gc->Translate(m_offset.x / m_scale, m_offset.y / m_scale);
+
+        // 高DPI适配：获取设备缩放因子
+        double dpiScale = GetContentScaleFactor();
+        gc->Scale(dpiScale, dpiScale);
+
+        // 1. 绘制网格（逻辑坐标，线宽随缩放自适应）
+        const int grid = 20;
+        const wxColour gridColor(240, 240, 240);
+        gc->SetPen(wxPen(gridColor, 1.0 / m_scale)); // 笔宽在逻辑坐标下调整
+
+        wxSize sz = GetClientSize();
+        int maxX = static_cast<int>(sz.x / (m_scale * dpiScale));
+        int maxY = static_cast<int>(sz.y / (m_scale * dpiScale));
+
+        for (int x = 0; x < maxX; x += grid) {
+            gc->StrokeLine(x, 0, x, maxY);
         }
+        for (int y = 0; y < maxY; y += grid) {
+            gc->StrokeLine(0, y, maxX, y);
+        }
+
+        // 2. 绘制元素（使用矢量绘制）
+        for (size_t i = 0; i < m_elements.size(); ++i) {
+            m_elements[i].Draw(*gcdc); // 确保元素内部使用gc绘制
+
+            // 选中状态边框（虚线宽度随缩放调整）
+            if ((int)i == m_selectedIndex) {
+                wxRect b = m_elements[i].GetBounds();
+                gc->SetPen(wxPen(*wxRED, 2.0 / m_scale, wxPENSTYLE_DOT));
+                gc->SetBrush(*wxTRANSPARENT_BRUSH);
+                gc->DrawRectangle(b.x, b.y, b.width, b.height);
+            }
+        }
+
+        // 3. 绘制导线（矢量线段）
+        gc->SetPen(wxPen(*wxBLACK, 1.5 / m_scale)); // 导线宽度自适应
+        for (const auto& w : m_wires) w.Draw(*gcdc);
+        if (m_wireMode == WireMode::DragNew) m_tempWire.Draw(*gcdc);
+
+        // 4. 悬停引脚高亮（绿色空心圆）
+        if (m_hoverPinIdx != -1) {
+            gc->SetBrush(*wxTRANSPARENT_BRUSH);
+            gc->SetPen(wxPen(wxColour(0, 255, 0), 1.0 / m_scale));
+            gc->DrawEllipse(m_hoverPinPos.x - 3, m_hoverPinPos.y - 3, 6, 6);
+        }
+
+        if (m_hoverCellIdx != -1) {
+            gc->SetBrush(*wxTRANSPARENT_BRUSH);
+            gc->SetPen(wxPen(wxColour(0, 255, 0), 1.0 / m_scale));
+            gc->DrawEllipse(m_hoverCellPos.x - 3, m_hoverCellPos.y - 3, 6, 6);
+        }
+
+        delete gcdc; // 释放资源
     }
+    else {
+        // 如果无法获取 GraphicsContext，回退到原始绘制方法
+        // 应用缩放和偏移
+        dc.SetUserScale(m_scale, m_scale);
+        dc.SetDeviceOrigin(m_offset.x, m_offset.y);  // 设置设备原点偏移
 
-    // 3. 绘制导线（导线坐标基于画布，缩放由DC处理）
-    for (const auto& w : m_wires) w.Draw(dc);
-    if (m_wireMode == WireMode::DragNew) m_tempWire.Draw(dc);
+        // 1. 绘制网格（网格大小随缩放自适应）
+        const int grid = 20;
+        const wxColour c(240, 240, 240);
+        dc.SetPen(wxPen(c, 1));
+        // 计算可见区域的网格范围（基于缩放后的画布大小）
+        wxSize sz = GetClientSize();
+        int maxX = static_cast<int>(sz.x / m_scale);  // 转换为画布坐标
+        int maxY = static_cast<int>(sz.y / m_scale);
+        for (int x = 0; x < maxX; x += grid)
+            dc.DrawLine(x, 0, x, maxY);
+        for (int y = 0; y < maxY; y += grid)
+            dc.DrawLine(0, y, maxX, y);
 
-    // 4. 悬停引脚：绿色空心圆
-    if (m_hoverPinIdx != -1) {
-        dc.SetBrush(*wxTRANSPARENT_BRUSH);              // 不填充 → 空心
-        dc.SetPen(wxPen(wxColour(0, 255, 0), 1));       // 绿色边框，线宽 2
-        dc.DrawCircle(m_hoverPinPos, 3);                // 半径 3 像素
-    }
+        // 2. 绘制元素（元素坐标已在CanvasElement内部维护，缩放由DC自动处理）
+        for (size_t i = 0; i < m_elements.size(); ++i) {
+            m_elements[i].Draw(dc);
+            // 选中状态边框
+            if ((int)i == m_selectedIndex) {
+                wxRect b = m_elements[i].GetBounds();
+                dc.SetPen(wxPen(*wxRED, 2, wxPENSTYLE_DOT));
+                dc.SetBrush(*wxTRANSPARENT_BRUSH);
+                dc.DrawRectangle(b);
+            }
+        }
 
-    if (m_hoverCellIdx != -1) {
-        /*MyLog("DRAW GREEN CELL: wire=%zu cell=%zu  pos=(%d,%d)\n",
-            m_hoverCellWire, m_hoverCellIdx,
-            m_hoverCellPos.x, m_hoverCellPos.y);*/
-        dc.SetBrush(*wxTRANSPARENT_BRUSH);
-        dc.SetPen(wxPen(wxColour(0, 255, 0), 1));
-        dc.DrawCircle(m_hoverCellPos, 3);
+        // 3. 绘制导线（导线坐标基于画布，缩放由DC处理）
+        for (const auto& w : m_wires) w.Draw(dc);
+        if (m_wireMode == WireMode::DragNew) m_tempWire.Draw(dc);
+
+        // 4. 悬停引脚：绿色空心圆
+        if (m_hoverPinIdx != -1) {
+            dc.SetBrush(*wxTRANSPARENT_BRUSH);              // 不填充 → 空心
+            dc.SetPen(wxPen(wxColour(0, 255, 0), 1));       // 绿色边框，线宽 2
+            dc.DrawCircle(m_hoverPinPos, 3);                // 半径 3 像素
+        }
+
+        if (m_hoverCellIdx != -1) {
+            dc.SetBrush(*wxTRANSPARENT_BRUSH);
+            dc.SetPen(wxPen(wxColour(0, 255, 0), 1));
+            dc.DrawCircle(m_hoverCellPos, 3);
+        }
     }
 }
 
@@ -249,8 +518,24 @@ void CanvasPanel::PlaceElement(const wxString& name, const wxPoint& pos)
         [&](const CanvasElement& e) { return e.GetName() == name; });
     if (it == g_elements.end()) return;
     CanvasElement clone = *it;
-    Pin standardPin = clone.GetOutputPins()[0];
-    wxPoint standardpos = pos - wxPoint(standardPin.pos.x, standardPin.pos.y);
+
+    // 修复：检查引脚是否存在
+    wxPoint standardpos = pos;
+    const auto& outputPins = clone.GetOutputPins();
+    const auto& inputPins = clone.GetInputPins();
+
+    if (!outputPins.empty()) {
+        // 优先使用输出引脚
+        Pin standardPin = outputPins[0];
+        standardpos = pos - wxPoint(standardPin.pos.x, standardPin.pos.y);
+    }
+    else if (!inputPins.empty()) {
+        // 如果没有输出引脚，使用输入引脚
+        Pin standardPin = inputPins[0];
+        standardpos = pos - wxPoint(standardPin.pos.x, standardPin.pos.y);
+    }
+    // 如果都没有引脚，直接使用原位置
+
     clone.SetPos(standardpos);
     AddElement(clone);
 }
@@ -490,4 +775,27 @@ void CanvasPanel::DeleteSelectedElement() {
             }
         }
         evt.Skip();
+    }
+
+    void CanvasPanel::CollectUndoAnchor(size_t elemIdx,
+        std::vector<CmdMoveElement::Anchor>& out)
+    {
+        out.clear();
+        if (elemIdx >= m_elements.size()) return;
+
+        const auto& elem = m_elements[elemIdx];
+        auto collect = [&](const auto& pins) {
+            for (const auto& pin : pins) {
+                wxPoint pinWorld = elem.GetPos() + wxPoint(pin.pos.x, pin.pos.y);
+                for (size_t w = 0; w < m_wires.size(); ++w) {
+                    const auto& wire = m_wires[w];
+                    if (!wire.pts.empty() && wire.pts.front().pos == pinWorld)
+                        out.emplace_back(CmdMoveElement::Anchor{ w, 0, pinWorld });
+                    if (wire.pts.size() > 1 && wire.pts.back().pos == pinWorld)
+                        out.emplace_back(CmdMoveElement::Anchor{ w, wire.pts.size() - 1, pinWorld });
+                }
+            }
+            };
+        collect(elem.GetInputPins());
+        collect(elem.GetOutputPins());
     }
