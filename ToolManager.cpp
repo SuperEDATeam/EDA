@@ -2,7 +2,7 @@
 #include "MainFrame.h"
 #include "Wire.h"
 #include <wx/image.h>
-#include "QuickToolBar.h"
+#include "HandyToolKit.h"
 
 ToolManager::ToolManager(MainFrame* mainFrame, ToolBars* toolBars, CanvasPanel* canvas)
     : m_mainFrame(mainFrame), m_toolBars(toolBars), m_canvas(canvas),
@@ -846,11 +846,11 @@ void ToolManager::UpdatePanning(const wxPoint& currentPos) {
 
 void ToolManager::OnCanvasRightDown(const wxPoint& canvasPos){
     wxPoint toolBarPos = canvasPos + wxPoint(240, 124);
-	m_canvas->m_quickToolBar->SetPosition(toolBarPos);
-	m_canvas->m_quickToolBar->Show();
-	m_canvas->m_quickToolBar->SetFocus();
+	m_canvas->m_HandyToolKit->SetPosition(toolBarPos);
+	m_canvas->m_HandyToolKit->Show();
+	m_canvas->m_HandyToolKit->SetFocus();
 }
 
 void ToolManager::OnCanvasRightUp(const wxPoint& canvasPos) {
-    m_canvas->m_quickToolBar->Hide();
+    m_canvas->m_HandyToolKit->Hide();
 }

@@ -23,7 +23,7 @@ CanvasPanel::CanvasPanel(wxWindow* parent)
     m_wireMode(WireMode::Idle), m_selectedIndex(-1), m_isDragging(false),
     m_hoverPinIdx(-1), m_hoverCellIdx(-1), m_hoverCellWire(-1) {
     // 快捷工具栏
-    m_quickToolBar = new QuickToolBar(this);
+    m_HandyToolKit = new HandyToolKit(this);
 
     SetBackgroundStyle(wxBG_STYLE_PAINT);
     SetBackgroundColour(*wxWHITE);

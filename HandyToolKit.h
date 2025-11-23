@@ -1,16 +1,16 @@
 #pragma once
-// QuickToolbar.h
+// HandyToolKit.h
 #include <wx/wx.h>
 #include <wx/popupwin.h>
 #include "MainFrame.h"
 
 class MainFrame;
 
-class QuickToolBar : public wxPopupWindow
+class HandyToolKit : public wxPopupWindow
 {
 public:
-    QuickToolBar(wxWindow* parent);
-    ~QuickToolBar() = default;
+    HandyToolKit(wxWindow* parent);
+    ~HandyToolKit() = default;
 
     void CreateTools();
     int GetSelectedTool() const { return m_selectedTool; }

@@ -10,7 +10,7 @@
 #include <wx/filename.h> 
 #include <wx/sstream.h>
 #include "ToolManager.h"
-#include "QuickToolBar.h"
+#include "HandyToolKit.h"
 
 extern std::vector<CanvasElement> g_elements;
 

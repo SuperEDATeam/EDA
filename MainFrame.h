@@ -13,7 +13,7 @@
 class ToolManager; // 前向声明
 class ToolBars;   // 前向声明
 class CanvasPanel; // 前向声明
-class QuickToolBar;
+class HandyToolKit;
 
 class MainFrame : public wxFrame
 {

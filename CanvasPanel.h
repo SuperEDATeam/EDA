@@ -3,9 +3,9 @@
 #include <vector>
 #include "CanvasElement.h"
 #include "Wire.h"          // ← 新增：连线数据
-#include "QuickToolBar.h"
+#include "HandyToolKit.h"
 
-class QuickToolBar;
+class HandyToolKit;
 class ToolManager;
 class MainFrame;
 
@@ -127,7 +127,7 @@ public:
     bool IsClickOnEmptyAreaPublic(const wxPoint& canvasPos);
 
     // 快捷工具栏
-    QuickToolBar* m_quickToolBar;
+    HandyToolKit* m_HandyToolKit;
 
     std::vector<WireWireAnchor> m_wireWireAnchors;// 导线<->导线小方块（新增）
     wxDECLARE_EVENT_TABLE();
