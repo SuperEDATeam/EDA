@@ -10,6 +10,7 @@
 class QuickToolBar;
 class ToolManager;
 class MainFrame;
+class CanvasTextElement;
 
 /* 新增：拖动时需要更新的连线索引 + 对应引脚信息 */
 struct WireAnchor {
@@ -57,6 +58,7 @@ public:
     void OnMouseWheel(wxMouseEvent& evt);  
     void OnRightDown(wxMouseEvent& evt);
     void OnRightUp(wxMouseEvent& evt);
+    void OnCursorTimer(wxTimerEvent& event);
 
     const std::vector<CanvasElement>& GetElements() const { return m_elements; }
     void ClearAll() {
@@ -90,6 +92,20 @@ public:
 
 
 public:
+    // 文本元素相关
+    std::vector<CanvasTextElement> m_textElements;
+    wxTimer m_cursorTimer;
+	int inWhichTextBox(const wxPoint& canvasPos);
+    void CreateTextElement(const wxPoint& position);
+	void SetFocusToTextElement(int index);
+
+    wxTextCtrl* m_hiddenTextCtrl;
+    int m_currentEditingTextIndex;
+
+    void SetupHiddenTextCtrl();
+    void AttachHiddenTextCtrlToElement(int textIndex);
+    void DetachHiddenTextCtrl();
+
     /* ---------- 原有元件相关 ---------- */
     std::vector<CanvasElement> m_elements;
     int  m_selectedIndex = -1;
@@ -143,5 +159,23 @@ public:
     QuickToolBar* m_quickToolBar;
 
     std::vector<WireWireAnchor> m_wireWireAnchors;// 导线<->导线小方块（新增）
+private:
+    // 添加焦点状态
+    bool m_hasFocus;
+
+    // 添加焦点事件处理
+    void OnFocus(wxFocusEvent& event);
+    void OnKillFocus(wxFocusEvent& event);
+    void EnsureFocus();
+
+
+public:
+    // 隐藏的文本控件用于输入法支持
+    bool m_isUsingHiddenCtrl;
+
+    void StartTextEditing(int index);
+
+    wxTextCtrl* m_sharedTextCtrl;
+
     wxDECLARE_EVENT_TABLE();
 };

@@ -9,16 +9,19 @@ wxBEGIN_EVENT_TABLE(QuickToolBar, wxPopupWindow)
 EVT_PAINT(QuickToolBar::OnPaint)
 EVT_MOTION(QuickToolBar::OnMouseMove)
 EVT_RIGHT_UP(QuickToolBar::OnRightUp)
+EVT_LEFT_UP(QuickToolBar::OnLeftDown)
 EVT_KILL_FOCUS(QuickToolBar::OnKillFocus)
 wxEND_EVENT_TABLE()
 
 QuickToolBar::QuickToolBar(wxWindow* parent)
-    : wxPopupWindow(parent, wxBORDER_SIMPLE),
+    : wxPopupWindow(parent, wxBORDER_SIMPLE | wxPU_CONTAINS_CONTROLS),
     m_selectedTool(-1), m_hoveredTool(-1)
 {   
     wxInitAllImageHandlers();
     SetBackgroundStyle(wxBG_STYLE_PAINT);
     CreateTools();
+
+    SetExtraStyle(GetExtraStyle() | wxWS_EX_TRANSIENT);
 
     // 设置合适的大小
     SetSize(wxSize(96, 24));
@@ -205,6 +208,7 @@ void QuickToolBar::OnRightUp(wxMouseEvent& event)
             m_selectedTool = i;
 			// 执行工具的动作
 			m_tools[i].action();
+            PassFocusToCanvas();
             break;
         }
     }
@@ -215,10 +219,22 @@ void QuickToolBar::OnRightUp(wxMouseEvent& event)
     // 注意：这里不调用event.Skip()，因为我们处理了这个事件
 }
 
-void QuickToolBar::OnKillFocus(wxFocusEvent& event)
-{
-    // 失去焦点时自动关闭
-    Hide();
+//void QuickToolBar::OnKillFocus(wxFocusEvent& event)
+//{
+//    // 失去焦点时自动关闭
+//    Hide();
+//    event.Skip();
+//}
+
+void QuickToolBar::OnKillFocus(wxFocusEvent& event) {
+    wxWindow* focused = wxWindow::FindFocus();
+
+    // 只有当焦点转移到非父窗口时才隐藏
+    if (focused && focused != GetParent()) {
+        Hide();
+        //MyLog("QuickToolBar: Hidden due to focus loss\n");
+    }
+
     event.Skip();
 }
 
@@ -233,4 +249,31 @@ MainFrame* QuickToolBar::GetMainFrame(wxWindow* window)
         parent = parent->GetParent();
     }
     return nullptr;
+}
+
+void QuickToolBar::PassFocusToCanvas() {
+    // 获取父窗口（应该是CanvasPanel）并设置焦点
+    wxWindow* parent = GetParent();
+    if (parent) {
+        parent->SetFocus();
+        //MyLog("QuickToolBar: Focus passed back to CanvasPanel\n");
+    }
+}
+
+void QuickToolBar::OnLeftDown(wxMouseEvent& event) {
+    wxPoint pos = event.GetPosition();
+
+    // 确定选择了哪个工具
+    for (size_t i = 0; i < m_tools.size(); i++) {
+        if (m_tools[i].rect.Contains(pos)) {
+            m_selectedTool = i;
+            // 执行工具的动作
+            m_tools[i].action();
+
+            // 选择工具后立即将焦点传回画布
+            PassFocusToCanvas();
+            break;
+        }
+    }
+    Hide();
 }

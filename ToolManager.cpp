@@ -4,6 +4,8 @@
 #include <wx/image.h>
 #include "QuickToolBar.h"
 #include "UndoStack.h"
+#include "CanvasPanel.h"
+#include "CanvasTextElement.h"
 
 ToolManager::ToolManager(MainFrame* mainFrame, ToolBars* toolBars, CanvasPanel* canvas)
     : m_mainFrame(mainFrame), m_toolBars(toolBars), m_canvas(canvas),
@@ -11,7 +13,17 @@ ToolManager::ToolManager(MainFrame* mainFrame, ToolBars* toolBars, CanvasPanel* 
     m_isDrawingWire(false), m_isPanning(false),
     m_isEditingWire(false), m_editingWireIndex(-1), m_editingPointIndex(-1),
     m_isDraggingElement(false), m_draggingElementIndex(-1),
-	m_previousTool(ToolType::DEFAULT_TOOL), m_tempTool(false) {
+	m_previousTool(ToolType::DEFAULT_TOOL), m_tempTool(false), m_editingTextIndex(-1) {
+    BindHiddenTextCtrlEvents();
+}
+
+void ToolManager::CleanTempTool() {
+    m_tempTool = false;
+}
+
+void ToolManager::SetCurrentTool4Bar(ToolType tool) {
+    CleanTempTool();
+    SetCurrentTool(tool);
 }
 
 void ToolManager::SetCurrentTool(ToolType tool) {
@@ -92,6 +104,11 @@ void ToolManager::SetCurrentTool(ToolType tool) {
 void ToolManager::OnCanvasLeftDown(const wxPoint& canvasPos) {
     m_eventHandled = false;
 
+    // 清除文本编辑焦点
+    if (m_editingTextIndex != -1) {
+        FinishTextEditing();
+    }
+
     // 1. 最高优先级：检查是否点击了导线控制点
   //  int cellWire, cellIdx;
   //  wxPoint cellPos;
@@ -148,14 +165,14 @@ void ToolManager::OnCanvasLeftDown(const wxPoint& canvasPos) {
         }
     }
 
-	// 4. 是否点击在默认工具下的空白区域
-    if (m_currentTool == ToolType::DEFAULT_TOOL &&
-        m_canvas->IsClickOnEmptyAreaPublic(canvasPos)) {
-		m_tempTool = true;
-		SetCurrentTool(ToolType::DRAG_TOOL);
-        //StartPanning(canvasPos);
-        StartPanning(m_canvas->CanvasToScreen(canvasPos));
-        m_eventHandled = true;
+    // 4. 检查是否点击了现有文本元素
+    bool clickedExisting = false;
+	int textIndex = m_canvas->inWhichTextBox(canvasPos);
+    if (textIndex != -1) {
+        m_tempTool = true;
+		SetCurrentTool(ToolType::TEXT_TOOL);
+        StartTextEditing(textIndex);
+        clickedExisting = true;
         return;
 	}
 
@@ -365,28 +382,60 @@ void ToolManager::OnCanvasLeftUp(const wxPoint& canvasPos) {
 }
 
 void ToolManager::OnCanvasKeyDown(wxKeyEvent& evt) {
-    if (evt.GetKeyCode() == WXK_ESCAPE) {
-        if (m_isDrawingWire) {
-            CancelWireDrawing();
-        }
-        else if (m_isEditingWire) {
-            CancelWireEditing();
-        }
-        else if (m_isDraggingElement) {
-            // 取消元件拖动，恢复原位
-            if (m_draggingElementIndex != -1) {
-                m_canvas->m_elements[m_draggingElementIndex].SetPos(m_elementStartCanvasPos);
-                m_canvas->Refresh();
-            }
-            FinishElementDragging();
-        }
-        else {
-            SetCurrentTool(ToolType::DEFAULT_TOOL);
-        }
-        evt.Skip(false); // 已处理
+    // Ctrl + z 撤销
+    if (evt.ControlDown() && evt.GetKeyCode() == 'z') {
+        m_eventHandled = true;
+        return;
     }
-    else {
-        evt.Skip(); // 其他按键继续传递
+
+    // Ctrl + s 保存
+    if (evt.ControlDown() && evt.GetKeyCode() == 's') {
+        m_eventHandled = true;
+        return;
+    }
+
+    // Space 开始/终止仿真
+    //if () {
+    //    m_eventHandled = true;
+    //    return;
+    //}
+
+	// Ctrl + c 复制画布元素
+    if (evt.ControlDown() && evt.GetKeyCode() == 'c') {
+        m_eventHandled = true;
+        return;
+	}
+
+	// Ctrl + v 粘贴画布元素
+    if (evt.ControlDown() && evt.GetKeyCode() == 'v') {
+        m_eventHandled = true;
+        return;
+	}
+
+	// Ctrl + x 剪切画布元素
+    if (evt.ControlDown() && evt.GetKeyCode() == 'x') {
+        m_eventHandled = true;
+        return;
+    }
+
+
+    switch (m_currentTool) {
+    case ToolType::DRAG_TOOL: {
+
+    }
+    case ToolType::SELECT_TOOL: {
+
+    }
+    case ToolType::TEXT_TOOL: {
+
+    }
+    case ToolType::WIRE_TOOL: {
+
+    }
+
+    default: {
+		return;
+    }
     }
 }
 
@@ -438,19 +487,22 @@ void ToolManager::HandleSelectTool(const wxPoint& canvasPos) {
 }
 
 void ToolManager::HandleTextTool(const wxPoint& canvasPos) {
-    // 文本工具行为：在点击位置创建文本元素
-    // 注意：这里暂时注释掉文本输入对话框，等工具稳定后再实现
-    /*
-    wxString text = wxGetTextFromUser("请输入文本:", "添加文本", "", m_mainFrame);
-    if (!text.IsEmpty()) {
-        if (m_mainFrame) {
-            m_mainFrame->SetStatusText(wxString::Format("文本工具: 添加文本 '%s'", text.ToUTF8().data()));
-        }
+    // 检查是否点击了现有文本元素
+    int textIndex = m_canvas->inWhichTextBox(canvasPos);
+    if (textIndex != -1) {
+        m_tempTool = true;
+        SetCurrentTool(ToolType::TEXT_TOOL);
+        StartTextEditing(textIndex);
+        m_eventHandled = true;
+        return;
     }
-    */
+
+    // 创建新文本元素
+    CreateTextElement(canvasPos);
+    m_canvas->Refresh();
 
     if (m_mainFrame) {
-        m_mainFrame->SetStatusText("文本工具: 点击添加文本");
+        m_mainFrame->SetStatusText(wxString::Format("放置文本框：(%d, %d)", canvasPos.x, canvasPos.y));
     }
 }
 
@@ -880,4 +932,232 @@ void ToolManager::OnCanvasRightDown(const wxPoint& canvasPos){
 
 void ToolManager::OnCanvasRightUp(const wxPoint& canvasPos) {
     m_canvas->m_quickToolBar->Hide();
+}
+
+bool ToolManager::IsCharacterKey(const wxKeyEvent& event) {
+    int keyCode = event.GetKeyCode();
+
+    // 直接排除已知的特殊键
+    switch (keyCode) {
+    case WXK_BACK:
+    case WXK_TAB:
+    case WXK_RETURN:
+    case WXK_ESCAPE:
+    case WXK_DELETE:
+    case WXK_START:
+    case WXK_LBUTTON:
+    case WXK_RBUTTON:
+    case WXK_CANCEL:
+    case WXK_MBUTTON:
+    case WXK_CLEAR:
+    case WXK_SHIFT:
+    case WXK_ALT:
+    case WXK_CONTROL:
+    case WXK_MENU:
+    case WXK_PAUSE:
+    case WXK_CAPITAL:
+    case WXK_END:
+    case WXK_HOME:
+    case WXK_LEFT:
+    case WXK_UP:
+    case WXK_RIGHT:
+    case WXK_DOWN:
+    case WXK_SELECT:
+    case WXK_PRINT:
+    case WXK_EXECUTE:
+    case WXK_SNAPSHOT:
+    case WXK_INSERT:
+    case WXK_HELP:
+    case WXK_NUMPAD0:
+    case WXK_NUMPAD1:
+    case WXK_NUMPAD2:
+    case WXK_NUMPAD3:
+    case WXK_NUMPAD4:
+    case WXK_NUMPAD5:
+    case WXK_NUMPAD6:
+    case WXK_NUMPAD7:
+    case WXK_NUMPAD8:
+    case WXK_NUMPAD9:
+    case WXK_MULTIPLY:
+    case WXK_ADD:
+    case WXK_SEPARATOR:
+    case WXK_SUBTRACT:
+    case WXK_DECIMAL:
+    case WXK_DIVIDE:
+    case WXK_F1:
+    case WXK_F2:
+    case WXK_F3:
+    case WXK_F4:
+    case WXK_F5:
+    case WXK_F6:
+    case WXK_F7:
+    case WXK_F8:
+    case WXK_F9:
+    case WXK_F10:
+    case WXK_F11:
+    case WXK_F12:
+    case WXK_F13:
+    case WXK_F14:
+    case WXK_F15:
+    case WXK_F16:
+    case WXK_F17:
+    case WXK_F18:
+    case WXK_F19:
+    case WXK_F20:
+    case WXK_F21:
+    case WXK_F22:
+    case WXK_F23:
+    case WXK_F24:
+    case WXK_NUMLOCK:
+    case WXK_SCROLL:
+    case WXK_PAGEUP:
+    case WXK_PAGEDOWN:
+    case WXK_WINDOWS_LEFT:
+    case WXK_WINDOWS_RIGHT:
+    case WXK_WINDOWS_MENU:
+        return false;
+    }
+
+    // 检查Unicode字符
+    wxChar unicodeChar = event.GetUnicodeKey();
+    return (unicodeChar >= 32 && unicodeChar != 127);
+}
+
+void ToolManager::CreateTextElement(const wxPoint& position) {
+    // 创建新文本元素
+	m_canvas->CreateTextElement(position);
+
+}
+
+// 修改StartTextEditing方法
+void ToolManager::StartTextEditing(int index) {
+    // 结束之前的编辑
+    if (m_editingTextIndex != -1) {
+        FinishTextEditing();
+    }
+
+    // 开始新的编辑
+    m_editingTextIndex = index;
+
+    if (m_canvas) {
+        m_canvas->AttachHiddenTextCtrlToElement(index);
+    }
+
+    if (m_mainFrame) {
+        m_mainFrame->SetStatusText("文本编辑: 在文本框中输入内容，按回车完成");
+    }
+}
+
+// 修改FinishTextEditing方法
+void ToolManager::FinishTextEditing() {
+    if (m_canvas) {
+        m_canvas->DetachHiddenTextCtrl();
+    }
+
+    m_editingTextIndex = -1;
+
+    if (m_tempTool) {
+        SetCurrentTool(m_previousTool);
+        m_tempTool = false;
+    }
+
+    if (m_mainFrame) {
+        m_mainFrame->SetStatusText("文本编辑完成");
+    }
+}
+// 文本事件绑定方法
+void ToolManager::BindTextCtrlEvents(wxTextCtrl* textCtrl, int textIndex) {
+    if (!textCtrl) return;
+
+    // 跟踪绑定
+    m_textCtrlBindings[textCtrl] = textIndex;
+
+    // 绑定事件
+    textCtrl->Bind(wxEVT_TEXT, [this, textCtrl](wxCommandEvent& evt) {
+        auto it = m_textCtrlBindings.find(textCtrl);
+        if (it != m_textCtrlBindings.end()) {
+            OnTextCtrlTextChanged(evt, it->second);
+        }
+        });
+
+    textCtrl->Bind(wxEVT_TEXT_ENTER, [this, textCtrl](wxCommandEvent& evt) {
+        auto it = m_textCtrlBindings.find(textCtrl);
+        if (it != m_textCtrlBindings.end()) {
+            OnTextCtrlEnter(evt, it->second);
+        }
+        });
+
+    textCtrl->Bind(wxEVT_KILL_FOCUS, [this, textCtrl](wxFocusEvent& evt) {
+        auto it = m_textCtrlBindings.find(textCtrl);
+        if (it != m_textCtrlBindings.end()) {
+            OnTextCtrlKillFocus(evt, it->second);
+        }
+        });
+}
+
+void ToolManager::UnbindTextCtrlEvents(wxTextCtrl* textCtrl) {
+    if (!textCtrl) return;
+
+    // 移除绑定跟踪
+    m_textCtrlBindings.erase(textCtrl);
+
+    // 注意：由于我们使用lambda，需要小心地解绑
+    // 在实际使用中，可能需要更复杂的事件管理
+}
+
+// 文本事件处理方法
+void ToolManager::OnTextCtrlTextChanged(wxCommandEvent& evt, int textIndex) {
+    if (textIndex >= 0 && textIndex < (int)m_canvas->m_textElements.size()) {
+        wxTextCtrl* textCtrl = wxDynamicCast(evt.GetEventObject(), wxTextCtrl);
+        if (textCtrl) {
+            // 表面操作：更新CanvasTextElement
+            m_canvas->m_textElements[textIndex].OnTextChanged(textCtrl->GetValue());
+            m_canvas->Refresh();
+        }
+    }
+    evt.Skip();
+}
+
+void ToolManager::OnTextCtrlEnter(wxCommandEvent& evt, int textIndex) {
+    if (textIndex >= 0 && textIndex < (int)m_canvas->m_textElements.size()) {
+        m_canvas->m_textElements[textIndex].OnTextEnter();
+        FinishTextEditing();
+    }
+    evt.Skip();
+}
+
+void ToolManager::OnTextCtrlKillFocus(wxFocusEvent& evt, int textIndex) {
+    if (textIndex >= 0 && textIndex < (int)m_canvas->m_textElements.size()) {
+        m_canvas->m_textElements[textIndex].OnTextKillFocus();
+        FinishTextEditing();
+    }
+    evt.Skip();
+}
+
+void ToolManager::BindHiddenTextCtrlEvents() {
+    if (m_canvas && m_canvas->m_hiddenTextCtrl) {
+        wxTextCtrl* hiddenCtrl = m_canvas->m_hiddenTextCtrl;
+
+        hiddenCtrl->Bind(wxEVT_TEXT, &ToolManager::OnHiddenTextCtrlText, this);
+        hiddenCtrl->Bind(wxEVT_TEXT_ENTER, &ToolManager::OnHiddenTextCtrlEnter, this);
+        hiddenCtrl->Bind(wxEVT_KILL_FOCUS, &ToolManager::OnHiddenTextCtrlKillFocus, this);
+    }
+}
+
+void ToolManager::OnHiddenTextCtrlText(wxCommandEvent& evt) {
+    if (m_canvas && m_canvas->m_currentEditingTextIndex != -1) {
+        // 文本变化时刷新画布，让CanvasTextElement重绘
+        m_canvas->Refresh();
+    }
+    evt.Skip();
+}
+
+void ToolManager::OnHiddenTextCtrlEnter(wxCommandEvent& evt) {
+    FinishTextEditing();
+    evt.Skip();
+}
+
+void ToolManager::OnHiddenTextCtrlKillFocus(wxFocusEvent& evt) {
+    FinishTextEditing();
+    evt.Skip();
 }

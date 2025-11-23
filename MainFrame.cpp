@@ -46,6 +46,7 @@ MainFrame::MainFrame()
     /* 创建中央画布（先空白占位） */
     m_canvas = new CanvasPanel(this);
     m_canvas->SetBackgroundColour(*wxWHITE);
+	m_canvas->SetFocus();
 
     // 工具栏
     m_toolBars = new ToolBars(this);
