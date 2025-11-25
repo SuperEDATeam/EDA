@@ -9,47 +9,6 @@ void Wire::Draw(wxDC& dc) const {
 }
 
 
-std::vector<ControlPoint> Wire::RouteOrtho(
-    const ControlPoint& start,
-    const ControlPoint& end,
-    PinDirection startDir,
-    PinDirection endDir) {
-
-    std::vector<ControlPoint> out;
-
-    // 边界情况：起点和终点相同
-    if (start.pos == end.pos) {
-        out.push_back({ start.pos, start.type });
-        out.push_back({ end.pos, end.type });
-        return out;
-    }
-
-    // 添加起点
-    out.push_back({ start.pos, start.type });
-
-    // 曼哈顿路由：先水平后垂直 或 先垂直后水平
-    // 这里使用"先水平后垂直"策略
-    int med_x = (start.pos.x + end.pos.x) / 2;
-    med_x = med_x / 20 * 20;
-    wxPoint med_1(med_x, start.pos.y);
-    wxPoint med_2(med_x, end.pos.y);
-
-    // 只有当中间点与起点不同时才添加
-    if (med_1 != start.pos) {
-        out.push_back({ med_1, CPType::Bend });
-    }
-
-    if (med_2 != end.pos) {
-        out.push_back({ med_2, CPType::Bend });
-    }
-
-    // 添加终点
-    out.push_back({ end.pos, end.type });
-
-    return out;
-}
-
-
 void Wire::GenerateCells()
 {
     cells.clear();
@@ -73,29 +32,126 @@ void Wire::GenerateCells()
     }
 }
 
-std::vector<ControlPoint> Wire::RouteBranch(
-    const ControlPoint& branchStart,    // 分支起点（导线上的点）
-    const ControlPoint& branchEnd,      // 分支终点
-    PinDirection endDir) {
 
+std::vector<ControlPoint> Wire::Route(const ControlPoint& start, const ControlPoint& end) {
     std::vector<ControlPoint> out;
 
-    // 添加分支起点
-    out.push_back({ branchStart.pos, CPType::Bend });
+    // 边界情况：起点和终点相同
+    if (start.pos == end.pos) {
+        out.push_back({ start.pos, start.type });
+        out.push_back({ end.pos, end.type });
+        return out;
+    }
 
-    // 分支路由策略：先垂直偏移一段距离，再水平连接到目标
-    int offsetY = 20; // 垂直偏移量
+    // 添加起点
+    out.push_back({ start.pos, start.type });
 
-    // 第一个中间点：垂直偏移
-    wxPoint mid1(branchStart.pos.x, branchStart.pos.y + offsetY);
-    out.push_back({ mid1, CPType::Bend });
+    // 处理自由点的情况
+    CPType effectiveStartType = start.type;
+    CPType effectiveEndType = end.type;
 
-    // 第二个中间点：水平对齐到终点
-    wxPoint mid2(branchEnd.pos.x, branchStart.pos.y + offsetY);
-    out.push_back({ mid2, CPType::Bend });
+    // 如果有一个是自由点，根据另一个点的类型确定行为
+    if (start.type == CPType::Free) {
+        if (end.type == CPType::Free) {
+            effectiveStartType = CPType::Pin;
+            effectiveEndType = CPType::Pin;
+        }
+        else {
+            effectiveStartType = (end.type == CPType::Pin) ? CPType::Pin : CPType::Branch;
+        }
+    }
+    if (end.type == CPType::Free) {
+        if (start.type == CPType::Free) {
+            effectiveStartType = CPType::Pin;
+            effectiveEndType = CPType::Pin;
+        }
+        else {
+            effectiveEndType = (start.type == CPType::Pin) ? CPType::Pin : CPType::Branch;
+        }
+    }
+
+    // 根据标准化后的类型进行路由
+    if (effectiveStartType == CPType::Branch && effectiveEndType == CPType::Branch) {
+        // 分支点到分支点：先竖直，再水平，再竖直，平分竖直落差
+        int mid_y1 = start.pos.y + (end.pos.y - start.pos.y) / 2;
+        int mid_y2 = start.pos.y + (end.pos.y - start.pos.y) / 2;
+
+        // 对齐到网格
+        mid_y1 = mid_y1 / 20 * 20;
+        mid_y2 = mid_y2 / 20 * 20;
+
+        wxPoint vert_1(start.pos.x, mid_y1);
+        wxPoint horz_1(end.pos.x, mid_y1);
+        wxPoint vert_2(end.pos.x, mid_y2);
+
+        if (vert_1 != start.pos) {
+            out.push_back({ vert_1, CPType::Bend });
+        }
+        if (horz_1 != vert_1) {
+            out.push_back({ horz_1, CPType::Bend });
+        }
+        if (vert_2 != horz_1) {
+            out.push_back({ vert_2, CPType::Bend });
+        }
+    }
+    else if (effectiveStartType == CPType::Pin && effectiveEndType == CPType::Pin) {
+        // 引脚到引脚：先水平，再竖直，再水平，平分水平差
+        int mid_x1 = start.pos.x + (end.pos.x - start.pos.x) / 2;
+        int mid_x2 = start.pos.x + (end.pos.x - start.pos.x) / 2;
+
+        // 对齐到网格
+        mid_x1 = mid_x1 / 20 * 20;
+        mid_x2 = mid_x2 / 20 * 20;
+
+        wxPoint horz_1(mid_x1, start.pos.y);
+        wxPoint vert_1(mid_x1, end.pos.y);
+        wxPoint horz_2(mid_x2, end.pos.y);
+
+        if (horz_1 != start.pos) {
+            out.push_back({ horz_1, CPType::Bend });
+        }
+        if (vert_1 != horz_1) {
+            out.push_back({ vert_1, CPType::Bend });
+        }
+        if (horz_2 != vert_1) {
+            out.push_back({ horz_2, CPType::Bend });
+        }
+    }
+    else if (effectiveStartType == CPType::Branch && effectiveEndType == CPType::Pin) {
+        // 分支到引脚：先竖直再水平
+        wxPoint med(start.pos.x, end.pos.y);
+        med.y = med.y / 20 * 20; // 对齐到网格
+
+        if (med != start.pos && med != end.pos) {
+            out.push_back({ med, CPType::Bend });
+        }
+    }
+    else if (effectiveStartType == CPType::Pin && effectiveEndType == CPType::Branch) {
+        // 引脚到分支：先水平再竖直
+        wxPoint med(end.pos.x, start.pos.y);
+        med.x = med.x / 20 * 20; // 对齐到网格
+
+        if (med != start.pos && med != end.pos) {
+            out.push_back({ med, CPType::Bend });
+        }
+    }
+    else {
+        // 默认情况：使用正交路由作为后备
+        int med_x = (start.pos.x + end.pos.x) / 2;
+        med_x = med_x / 20 * 20;
+        wxPoint med_1(med_x, start.pos.y);
+        wxPoint med_2(med_x, end.pos.y);
+
+        if (med_1 != start.pos) {
+            out.push_back({ med_1, CPType::Bend });
+        }
+        if (med_2 != end.pos) {
+            out.push_back({ med_2, CPType::Bend });
+        }
+    }
 
     // 添加终点
-    out.push_back({ branchEnd.pos, CPType::Bend });
+    out.push_back({ end.pos, end.type });
 
     return out;
 }

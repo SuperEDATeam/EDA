@@ -4,7 +4,7 @@
 
 class CanvasPanel;
 
-enum class CPType { Pin, Bend, Free };
+enum class CPType { Pin, Bend, Free, Branch };
 
 struct ControlPoint {
     wxPoint  pos;
@@ -12,31 +12,9 @@ struct ControlPoint {
     // 若吸附到引脚，可扩展存元件指针/pin索引
 };
 
-/* 导线-导线连接记录 */
-struct WireWireAnchor {
-    size_t srcWire;   // 新导线索引
-    size_t srcPt;     // 0 或 pts.size()-1
-    size_t dstWire;   // 被连接的导线索引
-    size_t dstCell;   // 被连接的小方块序号
-};
-
-enum class PinDirection {
-    Left,    // 引脚朝左
-    Right,   // 引脚朝右
-    Up,      // 引脚朝上  
-    Down     // 引脚朝下
-};
-
-struct WireBranch {
-    size_t parentWire;    // 父导线索引
-    size_t parentCell;    // 父导线上的控制点索引
-    size_t branchWire;    // 分支导线索引
-};
-
 class Wire {
 public:
     std::vector<ControlPoint> pts;
-	std::vector<WireWireAnchor> anchors;
 
     Wire() = default;
     explicit Wire(std::vector<ControlPoint> v) : pts(std::move(v)) {}
@@ -49,30 +27,12 @@ public:
     size_t Size() const { return pts.size(); }
 
     CanvasPanel* m_canvas;
-
-    //采用曼哈顿路由（Manhattan Wiring）代替传统的正交路由
-    static std::vector<ControlPoint> RouteOrtho(const ControlPoint& start,
-        const ControlPoint& end,
-        PinDirection startDir,
-        PinDirection endDir);
     std::vector<wxPoint> cells;          // 每 2 px 小格中心
     void GenerateCells();                // 一次性切分
 public:
     // ... 现有成员 ...
 
     // 分支相关
-    std::vector<WireBranch> branches;  // 该导线的所有分支
-    bool isBranch = false;             // 标记是否为分支导线
-    size_t parentWire = -1;            // 如果是分支，指向父导线
-    size_t parentCell = -1;            // 父导线上的连接点
 
-    // 分支管理方法
-    void AddBranch(size_t branchWireIdx, size_t cellIdx);
-    void RemoveBranch(size_t branchWireIdx);
-    bool HasBranches() const { return !branches.empty(); }
-    static std::vector<ControlPoint> RouteBranch(
-        const ControlPoint& branchStart,    // 分支起点（导线上的点）
-        const ControlPoint& branchEnd,      // 分支终点
-        PinDirection endDir);
-
+    static std::vector<ControlPoint> Route(const ControlPoint& start, const ControlPoint& end);
 };

@@ -59,8 +59,7 @@ void CmdMoveElement::undo(CanvasPanel* canvas)
             wire.pts[a.ptIdx].pos = a.oldPos;
 
         // 重新布线 & 小格
-        wire.pts = Wire::RouteOrtho(wire.pts.front(), wire.pts.back(),
-            PinDirection::Right, PinDirection::Left);
+        wire.pts = Wire::Route(wire.pts.front(), wire.pts.back());
         wire.GenerateCells();
     }
     canvas->Refresh();
@@ -81,6 +80,5 @@ void CmdAddBranchWire::undo(CanvasPanel* canvas) {
         m_branchWire < canvas->GetWires().size()) {
 
         // 调用 CanvasPanel 的方法来移除分支连接
-        canvas->RemoveBranchConnection(m_parentWire, m_branchWire);
     }
 }

@@ -17,6 +17,7 @@ class ToolStateMachine;
 
 struct HoverInfo {
     wxPoint pos;
+    wxPoint snappedPos; // 优先级：引脚，导线控制点
 
     // -----------------
     // 1. 引脚 (Pin) 悬停信息
@@ -146,8 +147,6 @@ public:
 
     std::vector<Wire> m_wires;   // 已定型的连线
     Wire m_tempWire;             // 正在拖动/预览的连线
-    enum class WireMode { Idle, DragNew, DragMove, DragBranch};
-    WireMode m_wireMode = WireMode::Idle;
 
     ControlPoint m_startCP;      // 连线起点
     wxPoint m_curSnap;           // 当前吸附/预览点
@@ -164,8 +163,6 @@ public:
     wxPoint Snap(const wxPoint& raw, bool* snapped);
 
     std::vector<WireAnchor> m_movingWires;
-    std::vector<WireAnchor> m_movingbranchWires;
-    std::vector<WireAnchor> m_branchWires;
 
     int  HitHoverPin(const wxPoint& raw, bool* isInput, wxPoint* worldPos);
 
@@ -199,8 +196,6 @@ public:
 
     // 悬停信息检测
     void UpdateHoverInfo(const wxPoint& canvasPos);
-
-    std::vector<WireWireAnchor> m_wireWireAnchors;// 导线<->导线小方块（新增）
 private:
     // 添加焦点状态
     bool m_hasFocus;
@@ -218,28 +213,5 @@ public:
     void StartTextEditing(int index);
 
     wxTextCtrl* m_sharedTextCtrl;
-
-private:
-        // ... 现有成员 ...
-
-        // 分支管理
-        std::vector<WireBranch> m_allBranches;  // 所有分支关系
-        // 分支拖动状态
-        struct BranchDragState {
-            size_t parentWire;
-            size_t parentCell;
-            wxPoint branchStartPos;
-        } m_branchDragState;
-public:
-    // 分支相关方法
-    bool CanCreateBranchFromWire(size_t wireIdx, size_t cellIdx) const;
-    size_t CreateBranchFromWire(size_t wireIdx, size_t cellIdx, const wxPoint& startPos);
-    void UpdateWireBranches(size_t wireIdx);
-    void DeleteWireWithBranches(size_t wireIdx);
-    void StartBranchFromWire(size_t wireIdx, size_t cellIdx, const wxPoint& startPos);
-    void CompleteBranchConnection();
-    void EstablishBranchConnection(size_t parentWire, size_t parentCell, size_t branchWire);
-    void RemoveBranchConnection(size_t parentWire, size_t branchWire);
-
     wxDECLARE_EVENT_TABLE();
 };

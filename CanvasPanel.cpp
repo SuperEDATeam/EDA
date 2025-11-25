@@ -31,7 +31,7 @@ CanvasPanel::CanvasPanel(MainFrame* parent)
         wxFULL_REPAINT_ON_RESIZE | wxBORDER_NONE),
     m_mainFrame(parent),
     m_offset(0, 0), m_isPanning(false), m_scale(1.0f),
-    m_wireMode(WireMode::Idle), m_selectedIndex(-1), m_isDragging(false), m_hoverInfo{}, m_hasFocus(false),
+    m_selectedIndex(-1), m_isDragging(false), m_hoverInfo{}, m_hasFocus(false),
     m_hiddenTextCtrl(nullptr),
     m_isUsingHiddenCtrl(false), m_currentEditingTextIndex(-1) {
     SetupHiddenTextCtrl();
@@ -93,19 +93,7 @@ void CanvasPanel::OnLeftDown(wxMouseEvent& evt)
     m_clickPos = rawCanvasPos;
     m_clickElementIndex = idx;
 
-    // 如果是Pin_Input元件，启动定时器等待可能的双击
-    if (idx != -1 && m_elements[idx].GetId() == "Pin_Input") {
-        m_clickTimer.Start(250, true); // 250ms后触发，单次定时器
-    }
-    else {
-        // 对于其他元件，正常处理单击
-        if (idx != -1) {
-            m_selectedIndex = idx;
-            m_dragStartElemPos = m_elements[idx].GetPos();
-            CollectUndoAnchor(idx, m_undoAnchors);
-            m_isDragging = true;
-        }
-    }
+
     EnsureFocus();
 
     // 2. 保存操作前的导线数量
@@ -119,6 +107,22 @@ void CanvasPanel::OnLeftDown(wxMouseEvent& evt)
     // 4. 如果没有点击元件且ToolManager没处理，清除选择
     if (idx == -1 && m_CanvasEventHandler && !m_CanvasEventHandler->IsEventHandled()) {
         ClearSelection();
+    }
+    // 如果是Pin_Input元件，启动定时器等待可能的双击
+    if (idx != -1 && m_elements[idx].GetId() == "Pin_Input") {
+        m_clickTimer.Start(250, true); // 250ms后触发，单次定时器
+    }
+    else {
+        // 对于其他元件，正常处理单击
+        if (idx != -1) {
+            if (m_toolStateMachine->GetCurrentTool() == ToolType::SELECT_TOOL) {
+                m_selectedIndex = idx;
+                m_dragStartElemPos = m_elements[idx].GetPos();
+                m_isDragging = true;
+            }
+            CollectUndoAnchor(idx, m_undoAnchors);
+            
+        }
     }
 
     evt.Skip();
@@ -261,7 +265,7 @@ void CanvasPanel::OnLeftUp(wxMouseEvent& evt)
     auto anchors = m_undoAnchors;
 
     // 保存导线绘制状态
-    bool wasDrawingWire = (m_wireMode == WireMode::DragNew);
+    bool wasDrawingWire = (m_toolStateMachine->GetWireState() == WireToolState::WIRE_DRAWING);
 
     EnsureFocus();
 
@@ -470,8 +474,7 @@ void CanvasPanel::OnPaint(wxPaintEvent&) {
         // 3. 绘制导线（矢量线段）
         gc->SetPen(wxPen(*wxBLACK, 1.5 / m_scale)); // 导线宽度自适应
         for (const auto& w : m_wires) w.Draw(*gcdc);
-        if (m_wireMode == WireMode::DragNew) m_tempWire.Draw(*gcdc);
-        if (m_wireMode == WireMode::DragBranch) m_tempWire.Draw(*gcdc);
+        if (m_toolStateMachine->GetWireState() == WireToolState::WIRE_DRAWING) m_tempWire.Draw(*gcdc);
 
         // 4. 悬停引脚高亮（绿色空心圆）
         if (m_hoverInfo.pinIndex != -1) {
@@ -525,8 +528,7 @@ void CanvasPanel::OnPaint(wxPaintEvent&) {
 
         // 3. 绘制导线（导线坐标基于画布，缩放由DC处理）
         for (const auto& w : m_wires) w.Draw(dc);
-        if (m_wireMode == WireMode::DragNew) m_tempWire.Draw(dc);
-        if (m_wireMode == WireMode::DragBranch) m_tempWire.Draw(dc);
+        if (m_toolStateMachine->GetWireState() == WireToolState::WIRE_DRAWING) m_tempWire.Draw(dc);
 
         // 4. 悬停引脚：绿色空心圆
         if (m_hoverInfo.pinIndex != -1) {
@@ -855,6 +857,9 @@ bool CanvasPanel::IsClickOnEmptyAreaPublic(const wxPoint& canvasPos) {
     void CanvasPanel::UpdateHoverInfo(const wxPoint& canvasPos) {
         m_hoverInfo.pos = canvasPos;
 
+        bool snapped = false;
+        m_hoverInfo.snappedPos = Snap(canvasPos, &snapped);
+
         // 悬停引脚信息检测
         bool isInput = false;
         wxPoint pinWorldPos;
@@ -1005,255 +1010,4 @@ void CanvasPanel::CreateTextElement(const wxPoint& position) {
 
 void CanvasPanel::StartTextEditing(int index) {
     AttachHiddenTextCtrlToElement(index);
-}
-
-void CanvasPanel::StartBranchFromWire(size_t wireIdx, size_t cellIdx, const wxPoint& startPos) {
-    m_wireMode = WireMode::DragBranch;
-    m_branchDragState.parentWire = wireIdx;
-    m_branchDragState.parentCell = cellIdx;
-    m_branchDragState.branchStartPos = startPos;
-
-    // 初始化临时连线
-    m_tempWire.Clear();
-    ControlPoint cp{ startPos, CPType::Bend };
-    m_tempWire.AddPoint(cp);
-
-    Refresh();
-}
-
-void CanvasPanel::CompleteBranchConnection() {
-    if (m_tempWire.Empty() || m_tempWire.pts.size() < 2) {
-        m_wireMode = WireMode::Idle;
-        return;
-    }
-
-    // 检查终点是否连接到有效目标（引脚或其他导线）
-    wxPoint endPos = m_tempWire.pts.back().pos;
-
-    // 这里可以检查是否连接到引脚或其他导线
-    bool isInput;
-    wxPoint pinPos;
-    int pinIdx = HitHoverPin(endPos, &isInput, &pinPos);
-
-    if (pinIdx != -1) {
-        // 连接到引脚，完成分支创建
-        Wire branchWire = m_tempWire;
-        branchWire.pts.back().type = CPType::Pin;
-
-        // 添加到导线列表
-        size_t branchIdx = m_wires.size();
-        m_wires.push_back(branchWire);
-
-        // 建立分支关系
-        EstablishBranchConnection(
-            m_branchDragState.parentWire,
-            m_branchDragState.parentCell,
-            branchIdx
-        );
-        auto recordConnection = [&](const wxPoint& pinPos, size_t ptIdx) {
-            for (size_t i = 0; i < m_elements.size(); ++i) {
-                const auto& elem = m_elements[i];
-                auto test = [&](const auto& pins, bool isIn) {
-                    for (size_t p = 0; p < pins.size(); ++p) {
-                        wxPoint w = elem.GetPos() + wxPoint(pins[p].pos.x, pins[p].pos.y);
-                        if (w == pinPos) {
-                            m_branchWires.push_back({ m_wires.size() - 1, ptIdx, isIn, p });
-                            return true;
-                        }
-                    }
-                    return false;
-                    };
-                if (test(elem.GetInputPins(), true)) return;
-                test(elem.GetOutputPins(), false);
-            }
-        };
-        if (branchWire.pts.front().type == CPType::Pin)
-            recordConnection(branchWire.pts.front().pos, 0);
-        if (branchWire.pts.back().type == CPType::Pin)
-            recordConnection(branchWire.pts.back().pos, branchWire.pts.size() - 1);
-
-        // 记录撤销操作
-        m_undoStack.Push(std::make_unique<CmdAddBranchWire>(
-            m_branchDragState.parentWire,
-            m_branchDragState.parentCell,
-            branchIdx));
-    }
-
-    // 检查是否连接到导线
-    int cellWire, cellIdx;
-    wxPoint cellPos;
-    int newCell = HitHoverCell(endPos, &cellWire, &cellIdx, &cellPos);
-    if (newCell != -1) {
-        // 连接到导线，完成分支创建
-        Wire branchWire = m_tempWire;
-        branchWire.pts.back().type = CPType::Pin;
-
-        // 添加到导线列表
-        size_t branchIdx = m_wires.size();
-        m_wires.push_back(branchWire);
-
-        // 建立分支关系
-        EstablishBranchConnection(
-            m_branchDragState.parentWire,
-            m_branchDragState.parentCell,
-            branchIdx
-        );
-        auto recordConnection = [&](const wxPoint& pinPos, size_t ptIdx) {
-            for (size_t i = 0; i < m_elements.size(); ++i) {
-                const auto& elem = m_elements[i];
-                auto test = [&](const auto& pins, bool isIn) {
-                    for (size_t p = 0; p < pins.size(); ++p) {
-                        wxPoint w = elem.GetPos() + wxPoint(pins[p].pos.x, pins[p].pos.y);
-                        if (w == pinPos) {
-                            m_branchWires.push_back({ m_wires.size() - 1, ptIdx, isIn, p });
-                            return true;
-                        }
-                    }
-                    return false;
-                    };
-                if (test(elem.GetInputPins(), true)) return;
-                test(elem.GetOutputPins(), false);
-            }
-            };
-        if (branchWire.pts.front().type == CPType::Pin)
-            recordConnection(branchWire.pts.front().pos, 0);
-        if (branchWire.pts.back().type == CPType::Pin)
-            recordConnection(branchWire.pts.back().pos, branchWire.pts.size() - 1);
-
-        // 记录撤销操作
-        m_undoStack.Push(std::make_unique<CmdAddBranchWire>(
-            m_branchDragState.parentWire,
-            m_branchDragState.parentCell,
-            branchIdx));
-    }
-
-    if (newCell == -1 && pinIdx == -1) {
-        // 连接到自由点，完成分支创建
-        Wire branchWire = m_tempWire;
-        branchWire.pts.back().type = CPType::Free;
-
-        // 添加到导线列表
-        size_t branchIdx = m_wires.size();
-        m_wires.push_back(branchWire);
-
-        // 建立分支关系
-        EstablishBranchConnection(
-            m_branchDragState.parentWire,
-            m_branchDragState.parentCell,
-            branchIdx
-        );
-        auto recordConnection = [&](const wxPoint& pinPos, size_t ptIdx) {
-            for (size_t i = 0; i < m_elements.size(); ++i) {
-                const auto& elem = m_elements[i];
-                auto test = [&](const auto& pins, bool isIn) {
-                    for (size_t p = 0; p < pins.size(); ++p) {
-                        wxPoint w = elem.GetPos() + wxPoint(pins[p].pos.x, pins[p].pos.y);
-                        if (w == pinPos) {
-                            m_branchWires.push_back({ m_wires.size() - 1, ptIdx, isIn, p });
-                            return true;
-                        }
-                    }
-                    return false;
-                    };
-                if (test(elem.GetInputPins(), true)) return;
-                test(elem.GetOutputPins(), false);
-            }
-            };
-        if (branchWire.pts.front().type == CPType::Pin)
-            recordConnection(branchWire.pts.front().pos, 0);
-        if (branchWire.pts.back().type == CPType::Pin)
-            recordConnection(branchWire.pts.back().pos, branchWire.pts.size() - 1);
-
-        // 记录撤销操作
-        m_undoStack.Push(std::make_unique<CmdAddBranchWire>(
-            m_branchDragState.parentWire,
-            m_branchDragState.parentCell,
-            branchIdx));
-    }
-
-    m_wireMode = WireMode::Idle;
-    m_tempWire.Clear();
-    Refresh();
-}
-
-void CanvasPanel::EstablishBranchConnection(size_t parentWire, size_t parentCell, size_t branchWire) {
-    if (parentWire >= m_wires.size() || branchWire >= m_wires.size()) return;
-
-    Wire& parent = m_wires[parentWire];
-    Wire& branch = m_wires[branchWire];
-
-    // 建立分支关系
-    WireBranch newBranch{ parentWire, parentCell, branchWire };
-    parent.branches.push_back(newBranch);
-
-    // 标记分支导线
-    branch.isBranch = true;
-    branch.parentWire = parentWire;
-    branch.parentCell = parentCell;
-
-    // 添加到全局分支列表
-    m_allBranches.push_back(newBranch);
-
-    Refresh();
-}
-
-void CanvasPanel::RemoveBranchConnection(size_t parentWire, size_t branchWire) {
-    if (parentWire >= m_wires.size() || branchWire >= m_wires.size()) return;
-
-    Wire& parent = m_wires[parentWire];
-    Wire& branch = m_wires[branchWire];
-
-    // 从父导线移除分支
-    auto it = std::find_if(parent.branches.begin(), parent.branches.end(),
-        [branchWire](const WireBranch& wb) { return wb.branchWire == branchWire; });
-
-    if (it != parent.branches.end()) {
-        parent.branches.erase(it);
-    }
-
-    // 重置分支标记
-    branch.isBranch = false;
-    branch.parentWire = -1;
-    branch.parentCell = -1;
-
-    // 从全局分支列表移除
-    auto globalIt = std::find_if(m_allBranches.begin(), m_allBranches.end(),
-        [branchWire](const WireBranch& wb) { return wb.branchWire == branchWire; });
-
-    if (globalIt != m_allBranches.end()) {
-        m_allBranches.erase(globalIt);
-    }
-
-    Refresh();
-}
-
-// 删除导线时同时删除其所有分支
-void CanvasPanel::DeleteWireWithBranches(size_t wireIdx) {
-    if (wireIdx >= m_wires.size()) return;
-
-    Wire& wire = m_wires[wireIdx];
-
-    // 递归删除所有分支
-    for (const auto& branch : wire.branches) {
-        DeleteWireWithBranches(branch.branchWire);
-    }
-
-    // 如果是分支，从父导线移除
-    if (wire.isBranch && wire.parentWire < m_wires.size()) {
-        Wire& parent = m_wires[wire.parentWire];
-        auto it = std::find_if(parent.branches.begin(), parent.branches.end(),
-            [wireIdx](const WireBranch& wb) { return wb.branchWire == wireIdx; });
-
-        if (it != parent.branches.end()) {
-            parent.branches.erase(it);
-        }
-    }
-
-    // 删除导线本身
-    m_wires.erase(m_wires.begin() + wireIdx);
-
-    // 更新后续导线的索引（如果需要）
-    // 这里可能需要更复杂的索引更新逻辑
-
-    Refresh();
 }
