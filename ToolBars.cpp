@@ -36,14 +36,14 @@ void ToolBars::ArrangeIds() {
 		"Choose", "Text", "Line", "Curve", "Polyline", "Retangle", "Rounded Retangle", "Oval", "Polygon"
 	};
 	//实现ID对方法MAP
-	toolIdToFunctionMap[toolBar1_ids[0]] = [this](int id) { OneChoose(id); m_owner->GetToolManager()->SetCurrentTool(ToolType::DRAG_TOOL); };
-	toolIdToFunctionMap[toolBar1_ids[1]] = [this](int id) { OneChoose(id); m_owner->GetToolManager()->SetCurrentTool(ToolType::SELECT_TOOL); };
-	toolIdToFunctionMap[toolBar1_ids[2]] = [this](int id) { OneChoose(id); m_owner->GetToolManager()->SetCurrentTool(ToolType::TEXT_TOOL); };
+	toolIdToFunctionMap[toolBar1_ids[0]] = [this](int id) { OneChoose(id); ; };
+	toolIdToFunctionMap[toolBar1_ids[1]] = [this](int id) { OneChoose(id); ; };
+	toolIdToFunctionMap[toolBar1_ids[2]] = [this](int id) { OneChoose(id); ; };
 	toolIdToFunctionMap[toolBar1_ids[3]] = [this](int id) { OneChoose(id); };
 	toolIdToFunctionMap[toolBar1_ids[4]] = [this](int id) { OneChoose(id); };
-	toolIdToFunctionMap[toolBar1_ids[5]] = [this](int id) { OneChoose(id); m_owner->GetToolManager()->SetCurrentTool(ToolType::DRAG_TOOL); };
-	toolIdToFunctionMap[toolBar1_ids[6]] = [this](int id) { OneChoose(id); m_owner->GetToolManager()->SetCurrentTool(ToolType::COMPONENT_TOOL), m_owner->GetToolManager()->SetCurrentComponent("AND Gate");  };
-	toolIdToFunctionMap[toolBar1_ids[7]] = [this](int id) { OneChoose(id); m_owner->GetToolManager()->SetCurrentTool(ToolType::WIRE_TOOL); };
+	toolIdToFunctionMap[toolBar1_ids[5]] = [this](int id) { OneChoose(id);  };
+	toolIdToFunctionMap[toolBar1_ids[6]] = [this](int id) { OneChoose(id);   };
+	toolIdToFunctionMap[toolBar1_ids[7]] = [this](int id) { OneChoose(id); };
 	toolIdToFunctionMap[toolBar1_ids[8]] = [this](int id) { OneChoose(id); };
 	toolIdToFunctionMap[toolBar1_ids[9]] = [this](int id) { OneChoose(id); };
 	toolIdToFunctionMap[toolBar1_ids[10]] = [this](int id) { OneChoose(id); };
@@ -154,11 +154,11 @@ void ToolBars::OnToolClicked(wxCommandEvent& event) {
 		return;
 	}
 
-	ToolManager* toolManager = m_owner->GetToolManager();
-	if (!toolManager) {
-		wxLogError("ToolBars: ToolManager is null!");
-		return;
-	}
+	//CanvasEventHandler* CanvasEventHandler = m_owner->GetCanvasEventHandler();
+	//if (!CanvasEventHandler) {
+	//	wxLogError("ToolBars: CanvasEventHandler is null!");
+	//	return;
+	//}
 
 	// 查找对应的工具 ID 并调用其方法
 	auto it = toolIdToFunctionMap.find(toolId);

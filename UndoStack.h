@@ -5,6 +5,15 @@
 
 class CanvasPanel;
 
+struct WireAnchor {
+    size_t wireIdx;   // 哪条线
+    size_t ptIdx;     // 该线第几个控制点（0 或 最后）
+    bool   isInput;   // 元件侧是输入还是输出引脚
+    size_t pinIdx;    // 元件侧引脚索引
+    wxPoint oldPos;   // 原来的位置（用于撤销）
+};
+
+
 /* 抽象命令 */
 class Command
 {
@@ -31,14 +40,9 @@ public:
 class CmdMoveElement : public Command
 {
 public:
-    struct Anchor {
-        size_t wireIdx;
-        size_t ptIdx;   // 0 前端  1 后端
-        wxPoint oldPos;
-    };
     CmdMoveElement(size_t idx,
         const wxPoint& oldPos,
-        const std::vector<Anchor>& anchors)
+        const std::vector<WireAnchor>& anchors)
         : m_index(idx), m_oldPos(oldPos), m_anchors(anchors) {
     }
 
@@ -48,7 +52,7 @@ public:
 private:
     size_t m_index;
     wxPoint m_oldPos;   // 移动前的坐标
-    std::vector<Anchor> m_anchors;
+    std::vector<WireAnchor> m_anchors;
 };
 
 /* 具体命令：添加导线 */
@@ -60,6 +64,25 @@ public:
     void undo(CanvasPanel* canvas) override;
     wxString GetName() const override { return "Add Wire"; }
 };
+
+class CmdAddBranchWire : public Command {
+private:
+    size_t m_parentWire;
+    size_t m_parentCell;
+    size_t m_branchWire;
+
+public:
+    CmdAddBranchWire(size_t parentWire, size_t parentCell, size_t branchWire)
+        : m_parentWire(parentWire), m_parentCell(parentCell), m_branchWire(branchWire) {
+    }
+
+    void undo(CanvasPanel* canvas) override;
+
+    wxString GetName() const override {
+        return "Add Branch Wire";
+    }
+};
+
 
 /* 撤销栈 */
 class UndoStack
@@ -73,3 +96,4 @@ public:
     wxString GetUndoName() const;
     void Clear() { m_stack.clear(); }
 };
+

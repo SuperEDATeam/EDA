@@ -46,6 +46,9 @@ std::vector<CanvasElement> LoadCanvasElements(const wxString& jsonPath)
         wxPoint  pos(elem["anchorPoint"][0].asInt(), elem["anchorPoint"][1].asInt());
         CanvasElement ce(name, pos);
 
+        // 设置元件ID
+        ce.SetId(id);
+
         // ������
         for (const auto& pin : elem["inputPins"])
             ce.AddInputPin({ pin["x"].asInt(), pin["y"].asInt() }, wxString::FromUTF8(pin["name"].asString()));
@@ -68,9 +71,8 @@ std::vector<CanvasElement> LoadCanvasElements(const wxString& jsonPath)
                 int startY = shape["start"]["y"].asInt();
                 int endX = shape["end"]["x"].asInt();
                 int endY = shape["end"]["y"].asInt();
-                // �����־��ȷ��ˮƽֱ�ߣ�y������ͬ��������
-                MyLog("Loaded Line: start(%d,%d) �� end(%d,%d) [type: %s]\n",
-                    startX, startY, endX, endY, type.ToUTF8().data());
+                //MyLog("Loaded Line: start(%d,%d) �� end(%d,%d) [type: %s]\n",
+                //    startX, startY, endX, endY, type.ToUTF8().data());
                 ce.AddShape(Line{
                     {startX, startY},
                     {endX, endY},

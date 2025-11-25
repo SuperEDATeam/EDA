@@ -75,11 +75,11 @@
       {"name": "Input A", "x": 40, "y": 40},
       {"name": "Input B", "x": 40, "y": 80}
     ],
-    "outputPins": [{"name": "Output", "x": 120, "y": 60}],
+    "outputPins": [{"name": "Output", "x": 120, "y": 60}],  
     "shapes": [
-      {"type": "BezierShape", "p0": {"x": 43, "y": 20}, "p1": {"x": 81, "y": 26}, "p2": {"x": 100, "y": 60}, "color": "#333333"},
-      {"type": "BezierShape", "p0": {"x": 43, "y": 100}, "p1": {"x": 81, "y": 94}, "p2": {"x": 100, "y": 60}, "color": "#333333"},
-      {"type": "BezierShape", "p0": {"x": 43, "y": 20}, "p1": {"x": 55, "y": 60}, "p2": {"x": 43, "y": 100}, "color": "#333333"}
+      {"type": "BezierShape", "p0": {"x": 43, "y": 20}, "p1": {"x": 85, "y": 24}, "p2": {"x": 110, "y": 60}, "color": "#333333"},
+      {"type": "BezierShape", "p0": {"x": 43, "y": 100}, "p1": {"x": 85, "y": 96}, "p2": {"x": 110, "y": 60}, "color": "#333333"},
+      {"type": "BezierShape", "p0": {"x": 43, "y": 20}, "p1": {"x": 60, "y": 60}, "p2": {"x": 43, "y": 100}, "color": "#333333"}  
     ]
   },
   {
@@ -315,11 +315,15 @@
     "id": "Pin_Input",
     "name": "Pin (Input)",
     "anchorPoint": [40, 40],
-    "inputPins": [{"name": "Input", "x": 40, "y": 40}],
+    "inputPins": [{"name": "Input", "x": 60, "y": 40}],
     "outputPins": [],
     "shapes": [
-      {"type": "circle", "x": 40, "y": 40, "r": 6, "color": "#333333", "fill": true, "fillColor": "#333333"},
-      {"type": "text", "x": 50, "y": 36, "text": "IN", "fontSize": 12, "color": "#333333"}
+      {"type": "circle", "x": 40, "y": 40, "r": 13, "color": "green", "fill": true, "fillColor": "green"},
+      {"type": "line", "start": {"x": 20, "y": 20}, "end": {"x": 20, "y": 60}, "color": "#333333"},
+      {"type": "line", "start": {"x": 20, "y": 20}, "end": {"x": 60, "y": 20}, "color": "#333333"},
+      {"type": "line", "start": {"x": 20, "y": 60}, "end": {"x": 60, "y": 60}, "color": "#333333"},
+      {"type": "line", "start": {"x": 60, "y": 20}, "end": {"x": 60, "y": 60}, "color": "#333333"},
+      {"type": "text", "x": 30, "y": 30, "text": "0", "fontSize": 20, "color": "white"}
     ]
   },
   {
@@ -327,10 +331,14 @@
     "name": "Pin (Output)",
     "anchorPoint": [40, 40],
     "inputPins": [],
-    "outputPins": [{"name": "Output", "x": 40, "y": 40}],
+    "outputPins": [{"name": "Output", "x": 20, "y": 40}],
     "shapes": [
-      {"type": "circle", "x": 40, "y": 40, "r": 6, "color": "#333333", "fill": true, "fillColor": "#333333"},
-      {"type": "text", "x": 50, "y": 36, "text": "OUT", "fontSize": 12, "color": "#333333"}
+      {"type": "circle", "x": 40, "y": 40, "r": 13, "color": "#CCE099", "fill": true, "fillColor": "#CCE099"},
+      {"type": "line", "start": {"x": 20, "y": 20}, "end": {"x": 20, "y": 60}, "color": "#333333"},
+      {"type": "line", "start": {"x": 20, "y": 20}, "end": {"x": 60, "y": 20}, "color": "#333333"},
+      {"type": "line", "start": {"x": 20, "y": 60}, "end": {"x": 60, "y": 60}, "color": "#333333"},
+      {"type": "line", "start": {"x": 60, "y": 20}, "end": {"x": 60, "y": 60}, "color": "#333333"},
+      {"type": "text", "x": 30, "y": 30, "text": "X", "fontSize": 20, "color": "white"}
     ]
   },
   {
