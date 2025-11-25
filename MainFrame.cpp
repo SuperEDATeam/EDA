@@ -19,6 +19,7 @@ wxBEGIN_EVENT_TABLE(MainFrame, wxFrame)
 EVT_MENU(wxID_ABOUT, MainFrame::OnAbout)
 EVT_MENU(wxID_EXIT, MainFrame::OnQuit)
 EVT_MENU(wxID_HIGHEST + 900, MainFrame::OnToolboxElement)
+EVT_MENU(wxID_HIGHEST + 901, MainFrame::OnToolSelected)
 wxEND_EVENT_TABLE()
 
 
@@ -368,6 +369,23 @@ void MainFrame::DoFileOpen(const wxString& path)
     SetTitle(wxFileName(filePath).GetFullName());
     static_cast<MainMenuBar*>(GetMenuBar())->AddFileToHistory(filePath);
     SetStatusText("已打开: " + filePath);
+}
+
+// 处理工具选择事件，更新属性面板
+void MainFrame::OnToolSelected(wxCommandEvent& evt)
+{
+    wxString toolName = evt.GetString();
+
+    if (m_propPanel) {
+        if (toolName.IsEmpty()) {
+            // 清空属性面板
+            m_propPanel->ShowElement("No element selected");
+        }
+        else {
+            // 显示选中工具的属性
+            m_propPanel->ShowElement(toolName);
+        }
+    }
 }
 
 
