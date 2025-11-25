@@ -1,4 +1,5 @@
-﻿#include "ToolboxPanel.h"
+﻿//﻿#include "ToolboxPanel.h"
+#include "ToolboxPanel.h"
 #include "ToolboxModel.h"
 #include <wx/artprov.h>
 #include <wx/dnd.h>
@@ -17,7 +18,7 @@
 
 #define ICON_FOLDER wxT("res/icons/")
 
-static void MY_LOG(const wxString& s)
+static void MY_LOG(const wxString & s)
 {
     wxFile f(wxStandardPaths::Get().GetTempDir() + "\\logsim_tools.log",
         wxFile::write_append);
@@ -27,7 +28,7 @@ static void MY_LOG(const wxString& s)
     }
 }
 
-// 自定义树项数据（不变）
+// 自定义树项数据
 class wxStringTreeItemData : public wxTreeItemData
 {
 public:
@@ -40,7 +41,6 @@ private:
 wxBEGIN_EVENT_TABLE(ToolboxPanel, wxPanel)
 EVT_TREE_ITEM_ACTIVATED(wxID_ANY, ToolboxPanel::OnItemActivated)
 EVT_TREE_BEGIN_DRAG(wxID_ANY, ToolboxPanel::OnBeginDrag)
-//EVT_TREE_SEL_CHANGED(wxID_ANY, ToolboxPanel::OnToolSelected)
 wxEND_EVENT_TABLE()
 
 
@@ -50,36 +50,23 @@ ToolboxPanel::ToolboxPanel(wxWindow* parent)
     // 添加 PNG 图像处理器初始化
     wxImage::AddHandler(new wxPNGHandler);
 
-    /* 1. 布局调整：垂直排列“工具树”和“属性面板” */
+    // 创建布局
     wxBoxSizer* mainSizer = new wxBoxSizer(wxVERTICAL);
 
-    // 1.1 初始化工具树（原有逻辑保留，调整比例）
+    // 初始化工具树
     m_tree = new wxTreeCtrl(this, wxID_ANY, wxDefaultPosition, wxDefaultSize,
         wxTR_DEFAULT_STYLE | wxTR_HIDE_ROOT | wxTR_FULL_ROW_HIGHLIGHT);
-    mainSizer->Add(m_tree, 7, wxEXPAND | wxALL, 0); // 工具树占70%高度
-
-    // 初始化属性面板 - 使用兼容的 API
-    m_propGrid = new wxPropertyGrid(this, wxID_ANY, wxDefaultPosition, wxDefaultSize,
-        wxPG_BOLD_MODIFIED | wxPG_SPLITTER_AUTO_CENTER);
-    m_propGrid->SetCaptionBackgroundColour(wxColour(230, 230, 230));
-
-    // 在 wxWidgets 3.2.2.1 中设置列标题的正确方式
-    // 移除不兼容的 SetColumnLabel 调用
-    // m_propGrid->SetColumnLabel(0, "Property");
-    // m_propGrid->SetColumnLabel(1, "Value");
-
-    mainSizer->Add(m_propGrid, 3, wxEXPAND | wxALL, 0);
+    mainSizer->Add(m_tree, 1, wxEXPAND | wxALL, 0);
 
     SetSizer(mainSizer);
 
-    /* 2. 初始化图像列表 + 加载图标（原有逻辑完全保留） */
+    // 初始化图像列表
     m_imgList = new wxImageList(24, 24, true, 500);
     m_imgList->Add(wxArtProvider::GetBitmap(wxART_FOLDER, wxART_OTHER, wxSize(24, 24))); // 0: 文件夹图标
-    // -------------------------- 原有图标加载代码完全保留 --------------------------
-    // -------------------------- 原有图标加载代码完全保留（补全中间省略的部分） --------------------------
+
+    // 加载所有工具图标
     LoadToolIcon("Wire", "wiring.png");               // 1: Wiring-Wire
     LoadToolIcon("Splitter", "splitter.png");         // 2: Wiring-Splitter
-    // 【补全开始：之前被省略的中间工具加载代码】
     LoadToolIcon("Pin (Input)", "pinInput.png");      // 3: Wiring-Pin (Input)
     LoadToolIcon("Pin (Output)", "pinOutput.png");    // 4: Wiring-Pin (Output)
     LoadToolIcon("Probe", "probe.png");               // 5: Wiring-Probe
@@ -92,7 +79,7 @@ ToolboxPanel::ToolboxPanel(wxWindow* parent)
     LoadToolIcon("Transmission Gate", "transmis.png");// 12: Wiring-Transmission Gate
     LoadToolIcon("Bit Extender", "extender.png");     // 13: Wiring-Bit Extender
 
-    // 2. Gates 分类（逻辑门）
+    // Gates 分类（逻辑门）
     LoadToolIcon("Buffer Gate", "bufferGate.png");    // 14: Gates-Buffer Gate
     LoadToolIcon("AND Gate", "andGate.png");          // 15: Gates-AND Gate
     LoadToolIcon("AND Gate (Rect)", "andGateRect.png");// 16: Gates-AND Gate(Rect)
@@ -111,14 +98,14 @@ ToolboxPanel::ToolboxPanel(wxWindow* parent)
     LoadToolIcon("Controlled Buffer", "controlledBuffer.png");// 29: Gates-Controlled Buffer
     LoadToolIcon("Controlled Inverter", "controlledInverter.png");// 30: Gates-Controlled Inverter
 
-    // 3. Plexers 分类
+    // Plexers 分类
     LoadToolIcon("Multiplexer", "multiplexer.png");   // 31: Plexers-Multiplexer
     LoadToolIcon("Demultiplexer", "demultiplexer.png");// 32: Plexers-Demultiplexer
     LoadToolIcon("Decoder", "decoder.png");           // 33: Plexers-Decoder
     LoadToolIcon("Priority Encoder", "priencod.png"); // 34: Plexers-Priority Encoder
     LoadToolIcon("Bit Selector", "bitSelector.png");  // 35: Plexers-Bit Selector
 
-    // 4. Arithmetic 分类
+    // Arithmetic 分类
     LoadToolIcon("Adder", "adder.png");               // 36: Arithmetic-Adder
     LoadToolIcon("Subtractor", "subtractor.png");     // 37: Arithmetic-Subtractor
     LoadToolIcon("Multiplier", "multiplier.png");     // 38: Arithmetic-Multiplier
@@ -129,7 +116,7 @@ ToolboxPanel::ToolboxPanel(wxWindow* parent)
     LoadToolIcon("Bit Adder", "bitadder.png");        // 43: Arithmetic-Bit Adder
     LoadToolIcon("Bit Finder", "bitfindr.png");       // 44: Arithmetic-Bit Finder
 
-    // 5. Memory 分类
+    // Memory 分类
     LoadToolIcon("D Flip-Flop", "dFlipFlop.png");     // 45: Memory-D Flip-Flop
     LoadToolIcon("T Flip-Flop", "tFlipFlop.png");     // 46: Memory-T Flip-Flop
     LoadToolIcon("JK Flip-Flop", "jkFlipFlop.png");   // 47: Memory-JK Flip-Flop
@@ -141,7 +128,7 @@ ToolboxPanel::ToolboxPanel(wxWindow* parent)
     LoadToolIcon("RAM", "ram.png");                   // 53: Memory-RAM
     LoadToolIcon("ROM", "rom.png");                   // 54: Memory-ROM
 
-    // 6. Input/Output 分类
+    // Input/Output 分类
     LoadToolIcon("Button", "button.png");             // 55: Input/Output-Button
     LoadToolIcon("Joystick", "joystick.png");         // 56: Input/Output-Joystick
     LoadToolIcon("Keyboard", "keyboard.png");         // 57: Input/Output-Keyboard
@@ -151,7 +138,7 @@ ToolboxPanel::ToolboxPanel(wxWindow* parent)
     LoadToolIcon("LED Matrix", "dotmat.png");         // 61: Input/Output-LED Matrix
     LoadToolIcon("TTY", "tty.png");                   // 62: Input/Output-TTY
 
-    // 7. Tools 分类（Label Tool 是最后一个）
+    // Tools 分类
     LoadToolIcon("Poke Tool", "poke.png");            // 63: Tools-Poke Tool
     LoadToolIcon("Edit Tool", "select.png");          // 64: Tools-Edit Tool
     LoadToolIcon("Select Tool", "select.png");        // 65: Tools-Select Tool
@@ -159,22 +146,20 @@ ToolboxPanel::ToolboxPanel(wxWindow* parent)
     LoadToolIcon("Text Tool", "text.png");            // 67: Tools-Text Tool
     LoadToolIcon("Menu Tool", "menu.png");            // 68: Tools-Menu Tool
     LoadToolIcon("Label Tool", "text.png");          // 69: Tools-Label Tool
-    // 【补全结束】
+
     m_tree->AssignImageList(m_imgList);
 
     MY_LOG("✅ 图像列表已关联到工具树，图像数量：" + wxString::Format("%d", m_imgList->GetImageCount()));
 
-    /* 3. 字体样式（原有逻辑保留） */
+    // 字体样式
     wxFont font(wxFontInfo(11).FaceName("Segoe UI"));
     m_tree->SetFont(font);
     m_tree->SetIndent(20);
-    m_propGrid->SetFont(font); // 给属性面板设置相同字体
 
-    /* 4. 新增：初始化工具-属性映射表 + 绑定选中事件 */
-    InitToolPropertyMap();
-    Rebuild(); // 构建工具树
+    // 构建工具树
+    Rebuild();
 
-    // 绑定“树节点选中事件”（Logisim是单击选中，不是双击）
+    // 绑定事件
     m_tree->Bind(wxEVT_TREE_SEL_CHANGED, &ToolboxPanel::OnToolSelected, this);
 }
 
@@ -196,13 +181,13 @@ void ToolboxPanel::LoadToolIcon(const wxString& toolName, const wxString& pngFil
     }
 }
 
-// -------------------------- 核心：按Logisim分类构建侧边栏 --------------------------
+// 构建工具树
 void ToolboxPanel::Rebuild()
 {
     m_tree->DeleteAllItems();
     wxTreeItemId root = m_tree->AddRoot("Logisim Tools", 0, 0); // 根节点（隐藏）
 
-    // ================================= 1. Wiring 分类（Logisim 原生顺序） =================================
+    // ================================= 1. Wiring 分类 =================================
     wxArrayString wiringTools;
     wiringTools.Add("Wire");
     wiringTools.Add("Splitter");
@@ -225,7 +210,7 @@ void ToolboxPanel::Rebuild()
         m_tree->AppendItem(wiringId, tool, iconIdx, iconIdx, new wxStringTreeItemData(tool));
     }
 
-    // ================================= 2. Gates 分类（Logisim 原生顺序） =================================
+    // ================================= 2. Gates 分类 =================================
     wxArrayString gatesTools;
     gatesTools.Add("Buffer Gate");
     gatesTools.Add("AND Gate");
@@ -252,7 +237,7 @@ void ToolboxPanel::Rebuild()
         m_tree->AppendItem(gatesId, tool, iconIdx, iconIdx, new wxStringTreeItemData(tool));
     }
 
-    // ================================= 3. Plexers 分类（原 Combinational，重命名贴合 Logisim） =================================
+    // ================================= 3. Plexers 分类 =================================
     wxArrayString plexersTools;
     plexersTools.Add("Multiplexer");
     plexersTools.Add("Demultiplexer");
@@ -267,7 +252,7 @@ void ToolboxPanel::Rebuild()
         m_tree->AppendItem(plexersId, tool, iconIdx, iconIdx, new wxStringTreeItemData(tool));
     }
 
-    // ================================= 4. Arithmetic 分类（补充缺失工具） =================================
+    // ================================= 4. Arithmetic 分类 =================================
     wxArrayString arithmeticTools;
     arithmeticTools.Add("Adder");
     arithmeticTools.Add("Subtractor");
@@ -286,7 +271,7 @@ void ToolboxPanel::Rebuild()
         m_tree->AppendItem(arithmeticId, tool, iconIdx, iconIdx, new wxStringTreeItemData(tool));
     }
 
-    // ================================= 5. Memory 分类（合并 Sequential+Storage，Logisim 原生） =================================
+    // ================================= 5. Memory 分类 =================================
     wxArrayString memoryTools;
     memoryTools.Add("D Flip-Flop");
     memoryTools.Add("T Flip-Flop");
@@ -306,7 +291,7 @@ void ToolboxPanel::Rebuild()
         m_tree->AppendItem(memoryId, tool, iconIdx, iconIdx, new wxStringTreeItemData(tool));
     }
 
-    // ================================= 6. Input/Output 分类（补充缺失设备） =================================
+    // ================================= 6. Input/Output 分类 =================================
     wxArrayString ioTools;
     ioTools.Add("Button");
     ioTools.Add("Joystick");
@@ -324,7 +309,7 @@ void ToolboxPanel::Rebuild()
         m_tree->AppendItem(ioId, tool, iconIdx, iconIdx, new wxStringTreeItemData(tool));
     }
 
-    // ================================= 7. Tools 分类（新增！Logisim 操作工具） =================================
+    // ================================= 7. Tools 分类 =================================
     wxArrayString toolsTools;
     toolsTools.Add("Poke Tool");
     toolsTools.Add("Edit Tool");
@@ -341,7 +326,7 @@ void ToolboxPanel::Rebuild()
         m_tree->AppendItem(toolsId, tool, iconIdx, iconIdx, new wxStringTreeItemData(tool));
     }
 
-    // 展开所有分类子节点（保持原有逻辑）
+    // 展开所有分类子节点
     wxTreeItemIdValue cookie;
     wxTreeItemId child = m_tree->GetFirstChild(root, cookie);
     while (child.IsOk()) {
@@ -350,7 +335,7 @@ void ToolboxPanel::Rebuild()
     }
 }
 
-// -------------------------- 工具名 → 图标索引映射（必须和加载顺序一致） --------------------------
+// 工具名 → 图标索引映射
 int ToolboxPanel::GetToolIconIndex(const wxString& toolName)
 {
     static std::map<wxString, int> toolToIconMap = {
@@ -442,7 +427,7 @@ int ToolboxPanel::GetToolIconIndex(const wxString& toolName)
     return (it != toolToIconMap.end()) ? it->second : 1;
 }
 
-// 以下两个函数不变（激活和拖拽功能）
+// 工具激活事件（双击）
 void ToolboxPanel::OnItemActivated(wxTreeEvent& evt)
 {
     wxString name = m_tree->GetItemText(evt.GetItem());
@@ -451,6 +436,7 @@ void ToolboxPanel::OnItemActivated(wxTreeEvent& evt)
     wxPostEvent(GetParent(), cmdEvt);
 }
 
+// 开始拖拽事件
 void ToolboxPanel::OnBeginDrag(wxTreeEvent& evt)
 {
     wxString name = m_tree->GetItemText(evt.GetItem());
@@ -461,134 +447,23 @@ void ToolboxPanel::OnBeginDrag(wxTreeEvent& evt)
     }
 }
 
-void ToolboxPanel::InitToolPropertyMap()
-{
-    // -------------------------- 1. Pin (Input) 属性 --------------------------
-    std::vector<ToolProperty> pinInputProps;
-    pinInputProps.push_back(ToolProperty("Facing", "string", "East"));
-    pinInputProps.push_back(ToolProperty("Output?", "bool", false));
-    pinInputProps.push_back(ToolProperty("Data Bits", "int", 1L));
-    pinInputProps.push_back(ToolProperty("Three-state?", "bool", true));
-    pinInputProps.push_back(ToolProperty("Pull Behavior", "string", "Unchanged"));
-    pinInputProps.push_back(ToolProperty("Label", "string", ""));
-    pinInputProps.push_back(ToolProperty("Label Location", "string", "West"));
-    pinInputProps.push_back(ToolProperty("Label Font", "string", "SansSerif Plain 12"));
-    m_toolPropMap["Pin (Input)"] = pinInputProps;
-
-    // -------------------------- 2. OR Gate 属性 --------------------------
-    std::vector<ToolProperty> orGateProps;
-    orGateProps.push_back(ToolProperty("Facing", "string", "East"));
-    orGateProps.push_back(ToolProperty("Data Bits", "int", 1L));
-    orGateProps.push_back(ToolProperty("Gate Size", "string", "Medium"));
-    orGateProps.push_back(ToolProperty("Number Of Inputs", "int", 5L));
-    orGateProps.push_back(ToolProperty("Output Value", "string", "0/1"));
-    orGateProps.push_back(ToolProperty("Label", "string", ""));
-    orGateProps.push_back(ToolProperty("Label Font", "string", "SansSerif Plain 12"));
-    orGateProps.push_back(ToolProperty("Negate 1 (Top)", "bool", false));
-    orGateProps.push_back(ToolProperty("Negate 2", "bool", false));
-    orGateProps.push_back(ToolProperty("Negate 3", "bool", false));
-    orGateProps.push_back(ToolProperty("Negate 4", "bool", false));
-    orGateProps.push_back(ToolProperty("Negate 5 (Bottom)", "bool", false));
-    m_toolPropMap["OR Gate"] = orGateProps;
-
-    // -------------------------- 3. Demultiplexer 属性 --------------------------
-    std::vector<ToolProperty> demuxProps;
-    demuxProps.push_back(ToolProperty("Facing", "string", "East"));
-    demuxProps.push_back(ToolProperty("Select Location", "string", "Bottom/Left"));
-    demuxProps.push_back(ToolProperty("Select Bits", "int", 1L));
-    demuxProps.push_back(ToolProperty("Data Bits", "int", 1L));
-    demuxProps.push_back(ToolProperty("Three-state?", "bool", false));
-    demuxProps.push_back(ToolProperty("Disabled Output", "string", "Floating"));
-    demuxProps.push_back(ToolProperty("Include Enable?", "bool", true));
-    m_toolPropMap["Demultiplexer"] = demuxProps;
-
-    // -------------------------- 4. Comparator 属性 --------------------------
-    std::vector<ToolProperty> comparatorProps;
-    comparatorProps.push_back(ToolProperty("Data Bits", "int", 8L));
-    comparatorProps.push_back(ToolProperty("Numeric Type", "string", "2's Complement"));
-    m_toolPropMap["Comparator"] = comparatorProps;
-
-    // -------------------------- 5. S-R Flip-Flop 属性 --------------------------
-    std::vector<ToolProperty> srFlipFlopProps;
-    srFlipFlopProps.push_back(ToolProperty("Trigger", "string", "Rising Edge"));
-    srFlipFlopProps.push_back(ToolProperty("Label", "string", ""));
-    srFlipFlopProps.push_back(ToolProperty("Label Font", "string", "SansSerif Plain 12"));
-    m_toolPropMap["SR Flip-Flop"] = srFlipFlopProps;
-
-    // -------------------------- 6. LED 属性 --------------------------
-    std::vector<ToolProperty> ledProps;
-    // 对于颜色，使用字符串表示，然后在 UpdatePropertyPanel 中解析
-    ledProps.push_back(ToolProperty("Facing", "string", "West"));
-    ledProps.push_back(ToolProperty("On Color", "color", "#F00000")); // 使用十六进制字符串
-    ledProps.push_back(ToolProperty("Off Color", "color", "#404040"));
-    ledProps.push_back(ToolProperty("Active On High?", "bool", true));
-    ledProps.push_back(ToolProperty("Label", "string", ""));
-    ledProps.push_back(ToolProperty("Label Location", "string", "Center"));
-    ledProps.push_back(ToolProperty("Label Font", "string", "SansSerif Plain 12"));
-    ledProps.push_back(ToolProperty("Label Color", "color", "#000000"));
-    m_toolPropMap["LED"] = ledProps;
-
-    // -------------------------- 其他工具属性 --------------------------
-    m_toolPropMap["Wire"] = std::vector<ToolProperty>();
-
-    std::vector<ToolProperty> buttonProps;
-    buttonProps.push_back(ToolProperty("Facing", "string", "North"));
-    buttonProps.push_back(ToolProperty("Trigger", "string", "Edge"));
-    buttonProps.push_back(ToolProperty("Label", "string", ""));
-    buttonProps.push_back(ToolProperty("Label Location", "string", "South"));
-    m_toolPropMap["Button"] = buttonProps;
-}
-
+// 工具选中事件（单击）
 void ToolboxPanel::OnToolSelected(wxTreeEvent& evt)
 {
     // 获取选中节点的工具名（过滤分类节点，只处理工具节点）
     wxTreeItemId selectedItem = evt.GetItem();
     if (!m_tree->ItemHasChildren(selectedItem)) {
         wxString toolName = m_tree->GetItemText(selectedItem);
-        UpdatePropertyPanel(toolName);
+
+        // 发送自定义事件通知主窗口更新属性面板
+        wxCommandEvent propEvent(wxEVT_COMMAND_MENU_SELECTED, wxID_HIGHEST + 901);
+        propEvent.SetString(toolName);
+        wxPostEvent(GetParent(), propEvent);
     }
     else {
-        // 选中分类节点，清空属性面板
-        m_propGrid->Clear();
-        m_propGrid->Append(new wxPropertyCategory("No Tool Selected"));
-    }
-}
-
-void ToolboxPanel::UpdatePropertyPanel(const wxString& toolName)
-{
-    // 1. 清空原有属性
-    m_propGrid->Clear();
-
-    // 2. 添加分类标题
-    wxPropertyCategory* category = new wxPropertyCategory(wxString::Format("Tool: %s", toolName));
-    m_propGrid->Append(category);
-
-    // 3. 从映射表中获取当前工具的属性列表
-    auto it = m_toolPropMap.find(toolName);
-    if (it == m_toolPropMap.end()) {
-        wxStringProperty* noProps = new wxStringProperty("Info", "Info", "No configurable properties");
-        m_propGrid->Append(noProps);
-        return;
-    }
-
-    // 4. 添加属性（只支持基本类型）
-    std::vector<ToolProperty> props = it->second;
-    for (auto& prop : props) {
-        if (prop.propType == "bool") {
-            wxBoolProperty* boolProp = new wxBoolProperty(prop.propName, prop.propName);
-            boolProp->SetValue(prop.defaultValue.GetBool());
-            m_propGrid->Append(boolProp);
-        }
-        else if (prop.propType == "int") {
-            wxIntProperty* intProp = new wxIntProperty(prop.propName, prop.propName);
-            intProp->SetValue(prop.defaultValue.GetLong());
-            m_propGrid->Append(intProp);
-        }
-        else if (prop.propType == "string") {
-            wxStringProperty* strProp = new wxStringProperty(prop.propName, prop.propName);
-            strProp->SetValue(prop.defaultValue.GetString());
-            m_propGrid->Append(strProp);
-        }
-        // 忽略颜色类型，或者将其转换为字符串
+        // 选中分类节点，发送空事件清空属性面板
+        wxCommandEvent propEvent(wxEVT_COMMAND_MENU_SELECTED, wxID_HIGHEST + 901);
+        propEvent.SetString("");
+        wxPostEvent(GetParent(), propEvent);
     }
 }
