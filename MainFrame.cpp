@@ -64,7 +64,7 @@ MainFrame::MainFrame()
     sideSizer->Add(toolbox, 1, wxEXPAND);    // 上：工具树（可拉伸）
 
     m_propPanel = new PropertyPanel(sidePanel);  // 父窗口是 sidePanel
-    sideSizer->Add(m_propPanel, 0, wxEXPAND);    // 下：属性表（先固定高）
+    sideSizer->Add(m_propPanel, 1, wxEXPAND);    // 下：属性表（先固定高）
 
     sidePanel->SetSizer(sideSizer);
 
