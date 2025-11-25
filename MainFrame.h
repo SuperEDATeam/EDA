@@ -35,12 +35,17 @@ private:
     bool SaveAsNetFile(const wxString& filePath);
     // 新增：关闭事件处理函数声明
     void OnClose(wxCloseEvent& event);
+    static std::vector<MainFrame*> m_allFrames; // 管理所有打开的窗口
+    wxString m_docTitle; // 当前文档标题（不含路径）
     // ...
     void OnToolSelected(wxCommandEvent& evt);  // 处理工具选择事件
 
 public:
     MainFrame();
     ~MainFrame();
+    wxString GetDocTitle() const { return m_docTitle; }
+    static const std::vector<MainFrame*>& GetAllFrames() { return m_allFrames; }
+    void UpdateTitle(); // 更新窗口标题
 
     void OnUndoStackChanged();
 

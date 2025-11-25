@@ -272,59 +272,37 @@ wxMenu* MainMenuBar::CreateSimulateMenu()
 
     return m;
 }
-
-void MainMenuBar::RebuildWindowMenu() //这个版本会把window放在simulate前面
-{
-    /* 如果已存在则先销毁旧项（重建用） */
+void MainMenuBar::RebuildWindowMenu() {
+    // 移除现有窗口菜单
     if (m_windowMenu)
-        Remove(3);   // Window 菜单在索引 3 位置（File/Edit/Project之后）
+        Remove(3);
 
-    m_windowMenu = new wxMenu;
 
-    /* 1. 常规窗口命令 */
-    m_windowMenu->Append(wxID_ICONIZE_FRAME, "Minimize\tCtrl+M");
-    m_windowMenu->Append(wxID_MAXIMIZE_FRAME, "Maximize");
-    m_windowMenu->Append(wxID_CLOSE_FRAME, "Close\tCtrl+W");
-    m_windowMenu->AppendSeparator();
+    // 创建新的窗口菜单
+    m_windowMenu = CreateWindowMenu();
+    Append(m_windowMenu, wxT("&Window"));
 
-    /* 2. 内置工具 */
-    m_windowMenu->Append(wxID_HIGHEST + 300, "Combinational Analysis");
-    m_windowMenu->Append(wxID_HIGHEST + 301, "Preferences");
-    m_windowMenu->AppendSeparator();
+    // 添加所有打开的窗口列表
+    const auto& allFrames = MainFrame::GetAllFrames();
+    if (!allFrames.empty()) {
+        m_windowMenu->AppendSeparator();
 
-    /* 3. 动态文档列表（初始 Untitled） */
-    AddDocToWindowList(m_curDocTitle.IsEmpty() ? wxString("Untitled") : m_curDocTitle);
-    SetCurrentDocInWindowList(m_curDocTitle.IsEmpty() ? wxString("Untitled") : m_curDocTitle);
-
-    /* 4. 重新插入菜单栏 */
-    Insert(3, m_windowMenu, wxT("&Window"));
+        for (size_t i = 0; i < allFrames.size(); ++i) {
+            const MainFrame* frame = allFrames[i];
+            wxString title = frame->GetDocTitle();
+            // 为当前窗口添加标记
+            if (frame == m_owner) {
+                title += "（current）";
+            }
+            // 添加菜单项，使用唯一ID
+            m_windowMenu->Append(wxID_HIGHEST + 400 + i, title);
+            // 绑定事件处理
+            Bind(wxEVT_MENU, &MainMenuBar::OnWindowItem, this, wxID_HIGHEST + 400 + i);
+        }
+    }
 }
 
-//void MainMenuBar::RebuildWindowMenu()
-//{
-//    /* 1. 如果已存在，按名字找到并删除，避免索引错位 */
-//    int oldPos = FindMenu(wxT("&Window"));
-//    if (oldPos != wxNOT_FOUND)
-//        Remove(oldPos);
-//
-//    /* 2. 重建菜单内容 */
-//    m_windowMenu = new wxMenu;
-//    m_windowMenu->Append(wxID_ICONIZE_FRAME, "Minimize\tCtrl+M");
-//    m_windowMenu->Append(wxID_MAXIMIZE_FRAME, "Maximize");
-//    m_windowMenu->Append(wxID_CLOSE_FRAME, "Close\tCtrl+W");
-//    m_windowMenu->AppendSeparator();
-//
-//    m_windowMenu->Append(wxID_HIGHEST + 300, "Combinational Analysis");
-//    m_windowMenu->Append(wxID_HIGHEST + 301, "Preferences");
-//    m_windowMenu->AppendSeparator();
-//
-//    AddDocToWindowList(m_curDocTitle.IsEmpty() ? wxT("Untitled") : m_curDocTitle);
-//    SetCurrentDocInWindowList(m_curDocTitle.IsEmpty() ? wxT("Untitled") : m_curDocTitle);
-//
-//    /* 3. 插在 Help 之前（Simulate 之后自然就是 Window） */
-//    int helpPos = FindMenu(wxT("&Help"));
-//    Insert(helpPos, m_windowMenu, wxT("&Window"));
-//}
+
 
 wxMenu* MainMenuBar::CreateHelpMenu()
 {
@@ -491,11 +469,18 @@ void MainMenuBar::OnWindowPreferences(wxCommandEvent&)
 {
     m_owner->DoWindowPreferences();
 }
-void MainMenuBar::OnWindowItem(wxCommandEvent& evt)
-{
-    wxString title = m_windowMenu->FindItem(evt.GetId())->GetItemLabelText();
-    if (title.StartsWith(wxT("• "))) title = title.Mid(2); // 去掉圆点
-    m_owner->DoWindowSwitchToDoc(title);
+void MainMenuBar::OnWindowItem(wxCommandEvent& event) {
+    int id = event.GetId();
+    size_t index = id - (wxID_HIGHEST + 400);
+    const auto& allFrames = MainFrame::GetAllFrames();
+
+    if (index < allFrames.size()) {
+        MainFrame* targetFrame = allFrames[index];
+        if (targetFrame) {
+            targetFrame->Raise(); // 激活并前置窗口
+            targetFrame->SetFocus();
+        }
+    }
 }
 
 void MainMenuBar::OnTutorial(wxCommandEvent&)
@@ -513,4 +498,20 @@ void MainMenuBar::OnLibraryRef(wxCommandEvent&)
 void MainMenuBar::OnAbout(wxCommandEvent&)
 {
     m_owner->DoHelpAbout();
+}
+wxMenu* MainMenuBar::CreateWindowMenu()
+{
+    wxMenu* menu = new wxMenu;
+    // 添加窗口操作相关菜单项
+    menu->Append(wxID_ICONIZE_FRAME, "Minimize\tCtrl+M");
+    menu->Append(wxID_MAXIMIZE_FRAME, "Maximize");
+    menu->Append(wxID_CLOSE_FRAME, "Close\tCtrl+W");
+    menu->AppendSeparator();
+
+    // 添加窗口相关功能项
+    menu->Append(wxID_HIGHEST + 300, "Combinational Analysis");
+    menu->Append(wxID_HIGHEST + 301, "Preferences");
+    menu->AppendSeparator();
+
+    return menu;
 }

@@ -14,6 +14,7 @@
 #include "HandyToolKit.h"
 
 extern std::vector<CanvasElement> g_elements;
+std::vector<MainFrame*> MainFrame::m_allFrames;
 
 wxBEGIN_EVENT_TABLE(MainFrame, wxFrame)
 EVT_MENU(wxID_ABOUT, MainFrame::OnAbout)
@@ -96,11 +97,43 @@ MainFrame::MainFrame()
     UndoNotifier::Subscribe([this](const wxString& name, bool canUndo) {
         this->OnUndoStackChanged();
         });
+
+    m_docTitle = "Untitled";
+    m_currentFilePath = "";
+    m_isModified = false;
+    UpdateTitle();
+
+    // 将新窗口添加到管理列表
+    m_allFrames.push_back(this);
+    // 通知菜单栏更新窗口列表
+    static_cast<MainMenuBar*>(GetMenuBar())->RebuildWindowMenu();
+
+}
+
+void MainFrame::UpdateTitle() {
+    wxString title = m_docTitle;
+    if (m_isModified) {
+        title += " *"; // 标记未保存的修改
+    }
+    title += " - MyLogisim";
+    SetTitle(title);
 }
 
 MainFrame::~MainFrame()
 {
-    m_auiMgr.UnInit();   // 必须手动反初始化
+    m_auiMgr.UnInit();
+    // 从窗口列表中移除当前窗口
+    auto it = std::find(m_allFrames.begin(), m_allFrames.end(), this);
+    if (it != m_allFrames.end()) {
+        m_allFrames.erase(it);
+    }
+    // 更新其他窗口的菜单栏
+    for (auto frame : m_allFrames) {
+        MainMenuBar* menuBar = dynamic_cast<MainMenuBar*>(frame->GetMenuBar());
+        if (menuBar) { // 确保转换成功
+            menuBar->RebuildWindowMenu();
+        }
+    }
 }
 
 void MainFrame::OnToolboxElement(wxCommandEvent& evt)
@@ -123,15 +156,9 @@ void MainFrame::OnToolboxElement(wxCommandEvent& evt)
 //TODO 9.24
 //只是打开一个新窗口，不会对现有窗口做任何改变
 void MainFrame::DoFileNew() {
-    // 直接创建一个新的空白MainFrame窗口
-    MainFrame* newFrame = new MainFrame();  // 假设MainFrame构造函数会初始化空白状态
-
-    // 显示新窗口（居中显示）
+    MainFrame* newFrame = new MainFrame();
     newFrame->Centre(wxBOTH);
     newFrame->Show(true);
-
-    // （可选）如果需要记录所有打开的窗口，可添加到窗口列表中
-    // m_allFrames.push_back(newFrame);  // 需要在MainFrame类中声明m_allFrames
 }
 
 //保存文件的实现，包含后面四个方法
@@ -151,6 +178,9 @@ void MainFrame::DoFileSave() {
         m_isModified = false;  // 保存成功，标记为未修改
         //UpdateTitle();         // 更新窗口标题（移除"*"等修改标记）
         SetStatusText(wxString::Format("已保存: %s", m_currentFilePath));
+        wxFileName fileName(m_currentFilePath);
+        m_docTitle = fileName.GetFullName();
+        UpdateTitle();
     }
     else {
         wxMessageBox(
@@ -262,6 +292,14 @@ void MainFrame::DoFileOpen(const wxString& path)
             return;
         }
         filePath = openDialog.GetPath();
+        m_currentFilePath = filePath;
+        wxFileName fileName(filePath);
+        m_docTitle = fileName.GetFullName();
+        m_isModified = false;
+        UpdateTitle();
+
+        // 更新菜单栏的最近文件列表
+        static_cast<MainMenuBar*>(GetMenuBar())->AddFileToHistory(filePath);
     }
 
     // 尝试读取文件内容
