@@ -118,7 +118,7 @@ public:
 
     void DeleteSelectedElement();
 
-public:
+
     // 文本元素相关
     std::vector<CanvasTextElement> m_textElements;
     wxTimer m_cursorTimer;
