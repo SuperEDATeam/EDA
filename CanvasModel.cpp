@@ -71,8 +71,9 @@ std::vector<CanvasElement> LoadCanvasElements(const wxString& jsonPath)
                 int startY = shape["start"]["y"].asInt();
                 int endX = shape["end"]["x"].asInt();
                 int endY = shape["end"]["y"].asInt();
-                //MyLog("Loaded Line: start(%d,%d) �� end(%d,%d) [type: %s]\n",
-                //    startX, startY, endX, endY, type.ToUTF8().data());
+                // �����־��ȷ��ˮƽֱ�ߣ�y������ͬ��������
+                MyLog("Loaded Line: start(%d,%d) �� end(%d,%d) [type: %s]\n",
+                    startX, startY, endX, endY, type.ToUTF8().data());
                 ce.AddShape(Line{
                     {startX, startY},
                     {endX, endY},

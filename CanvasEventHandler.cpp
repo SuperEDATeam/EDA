@@ -101,7 +101,8 @@ void CanvasEventHandler::OnCanvasLeftDown(const wxPoint& canvasPos) {
         SetCurrentTool(ToolType::WIRE_TOOL);
         bool _snapped = false;
         wxPoint _snappedPos = m_canvas->Snap(canvasPos, &_snapped);
-        StartBranchFromWire(cellWire, cellIdx, _snappedPos);
+        //StartBranchFromWire(cellWire, cellIdx, _snappedPos);
+        StartWireDrawing(_snappedPos, CPType::Branch);
         m_eventHandled = true;
         return;
     }
@@ -118,7 +119,9 @@ void CanvasEventHandler::OnCanvasLeftDown(const wxPoint& canvasPos) {
         m_previousTool = currentTool;
         m_isTemporaryAction = true;
         SetCurrentTool(ToolType::WIRE_TOOL);
-        StartWireDrawing(snappedPos, true);
+        CPType startType = CPType::Free;
+        if (snapped) startType = CPType::Pin;
+        StartWireDrawing(snappedPos, startType);
         m_eventHandled = true;
         return;
     }
@@ -132,7 +135,15 @@ void CanvasEventHandler::OnCanvasLeftDown(const wxPoint& canvasPos) {
             m_eventHandled = true;
             return;
         }
-        else {
+        //else {
+        //    m_previousTool = currentTool;
+        //    m_isTemporaryAction = true;
+        //    SetCurrentTool(ToolType::DRAG_TOOL);
+        //    StartElementDragging(elementIndex, canvasPos);
+        //    m_eventHandled = true;
+        //    return;
+        //}
+        else if (currentTool == ToolType::DRAG_TOOL){
             m_previousTool = currentTool;
             m_isTemporaryAction = true;
             SetCurrentTool(ToolType::DRAG_TOOL);
@@ -171,6 +182,7 @@ void CanvasEventHandler::OnCanvasLeftDown(const wxPoint& canvasPos) {
             m_canvas->ClearSelection();
             m_eventHandled = true;
         }
+        m_toolStateMachine->SetCurrentTool(ToolType::SELECT_TOOL);
         break;
     }
     case ToolType::TEXT_TOOL: {
@@ -186,7 +198,10 @@ void CanvasEventHandler::OnCanvasLeftDown(const wxPoint& canvasPos) {
     case ToolType::WIRE_TOOL: {
         bool snapped = false;
         wxPoint snappedPos = m_canvas->Snap(canvasPos, &snapped);
-        StartWireDrawing(snappedPos, snapped);
+        CPType startType = CPType::Free;
+        if (snapped) startType = CPType::Pin;
+        if (snapped) startType = CPType::Branch;       
+        StartWireDrawing(snappedPos, startType);
         m_eventHandled = true;
         break;
     }
@@ -208,7 +223,10 @@ void CanvasEventHandler::HandleWireTool(const wxPoint& canvasPos) {
     //if (!m_isDrawingWire) {
     if (m_toolStateMachine->GetWireState() != WireToolState::WIRE_DRAWING) {
         // 开始绘制导线（可以从任意点开始，不一定是引脚）
-        StartWireDrawing(snappedPos, snapped);
+        CPType startType = CPType::Free;
+        if (snapped) startType = CPType::Pin;
+        if (snapped) startType = CPType::Branch;
+        StartWireDrawing(snappedPos, startType);
     }
     else {
         // 完成导线绘制
@@ -231,7 +249,7 @@ void CanvasEventHandler::HandleDragTool(const wxPoint& canvasPos) {
     m_eventHandled = true;
 }
 
-void CanvasEventHandler::StartWireDrawing(const wxPoint& startPos, bool fromPin) {
+void CanvasEventHandler::StartWireDrawing(const wxPoint& startPos, CPType startType) {
     // 如果已经在进行其他操作，先取消
     //if (m_isDraggingElement) {
     if (m_toolStateMachine->GetComponentState() == ComponentToolState::COMPONENT_PREVIEW) {
@@ -244,20 +262,22 @@ void CanvasEventHandler::StartWireDrawing(const wxPoint& startPos, bool fromPin)
     //m_isDrawingWire = true;
 	m_toolStateMachine->SetWireState(WireToolState::WIRE_DRAWING);
     m_wireStartPos = startPos;
-    m_startCP = { startPos, fromPin ? CPType::Pin : CPType::Free };
+    m_startCP = {startPos, startType};
 
     // 初始化临时导线
     m_canvas->m_tempWire.Clear();
     m_canvas->m_tempWire.AddPoint(m_startCP);
-    m_canvas->m_wireMode = CanvasPanel::WireMode::DragNew;
 
-    if (true) {
-        if (fromPin) {
-            m_canvas->SetStatus("绘制导线: 从引脚开始，点击终点完成绘制 (ESC取消)");
-        }
-        else {
-            m_canvas->SetStatus("绘制导线: 从自由点开始，点击终点完成绘制 (ESC取消)");
-        }
+    switch (startType) {
+    case CPType::Pin:
+        m_canvas->SetStatus("绘制导线: 从引脚开始，点击终点完成绘制 (ESC取消)");
+        break;
+    case CPType::Free:
+        m_canvas->SetStatus("绘制导线: 从自由点开始，点击终点完成绘制 (ESC取消)");
+        break;
+    case CPType::Branch:
+        m_canvas->SetStatus("绘制导线: 从分支点开始，点击终点完成绘制 (ESC取消)");
+        break;
     }
 }
 
@@ -267,22 +287,50 @@ void CanvasEventHandler::UpdateWireDrawing(const wxPoint& currentPos) {
 
     bool snapped = false;
     wxPoint snappedPos = m_canvas->Snap(currentPos, &snapped);
-	ControlPoint endCP = { snappedPos, snapped ? CPType::Pin : CPType::Free };
+    CPType endType = CPType::Free;
+    if(m_canvas->m_hoverInfo.IsOverPin()) endType = CPType::Pin;
+    if (m_canvas->m_hoverInfo.IsOverCell()) endType = CPType::Branch;
+	m_endCP = { snappedPos, endType};
 
     // 更新导线预览
-    m_canvas->m_tempWire.pts = Wire::RouteOrtho(m_startCP, endCP, PinDirection::Right, PinDirection::Left);
-    m_canvas->Refresh();
+    wxString status = "绘制导线: ";
 
-    if (true) {
-        if (snapped) {
-            m_canvas->SetStatus(wxString::Format("绘制导线: 终点吸附到引脚 (%d,%d)",
-                snappedPos.x, snappedPos.y));
-        }
-        else {
-            m_canvas->SetStatus(wxString::Format("绘制导线: 终点为自由端点 (%d,%d)",
-                snappedPos.x, snappedPos.y));
-        }
+    switch (m_startCP.type) {
+    case CPType::Pin:
+        m_canvas->m_tempWire.pts = Wire::Route(m_startCP, m_endCP);
+        status = status + wxString::Format("起点: 引脚(%d, %d)", m_startCP.pos.x, m_startCP.pos.y);
+        break;
+    case CPType::Free:
+        m_canvas->m_tempWire.pts = Wire::Route(m_startCP, m_endCP);
+        status = status + wxString::Format("起点: 自由点(%d, %d)", m_startCP.pos.x, m_startCP.pos.y);
+        break;
+    case CPType::Branch:
+        m_canvas->m_tempWire.pts = Wire::Route(m_startCP, m_endCP);
+        status = status + wxString::Format("起点: 分支点(%d, %d)", m_startCP.pos.x, m_startCP.pos.y);
+        break;
     }
+
+    switch (endType) {
+    case CPType::Pin: {
+        status = status + wxString::Format("    终点: 引脚(%d,%d)",
+            snappedPos.x, snappedPos.y);
+        break;
+    }
+    case CPType::Free: {
+        status = status + wxString::Format("    终点: 自由点(%d,%d)",
+            snappedPos.x, snappedPos.y);
+        break;
+    }
+        
+    case CPType::Branch: {
+        status = status + wxString::Format("    终点: 分支点(%d,%d)",
+            snappedPos.x, snappedPos.y);
+        break;
+    }
+        
+    }
+    m_canvas->SetStatus(status);
+    m_canvas->Refresh();
 }
 
 void CanvasEventHandler::FinishPanning(const wxPoint& currentPos) {
@@ -331,11 +379,6 @@ void CanvasEventHandler::OnCanvasLeftUp(const wxPoint& canvasPos) {
         m_eventHandled = true;
     }
     //else if (m_isPanning) {
-    else if (m_toolStateMachine->GetWireState() == WireToolState::WIRE_BRANCHING) {
-        //FinishPanning(canvasPos);
-        CompleteBranchConnection();
-        m_eventHandled = true;
-    }
     else if (m_toolStateMachine->GetDragState() == DragToolState::CANVAS_DRAGGING) {
         //FinishPanning(canvasPos);
         FinishPanning(m_canvas->CanvasToScreen(canvasPos));
@@ -496,19 +539,13 @@ void CanvasEventHandler::SetCurrentComponent(const wxString& componentName) {
 void CanvasEventHandler::FinishWireDrawing(const wxPoint& endPos) {
     if (m_toolStateMachine->GetWireState() != WireToolState::WIRE_DRAWING) return;
 
-    bool snappedEnd = false;
-    wxPoint endSnapPos = m_canvas->Snap(endPos, &snappedEnd);
-
-    // 创建终点控制点
-    ControlPoint end{ endSnapPos, snappedEnd ? CPType::Pin : CPType::Free };
-
     // 使用固定的起点创建完整导线
     Wire completedWire;
     completedWire.AddPoint(m_startCP);
-    completedWire.AddPoint(end);
+    completedWire.AddPoint(m_endCP);
 
     // 使用路由算法生成最终路径
-    completedWire.pts = Wire::RouteOrtho(m_startCP, end, PinDirection::Right, PinDirection::Left);
+    completedWire.pts = Wire::Route(m_startCP, m_endCP);
 
     // 添加到导线列表
     m_canvas->m_wires.emplace_back(completedWire);
@@ -541,38 +578,62 @@ void CanvasEventHandler::FinishWireDrawing(const wxPoint& endPos) {
     if (m_isTemporaryAction) {
         SetCurrentTool(m_previousTool);
         m_isTemporaryAction = false;
-	}
+    }
     // 记录终点连接
     if (newWire.pts.back().type == CPType::Pin)
         recordConnection(newWire.pts.back().pos, newWire.pts.size() - 1);
 
     // 重置状态
     //m_isDrawingWire = false;
-	m_toolStateMachine->SetWireState(WireToolState::IDLE);
-    m_canvas->m_wireMode = CanvasPanel::WireMode::Idle;
+    m_toolStateMachine->SetWireState(WireToolState::IDLE);
     m_canvas->m_tempWire.Clear();
     if (m_isTemporaryAction) {
         SetCurrentTool(m_previousTool);
         m_isTemporaryAction = false;
-	}
-
-    if (true) {
-        if (snappedEnd) {
-            m_canvas->SetStatus("导线绘制完成: 连接到引脚");
-        }
-        else {
-            m_canvas->SetStatus(wxString::Format("导线绘制完成: 自由端点(%d, %d)", endSnapPos.x, endSnapPos.y));
-        }
     }
 
+    wxString status = "已绘制导线: ";
 
+    switch (m_startCP.type) {
+    case CPType::Pin:
+        m_canvas->m_tempWire.pts = Wire::Route(m_startCP, m_endCP);
+        status = status + wxString::Format("起点: 引脚(%d, %d)", m_startCP.pos.x, m_startCP.pos.y);
+        break;
+    case CPType::Free:
+        m_canvas->m_tempWire.pts = Wire::Route(m_startCP, m_endCP);
+        status = status + wxString::Format("起点: 自由点(%d, %d)", m_startCP.pos.x, m_startCP.pos.y);
+        break;
+    case CPType::Branch:
+        m_canvas->m_tempWire.pts = Wire::Route(m_startCP, m_endCP);
+        status = status + wxString::Format("起点: 分支点(%d, %d)", m_startCP.pos.x, m_startCP.pos.y);
+        break;
+    }
+
+    switch (m_endCP.type) {
+    case CPType::Pin: {
+        status = status + wxString::Format("    终点: 引脚(%d,%d)",
+            m_endCP.pos.x, m_endCP.pos.y);
+        break;
+    }
+    case CPType::Free: {
+        status = status + wxString::Format("    终点: 自由点(%d,%d)",
+            m_endCP.pos.x, m_endCP.pos.y);
+        break;
+    }
+
+    case CPType::Branch: {
+        status = status + wxString::Format("    终点: 分支点(%d,%d)",
+            m_endCP.pos.x, m_endCP.pos.y);
+        break;
+    }
+    }
+    m_canvas->SetStatus(status);
     m_canvas->Refresh();
 }
 
 void CanvasEventHandler::CancelWireDrawing() {
     //m_isDrawingWire = false;
 	m_toolStateMachine->SetWireState(WireToolState::IDLE);
-    m_canvas->m_wireMode = CanvasPanel::WireMode::Idle;
     m_canvas->m_tempWire.Clear();
     m_canvas->Refresh();
 
@@ -608,7 +669,7 @@ void CanvasEventHandler::UpdateWireEditing(const wxPoint& currentPos) {
 
         // 重新生成导线路径（如果是端点）
         if (m_editingPointIndex == 0 || m_editingPointIndex == (int)wire.pts.size() - 1) {
-            wire.pts = Wire::RouteOrtho(wire.pts.front(), wire.pts.back(), PinDirection::Right, PinDirection::Left);
+            wire.pts = Wire::Route(wire.pts.front(), wire.pts.back());
         }
 
         // 重新生成控制点
@@ -657,7 +718,6 @@ void CanvasEventHandler::StartElementDragging(int elementIndex, const wxPoint& s
 
     // 收集该元件所有引脚对应的导线端点
     m_canvas->m_movingWires.clear();
-    m_canvas->m_movingbranchWires.clear();
     const auto& elem = m_canvas->m_elements[elementIndex];
     auto collect = [&](const auto& pins, bool isIn) {
         for (size_t p = 0; p < pins.size(); ++p) {
@@ -675,26 +735,9 @@ void CanvasEventHandler::StartElementDragging(int elementIndex, const wxPoint& s
             }
         }
         };
-    auto collectBranch = [&](const auto& pins, bool isIn) {
-        for (size_t p = 0; p < pins.size(); ++p) {
-            wxPoint pinWorld = elem.GetPos() + wxPoint(pins[p].pos.x, pins[p].pos.y);
-            for (size_t w = 0; w < m_canvas->m_wires.size(); ++w) {
-                const auto& wire = m_canvas->m_wires[w];
-                if (!wire.pts.empty() && wire.pts.front().type == CPType::Pin &&
-                    wire.pts.front().pos == pinWorld)
-                    m_canvas->m_branchWires.push_back({ w, 0, isIn, p });
-                if (wire.pts.size() > 1 &&
-                    wire.pts.back().type == CPType::Pin &&
-                    wire.pts.back().pos == pinWorld)
-                    m_canvas->m_branchWires.push_back({ w, wire.pts.size() - 1, isIn, p });
-            }
-        }
-		};
 
     collect(elem.GetInputPins(), true);
     collect(elem.GetOutputPins(), false);
-	collectBranch(elem.GetInputPins(), true);
-	collectBranch(elem.GetOutputPins(), false);
 
     if (true) {
         m_canvas->SetStatus("拖动元件: 移动鼠标调整位置 (ESC取消)");
@@ -755,47 +798,7 @@ void CanvasEventHandler::UpdateElementDragging(const wxPoint& currentPos) {
             wire.pts.back().pos = newPinPos;
 
         // 重新生成导线路径
-        wire.pts = Wire::RouteOrtho(wire.pts.front(), wire.pts.back(), PinDirection::Right, PinDirection::Left);
-        wire.GenerateCells();
-    }
-
-    firstWire = true;
-    for (const auto& aw : m_canvas->m_movingbranchWires) {
-        if (aw.wireIdx >= m_canvas->m_wires.size()) continue;
-
-        Wire& wire = m_canvas->m_wires[aw.wireIdx];
-
-        // 计算新引脚世界坐标
-        const auto& elem = m_canvas->m_elements[m_draggingElementIndex];
-        const auto& pins = aw.isInput ? elem.GetInputPins() : elem.GetOutputPins();
-        if (aw.pinIdx >= pins.size()) continue;
-
-        wxPoint pinOffset = wxPoint(pins[aw.pinIdx].pos.x, pins[aw.pinIdx].pos.y);
-        wxPoint newPinPos = elem.GetPos() + pinOffset;
-
-        // 添加详细导线信息到调试信息 - 分开构建避免格式化问题
-        if (!firstWire) {
-            debugInfo += ", ";
-        }
-
-        // 分开构建字符串，避免复杂的格式化
-        wxString wireType = aw.isInput ? wxString("输入") : wxString("输出");
-        wxString wireInfo = wxString::Format("导线%d-%s引脚%d(%d,%d)",
-            (int)aw.wireIdx,
-            wireType,
-            (int)aw.pinIdx,
-            newPinPos.x, newPinPos.y);
-        debugInfo += wireInfo;
-        firstWire = false;
-
-        // 更新导线端点
-        if (aw.ptIdx == 0)
-            wire.pts.front().pos = newPinPos;
-        else
-            wire.pts.back().pos = newPinPos;
-
-        // 重新生成导线路径
-        wire.pts = Wire::RouteBranch(wire.pts.front(), wire.pts.back(), PinDirection::Left);
+        wire.pts = Wire::Route(wire.pts.front(), wire.pts.back());
         wire.GenerateCells();
     }
 
@@ -813,7 +816,6 @@ void CanvasEventHandler::FinishElementDragging() {
 	m_toolStateMachine->SetDragState(DragToolState::IDLE);
     m_draggingElementIndex = -1;
     m_canvas->m_movingWires.clear();
-	m_canvas->m_movingbranchWires.clear();
 
     if (m_isTemporaryAction) {
         SetCurrentTool(m_previousTool);
@@ -827,10 +829,6 @@ void CanvasEventHandler::OnCanvasMouseMove(const wxPoint& canvasPos) {
     // 按优先级处理各种操作
     if (m_toolStateMachine->GetWireState() == WireToolState::WIRE_DRAWING) {
         UpdateWireDrawing(canvasPos);
-        m_eventHandled = true;
-    }
-    else if (m_toolStateMachine->GetWireState() == WireToolState::WIRE_BRANCHING) {
-        UpdateElementBranching(canvasPos);
         m_eventHandled = true;
     }
     else if (m_toolStateMachine->GetDragState() == DragToolState::COMPONENT_DRAGGING) {
@@ -1143,44 +1141,4 @@ void CanvasEventHandler::OnHiddenTextCtrlEnter(wxCommandEvent& evt) {
 void CanvasEventHandler::OnHiddenTextCtrlKillFocus(wxFocusEvent& evt) {
     FinishTextEditing();
     evt.Skip();
-}
-
-void CanvasEventHandler::StartBranchFromWire(size_t wireIdx, size_t cellIdx, const wxPoint& startPos) {
-	m_toolStateMachine->SetWireState(WireToolState::WIRE_BRANCHING);
-    m_canvas->StartBranchFromWire(wireIdx, cellIdx, startPos);
-    m_startBP = { startPos, CPType::Pin };
-}
-
-void CanvasEventHandler::UpdateElementBranching(const wxPoint& canvasPos) {
-    if (m_toolStateMachine->GetWireState() != WireToolState::WIRE_BRANCHING) return;
-    bool snapped = false;
-    wxPoint snapPos = m_canvas->Snap(canvasPos, &snapped);
-    //wxPoint snapPos = wxPoint(300, 300);
-    if (!m_canvas->m_tempWire.Empty()) {
-		m_canvas->m_tempWire.pts = Wire::RouteBranch(m_startBP, {snapPos, snapped ? CPType::Pin : CPType::Free}, PinDirection::Right);
-    }
-    int cellWire, cellIdx;
-    wxPoint cellPos;
-    int newCell = m_canvas->HitHoverCell(snapPos, &cellWire, &cellIdx, &cellPos);
-    if (snapped) {
-        m_canvas->SetStatus(wxString::Format("导线分支：从(%d, %d)吸附到引脚(%d, %d)", m_startBP.pos.x, m_startBP.pos.y, snapPos.x, snapPos.y));
-    }
-    else if (newCell != -1) {
-        m_canvas->SetStatus(wxString::Format("导线分支：从(%d, %d)吸附到导线(%d, %d)", m_startBP.pos.x, m_startBP.pos.y, snapPos.x, snapPos.y));
-    }
-    else {
-        m_canvas->SetStatus(wxString::Format("导线分支：从(%d, %d)吸附到自由点(%d, %d)", m_startBP.pos.x, m_startBP.pos.y, snapPos.x, snapPos.y));
-    }
-
-    m_canvas->Refresh();
-    return;
-}
-
-void CanvasEventHandler::CompleteBranchConnection() {
-    m_canvas->CompleteBranchConnection();
-    m_toolStateMachine->SetWireState(WireToolState::IDLE);
-    if (m_isTemporaryAction) {
-        SetCurrentTool(m_previousTool);
-        m_isTemporaryAction = false;
-    }
 }

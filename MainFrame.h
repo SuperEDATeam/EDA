@@ -36,6 +36,7 @@ private:
     // 新增：关闭事件处理函数声明
     void OnClose(wxCloseEvent& event);
     // ...
+    void OnToolSelected(wxCommandEvent& evt);  // 处理工具选择事件
 
 public:
     MainFrame();

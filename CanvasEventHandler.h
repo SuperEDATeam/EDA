@@ -24,6 +24,7 @@ private:
     // 具体的绘制/操作数据仍然需要保留，因为状态机只管“状态”，不管“数据”
     wxPoint m_wireStartPos;
     ControlPoint m_startCP;
+    ControlPoint m_endCP;
 
     ControlPoint m_startBP;
 
@@ -97,7 +98,7 @@ public:
     bool IsCharacterKey(const wxKeyEvent& event);
 
     // 动作开启/更新/结束方法
-    void StartWireDrawing(const wxPoint& startPos, bool fromPin);
+    void StartWireDrawing(const wxPoint& startPos, CPType startType);
     void UpdateWireDrawing(const wxPoint& currentPos);
     void FinishWireDrawing(const wxPoint& endPos);
     void CancelWireDrawing();

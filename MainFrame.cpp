@@ -3,7 +3,7 @@
 #include "CanvasPanel.h"
 #include "PropertyPanel.h"
 #include <wx/msgdlg.h>
-#include "ToolboxPanel.h"   // 你的侧边栏
+#include "ToolboxPanel.h"
 #include <wx/aui/aui.h>
 #include "CanvasModel.h"
 #include "my_log.h"
@@ -19,6 +19,7 @@ wxBEGIN_EVENT_TABLE(MainFrame, wxFrame)
 EVT_MENU(wxID_ABOUT, MainFrame::OnAbout)
 EVT_MENU(wxID_EXIT, MainFrame::OnQuit)
 EVT_MENU(wxID_HIGHEST + 900, MainFrame::OnToolboxElement)
+EVT_MENU(wxID_HIGHEST + 901, MainFrame::OnToolSelected)
 wxEND_EVENT_TABLE()
 
 
@@ -63,7 +64,7 @@ MainFrame::MainFrame()
     sideSizer->Add(toolbox, 1, wxEXPAND);    // 上：工具树（可拉伸）
 
     m_propPanel = new PropertyPanel(sidePanel);  // 父窗口是 sidePanel
-    sideSizer->Add(m_propPanel, 0, wxEXPAND);    // 下：属性表（先固定高）
+    sideSizer->Add(m_propPanel, 1, wxEXPAND);    // 下：属性表（先固定高）
 
     sidePanel->SetSizer(sideSizer);
 
@@ -368,6 +369,23 @@ void MainFrame::DoFileOpen(const wxString& path)
     SetTitle(wxFileName(filePath).GetFullName());
     static_cast<MainMenuBar*>(GetMenuBar())->AddFileToHistory(filePath);
     SetStatusText("已打开: " + filePath);
+}
+
+// 处理工具选择事件，更新属性面板
+void MainFrame::OnToolSelected(wxCommandEvent& evt)
+{
+    wxString toolName = evt.GetString();
+
+    if (m_propPanel) {
+        if (toolName.IsEmpty()) {
+            // 清空属性面板
+            m_propPanel->ShowElement("No element selected");
+        }
+        else {
+            // 显示选中工具的属性
+            m_propPanel->ShowElement(toolName);
+        }
+    }
 }
 
 
