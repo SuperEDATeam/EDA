@@ -3,7 +3,7 @@
 #include <vector>
 #include <wx/graphics.h>
 #include "CanvasElement.h"
-#include "Wire.h"
+#include "Wire.h"          // ← 新增：连线数据
 #include "UndoStack.h"
 #include "HandyToolKit.h"
 #include "ToolStateMachine.h"
@@ -60,7 +60,7 @@ class CanvasPanel : public wxPanel
     wxPoint m_leftDownPos;
     bool m_maybeClick = false;
     int m_leftDownElementIndex = -1;
-    static const int CLICK_MAX_MS = 500;      // 单击最大时长
+    static const int CLICK_MAX_MS = 250;      // 单击最大时长
     static const int DRAG_THRESHOLD_PX = 6;   // 拖动阈值像素
 public:
     CanvasPanel(MainFrame* parent);

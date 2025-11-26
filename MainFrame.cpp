@@ -3,7 +3,7 @@
 #include "CanvasPanel.h"
 #include "PropertyPanel.h"
 #include <wx/msgdlg.h>
-#include "ToolboxPanel.h"
+#include "ToolboxPanel.h"   // ÄãµÄ²à±ßÀ¸
 #include <wx/aui/aui.h>
 #include "CanvasModel.h"
 #include "my_log.h"
