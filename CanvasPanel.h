@@ -8,6 +8,7 @@
 #include "HandyToolKit.h"
 #include "ToolStateMachine.h"
 #include "CanvasEventHandler.h"
+#include <chrono>
 
 class HandyToolKit;
 class CanvasEventHandler;
@@ -53,6 +54,14 @@ class CanvasPanel : public wxPanel
     std::vector<WireAnchor> m_undoAnchors;
     wxPoint m_dragStartElemPos;        // 拖动前元件左上角
     size_t m_wireCountBeforeOperation = 0;  // 操作前的导线数量
+
+    // 单击/拖动检测
+    std::chrono::steady_clock::time_point m_leftDownTime;
+    wxPoint m_leftDownPos;
+    bool m_maybeClick = false;
+    int m_leftDownElementIndex = -1;
+    static const int CLICK_MAX_MS = 250;      // 单击最大时长
+    static const int DRAG_THRESHOLD_PX = 6;   // 拖动阈值像素
 public:
     CanvasPanel(MainFrame* parent);
     void AddElement(const CanvasElement& elem);
@@ -106,17 +115,7 @@ public:
 
     void DeleteSelectedElement();
 
-    // 添加双击事件处理
-    void OnLeftDoubleClick(wxMouseEvent& evt);
 
-    // 添加定时器相关成员（用于区分单击和双击）
-    wxTimer m_clickTimer;
-    wxPoint m_clickPos;
-    int m_clickElementIndex = -1;
-    void OnClickTimer(wxTimerEvent& evt);
-
-
-public:
     // 文本元素相关
     std::vector<CanvasTextElement> m_textElements;
 	int inWhichTextBox(const wxPoint& canvasPos);
