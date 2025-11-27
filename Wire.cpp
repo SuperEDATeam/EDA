@@ -8,6 +8,13 @@ void Wire::Draw(wxDC& dc) const {
         dc.DrawLine(pts[i - 1].pos, pts[i].pos);
 }
 
+void Wire::DrawColor(wxDC& dc) const {
+    if (pts.size() < 2) return;
+    dc.SetPen(wxPen(*wxRED, 2));
+    for (size_t i = 1; i < pts.size(); ++i)
+        dc.DrawLine(pts[i - 1].pos, pts[i].pos);
+}
+
 
 void Wire::GenerateCells()
 {
@@ -154,4 +161,8 @@ std::vector<ControlPoint> Wire::Route(const ControlPoint& start, const ControlPo
     out.push_back({ end.pos, end.type });
 
     return out;
+}
+
+wxRect Wire::GetBounds() const{
+    return wxRect(pts.front().pos, pts.back().pos);
 }

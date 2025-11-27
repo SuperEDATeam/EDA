@@ -14,6 +14,7 @@ public:
     // 绘制方法
     void Draw(wxDC& dc);
     bool Contains(const wxPoint& point) const;
+    wxRect GetBounds() const;
 
     // 文本操作 - 代理到隐藏的TextCtrl
     void StartEditing();

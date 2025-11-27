@@ -26,6 +26,11 @@ void CanvasEventHandler::SetCurrentTool(ToolType tool) {
     if (textState != TextToolState::IDLE) {
         FinishTextEditing();
     }
+    m_compntIdx.clear();
+    m_textElemIdx.clear();
+    m_wireIdx.clear();
+    m_canvas->Refresh();
+
 
     m_toolStateMachine->SetCurrentTool(tool);
 
@@ -86,11 +91,26 @@ void CanvasEventHandler::SetCurrentTool(ToolType tool) {
     }
 }
 
-void CanvasEventHandler::OnCanvasLeftDown(const wxPoint& canvasPos) {
+void CanvasEventHandler::OnCanvasLeftDown(wxMouseEvent& evt) {
+    m_canvas->m_HandyToolKit->Hide();
+    wxPoint canvasPos = m_canvas->ScreenToCanvas(evt.GetPosition());
     m_eventHandled = false;
     ToolType currentTool = m_toolStateMachine->GetCurrentTool();
-    wxLogDebug("CanvasEventHandler::OnCanvasLeftDown at (%d, %d) with tool %d",
-        canvasPos.x, canvasPos.y, static_cast<int>(currentTool));
+    
+    if (currentTool == ToolType::SELECT_TOOL){
+        // 选择工具下点击空白区域：清除选择
+        //m_toolStateMachine->SetCurrentTool(ToolType::SELECT_TOOL);
+        HandleSelectTool(evt);
+		return;
+    }
+
+    // 清除文本编辑焦点
+    if (m_editingTextIndex != -1) {
+        FinishTextEditing();
+    }
+
+
+
     // 1. 最高优先级：检查是否点击了导线控制点
     int cellWire, cellIdx;
     wxPoint cellPos;
@@ -106,10 +126,7 @@ void CanvasEventHandler::OnCanvasLeftDown(const wxPoint& canvasPos) {
         m_eventHandled = true;
         return;
     }
-    // 清除文本编辑焦点
-    if (m_editingTextIndex != -1) {
-        FinishTextEditing();
-    }
+
 
 
         //2. 检查是否点击了引脚（开始绘制导线）
@@ -126,32 +143,32 @@ void CanvasEventHandler::OnCanvasLeftDown(const wxPoint& canvasPos) {
         return;
     }
 
-    // 3. 检查是否点击了元件
-    int elementIndex = m_canvas->HitTestPublic(canvasPos);
-    if (elementIndex != -1) {
-        // 在选择工具下点击元件：选择但不拖动
-        if (currentTool == ToolType::SELECT_TOOL) {
-            m_canvas->SetSelectedIndex(elementIndex);
-            m_eventHandled = true;
-            return;
-        }
-        //else {
-        //    m_previousTool = currentTool;
-        //    m_isTemporaryAction = true;
-        //    SetCurrentTool(ToolType::DRAG_TOOL);
-        //    StartElementDragging(elementIndex, canvasPos);
-        //    m_eventHandled = true;
-        //    return;
-        //}
-        else if (currentTool == ToolType::DRAG_TOOL){
-            m_previousTool = currentTool;
-            m_isTemporaryAction = true;
-            SetCurrentTool(ToolType::DRAG_TOOL);
-            StartElementDragging(elementIndex, canvasPos);
-            m_eventHandled = true;
-            return;
-        }
-    }
+    //// 3. 检查是否点击了元件
+    //int elementIndex = m_canvas->HitTestPublic(canvasPos);
+    //if (elementIndex != -1) {
+    //    // 在选择工具下点击元件：选择但不拖动
+    //    if (currentTool == ToolType::SELECT_TOOL) {
+    //        m_canvas->SetSelectedIndex(elementIndex);
+    //        m_eventHandled = true;
+    //        return;
+    //    }
+    //    //else {
+    //    //    m_previousTool = currentTool;
+    //    //    m_isTemporaryAction = true;
+    //    //    SetCurrentTool(ToolType::DRAG_TOOL);
+    //    //    StartElementDragging(elementIndex, canvasPos);
+    //    //    m_eventHandled = true;
+    //    //    return;
+    //    //}
+    //    else if (currentTool == ToolType::DRAG_TOOL){
+    //        m_previousTool = currentTool;
+    //        m_isTemporaryAction = true;
+    //        SetCurrentTool(ToolType::DRAG_TOOL);
+    //        StartElementDragging(elementIndex, canvasPos);
+    //        m_eventHandled = true;
+    //        return;
+    //    }
+    //}
 
     // 4. 检查是否在点击了现有文本元素
     bool clickedExisting = false;
@@ -176,15 +193,6 @@ void CanvasEventHandler::OnCanvasLeftDown(const wxPoint& canvasPos) {
 
     // 4. 按工具类型处理其他情况
     switch (currentTool) {
-    case ToolType::SELECT_TOOL: {
-        // 选择工具下点击空白区域：清除选择
-        if (m_canvas->IsClickOnEmptyAreaPublic(canvasPos)) {
-            m_canvas->ClearSelection();
-            m_eventHandled = true;
-        }
-        m_toolStateMachine->SetCurrentTool(ToolType::SELECT_TOOL);
-        break;
-    }
     case ToolType::TEXT_TOOL: {
         HandleTextTool(canvasPos);
         m_eventHandled = true;
@@ -370,13 +378,126 @@ void CanvasEventHandler::HandleComponentTool(const wxPoint& canvasPos) {
     }
 }
 
-void CanvasEventHandler::OnCanvasLeftUp(const wxPoint& canvasPos) {
+void CanvasEventHandler::OnCanvasLeftUp(wxMouseEvent& evt) {
+    wxPoint canvasPos = m_canvas->ScreenToCanvas(evt.GetPosition());
     //if (m_isEditingWire) {
 	ToolType currentTool = m_toolStateMachine->GetCurrentTool();
+    
 
     if (m_toolStateMachine->GetDragState() == DragToolState::COMPONENT_DRAGGING) {
+        wxLogDebug(wxString::Format("COMPONENT_DRAGGING"));
         FinishElementDragging();
         m_eventHandled = true;
+    }
+    else if (m_toolStateMachine->GetSelectState() == SelectToolState::CLICK_SELECT) {
+        if (evt.ShiftDown()) {
+            if (preIn) {
+                wxLogDebug(wxString::Format("PreIn"));
+                if (m_selectedIndex != -1) {
+                    auto it = std::find(m_compntIdx.begin(), m_compntIdx.end(), m_selectedIndex);
+                    if (it == m_compntIdx.end()) m_compntIdx.push_back(m_selectedIndex);
+                    else m_compntIdx.erase(it);
+                }
+                int cellIdx;
+                wxPoint tmpPos;
+                int wireIdx = m_canvas->HitHoverCell(canvasPos, &m_tmpwireIdx, &cellIdx, &tmpPos);
+                if (m_tmpwireIdx != -1) {
+                    auto it1 = std::find(m_wireIdx.begin(), m_wireIdx.end(), m_tmpwireIdx);
+                    if (it1 == m_wireIdx.end()) m_wireIdx.push_back(m_tmpwireIdx);
+                    else m_wireIdx.erase(it1);
+                }
+                m_textIdx = m_canvas->HitTestText(canvasPos);
+                if (m_textIdx != -1) {
+                    auto it2 = std::find(m_textElemIdx.begin(), m_textElemIdx.end(), m_textIdx);
+                    if (it2 == m_textElemIdx.end()) m_textElemIdx.push_back(m_textIdx);
+                    else m_textElemIdx.erase(it2);
+                }
+                m_canvas->Refresh();
+            }
+            else {
+
+            }
+
+
+        }
+        else {
+            wxLogDebug(wxString::Format("CLICK_SELECT"));
+            if (preIn) {
+                m_compntIdx.clear();
+                m_textElemIdx.clear();
+                m_wireIdx.clear();
+                m_canvas->Refresh();
+            }
+            else {
+                m_compntIdx.clear();
+                m_textElemIdx.clear();
+                m_wireIdx.clear();
+                if (m_selectedIndex != -1) {
+                    auto it = std::find(m_compntIdx.begin(), m_compntIdx.end(), m_selectedIndex);
+                    if (it == m_compntIdx.end()) m_compntIdx.push_back(m_selectedIndex);
+                    else m_compntIdx.erase(it);
+                }
+                int cellIdx;
+                wxPoint tmpPos;
+                int wireIdx = m_canvas->HitHoverCell(canvasPos, &m_tmpwireIdx, &cellIdx, &tmpPos);
+                if (m_tmpwireIdx != -1) {
+                    auto it1 = std::find(m_wireIdx.begin(), m_wireIdx.end(), m_tmpwireIdx);
+                    if (it1 == m_wireIdx.end()) m_wireIdx.push_back(m_tmpwireIdx);
+                    else m_wireIdx.erase(it1);
+                }
+                m_textIdx = m_canvas->HitTestText(canvasPos);
+                if (m_textIdx != -1) {
+                    auto it2 = std::find(m_textElemIdx.begin(), m_textElemIdx.end(), m_textIdx);
+                    if (it2 == m_textElemIdx.end()) m_textElemIdx.push_back(m_textIdx);
+                    else m_textElemIdx.erase(it2);
+                }
+                m_canvas->Refresh();
+            }
+        }
+
+        wxLogDebug(wxString::Format("CLICK_SELECT"));
+
+
+        m_canvas->Refresh();
+
+        m_canvas->SetStatus(wxString::Format("选择工具：结束选择"));
+        m_toolStateMachine->SetSelectState(SelectToolState::IDLE);
+        m_eventHandled = true;
+        return;
+    }
+    else if (m_toolStateMachine->GetSelectState() == SelectToolState::DRAG_SELECT) {
+        wxLogDebug(wxString::Format("DRAG_SELECT"));
+
+        wxLogDebug(wxString::Format("CLICK_SELECT"));
+        m_canvas->SetStatus(wxString::Format("选择工具：结束拖动"));
+        m_toolStateMachine->SetSelectState(SelectToolState::IDLE);
+        m_eventHandled = true;
+        return;
+    }
+    else if (m_toolStateMachine->GetSelectState() == SelectToolState::RECTANGLE_SELECT) {
+        if (m_canvas->m_selectRect.IsEmpty()) {
+            m_compntIdx.clear();
+            m_textElemIdx.clear();
+            m_wireIdx.clear();
+        }
+        wxLogDebug(wxString::Format("RECTANGLE_SELECT")); 
+        auto searchSelectedElements = [&](std::vector<int>& indexList, const auto& elements) {
+            for (size_t i = 0; i < elements.size(); ++i) {
+                const auto& elem = elements[i];
+                wxRect elemRect = elem.GetBounds();
+                if (m_canvas->m_selectRect.Contains(elemRect)) {
+					auto it = std::find(indexList.begin(), indexList.end(), i);
+					if (it == indexList.end()) indexList.push_back(i);
+					else indexList.erase(it);
+                }
+            }
+            };
+		searchSelectedElements(m_compntIdx, m_canvas->m_elements);
+		searchSelectedElements(m_textElemIdx, m_canvas->m_textElements);
+		searchSelectedElements(m_wireIdx, m_canvas->m_wires);
+        m_toolStateMachine->SetSelectState(SelectToolState::IDLE);
+        m_canvas->Refresh();
+		m_eventHandled = true;
     }
     //else if (m_isPanning) {
     else if (m_toolStateMachine->GetDragState() == DragToolState::CANVAS_DRAGGING) {
@@ -485,22 +606,98 @@ void CanvasEventHandler::OnCanvasMouseWheel(wxMouseEvent& evt) {
     }
 }
 
-void CanvasEventHandler::HandleSelectTool(const wxPoint& canvasPos) {
-    if (m_canvas->IsClickOnEmptyAreaPublic(canvasPos)) {
-        m_canvas->ClearSelection();
-        if (true) {
-            m_canvas->SetStatus("选中工具: 清除选择");
-        }
+void CanvasEventHandler::HandleSelectTool(wxMouseEvent& evt) {
+    preIn = false;
+    wxPoint canvasPos = m_canvas->ScreenToCanvas(evt.GetPosition());
+    wxString status = "选择工具: ";
+    if (evt.ShiftDown()) {
+        status = status + wxString::Format("多次单击可多选，"); 
     }
     else {
-        int selectedIndex = m_canvas->HitTestPublic(canvasPos);
-        if (selectedIndex != -1) {
-            m_canvas->SetSelectedIndex(selectedIndex);
-            if (true) {
-                m_canvas->SetStatus(wxString::Format("选中工具: 选择元件 %d", selectedIndex));
+        status = status + wxString::Format("单击单选元素，");
+        //m_compntIdx.clear();
+        //m_textElemIdx.clear();
+        //m_wireIdx.clear();
+    }
+    m_toolStateMachine->SetSelectState(SelectToolState::RECTANGLE_SELECT);
+	m_canvas->m_selectRect = wxRect(canvasPos, wxSize(0, 0));
+    m_selectStartPos = canvasPos;
+
+    m_selectedIndex = m_canvas->HitTestPublic(canvasPos);
+    if (m_selectedIndex != -1) {
+        auto it = std::find(m_compntIdx.begin(), m_compntIdx.end(), m_selectedIndex);
+        if (it == m_compntIdx.end()) {
+            m_compntIdx.push_back(m_selectedIndex);
+            wxLogDebug(wxString::Format("PreOut_1"));
+        }
+        else {
+            preIn = true;
+            wxLogDebug(wxString::Format("PreIn_1"));
+        }
+        m_toolStateMachine->SetSelectState(SelectToolState::CLICK_SELECT);
+    }
+    int cellIdx;
+    wxPoint tmpPos;
+    int wireIdx = m_canvas->HitHoverCell(canvasPos, &m_tmpwireIdx, &cellIdx, &tmpPos);
+    if (m_tmpwireIdx != -1) {
+        auto it1 = std::find(m_wireIdx.begin(), m_wireIdx.end(), m_tmpwireIdx);
+        if (it1 == m_wireIdx.end()) m_wireIdx.push_back(m_tmpwireIdx);
+        else preIn = true;
+        m_toolStateMachine->SetSelectState(SelectToolState::CLICK_SELECT);
+    }
+   m_textIdx = m_canvas->HitTestText(canvasPos);
+    if (m_textIdx != -1) {
+        auto it2 = std::find(m_textElemIdx.begin(), m_textElemIdx.end(), m_textIdx);
+        if (it2 == m_textElemIdx.end()) m_textElemIdx.push_back(m_textIdx);
+        else preIn = true;
+        m_toolStateMachine->SetSelectState(SelectToolState::CLICK_SELECT);
+    }
+    if (!evt.ShiftDown()) {
+        if (preIn) {
+
+        }
+        else {
+            m_compntIdx.clear();
+            m_textElemIdx.clear();
+            m_wireIdx.clear();
+            if (m_selectedIndex != -1) {
+                auto it = std::find(m_compntIdx.begin(), m_compntIdx.end(), m_selectedIndex);
+                if (it == m_compntIdx.end()) {
+                    m_compntIdx.push_back(m_selectedIndex);
+                    wxLogDebug(wxString::Format("PreOut_1"));
+                }
+                else {
+                    wxLogDebug(wxString::Format("PreIn_1"));
+                }
+                m_toolStateMachine->SetSelectState(SelectToolState::CLICK_SELECT);
+            }
+            int cellIdx;
+            wxPoint tmpPos;
+            int wireIdx = m_canvas->HitHoverCell(canvasPos, &m_tmpwireIdx, &cellIdx, &tmpPos);
+            if (m_tmpwireIdx != -1) {
+                auto it1 = std::find(m_wireIdx.begin(), m_wireIdx.end(), m_tmpwireIdx);
+                if (it1 == m_wireIdx.end()) m_wireIdx.push_back(m_tmpwireIdx);
+                m_toolStateMachine->SetSelectState(SelectToolState::CLICK_SELECT);
+            }
+            m_textIdx = m_canvas->HitTestText(canvasPos);
+            if (m_textIdx != -1) {
+                auto it2 = std::find(m_textElemIdx.begin(), m_textElemIdx.end(), m_textIdx);
+                if (it2 == m_textElemIdx.end()) m_textElemIdx.push_back(m_textIdx);
+                m_toolStateMachine->SetSelectState(SelectToolState::CLICK_SELECT);
             }
         }
     }
+
+
+    if (m_toolStateMachine->GetSelectState() == SelectToolState::CLICK_SELECT) {
+        StartSelectedDragging(canvasPos);
+        status = status + wxString("拖动平移被选中元素");
+    }
+    else {
+        status = status + wxString("拖动框选");
+    }
+    m_canvas->SetStatus(status);
+    m_canvas->Refresh();
 }
 
 void CanvasEventHandler::HandleTextTool(const wxPoint& canvasPos) {
@@ -560,7 +757,7 @@ void CanvasEventHandler::FinishWireDrawing(const wxPoint& endPos) {
                 for (size_t p = 0; p < pins.size(); ++p) {
                     wxPoint w = elem.GetPos() + wxPoint(pins[p].pos.x, pins[p].pos.y);
                     if (w == pinPos) {
-                        m_canvas->m_movingWires.push_back({ m_canvas->m_wires.size() - 1, ptIdx, isIn, p });
+                        m_movingWires.push_back({ m_canvas->m_wires.size() - 1, ptIdx, isIn, p });
                         return true;
                     }
                 }
@@ -717,7 +914,7 @@ void CanvasEventHandler::StartElementDragging(int elementIndex, const wxPoint& s
     m_elementStartCanvasPos = m_canvas->m_elements[elementIndex].GetPos();
 
     // 收集该元件所有引脚对应的导线端点
-    m_canvas->m_movingWires.clear();
+    m_movingWires.clear();
     const auto& elem = m_canvas->m_elements[elementIndex];
     auto collect = [&](const auto& pins, bool isIn) {
         for (size_t p = 0; p < pins.size(); ++p) {
@@ -726,12 +923,12 @@ void CanvasEventHandler::StartElementDragging(int elementIndex, const wxPoint& s
                 const auto& wire = m_canvas->m_wires[w];
                 if (!wire.pts.empty() && wire.pts.front().type == CPType::Pin &&
                     wire.pts.front().pos == pinWorld)
-                    m_canvas->m_movingWires.push_back({ w, 0, isIn, p });
+                    m_movingWires.push_back({ w, 0, isIn, p });
 
                 if (wire.pts.size() > 1 &&
                     wire.pts.back().type == CPType::Pin &&
                     wire.pts.back().pos == pinWorld)
-                    m_canvas->m_movingWires.push_back({ w, wire.pts.size() - 1, isIn, p });
+                    m_movingWires.push_back({ w, wire.pts.size() - 1, isIn, p });
             }
         }
         };
@@ -763,7 +960,7 @@ void CanvasEventHandler::UpdateElementDragging(const wxPoint& currentPos) {
 
     // 更新所有相关导线端点
     bool firstWire = true;
-    for (const auto& aw : m_canvas->m_movingWires) {
+    for (const auto& aw : m_movingWires) {
         if (aw.wireIdx >= m_canvas->m_wires.size()) continue;
 
         Wire& wire = m_canvas->m_wires[aw.wireIdx];
@@ -815,7 +1012,7 @@ void CanvasEventHandler::FinishElementDragging() {
     //m_isDraggingElement = false;
 	m_toolStateMachine->SetDragState(DragToolState::IDLE);
     m_draggingElementIndex = -1;
-    m_canvas->m_movingWires.clear();
+    m_movingWires.clear();
 
     if (m_isTemporaryAction) {
         SetCurrentTool(m_previousTool);
@@ -823,12 +1020,105 @@ void CanvasEventHandler::FinishElementDragging() {
 	}
 }
 
-void CanvasEventHandler::OnCanvasMouseMove(const wxPoint& canvasPos) {
+void CanvasEventHandler::OnCanvasMouseMove(wxMouseEvent& evt) {
+    wxPoint canvasPos = m_canvas->ScreenToCanvas(evt.GetPosition());
     m_eventHandled = false;
 
     // 按优先级处理各种操作
     if (m_toolStateMachine->GetWireState() == WireToolState::WIRE_DRAWING) {
         UpdateWireDrawing(canvasPos);
+        m_eventHandled = true;
+    }
+    else if (m_toolStateMachine->GetSelectState() == SelectToolState::CLICK_SELECT) {
+        m_toolStateMachine->SetSelectState(SelectToolState::DRAG_SELECT);
+        wxPoint raw = canvasPos - m_selectedDragPos;
+        const int grid = 20;
+        wxPoint delta((raw.x + grid / 2) / grid * grid, (raw.y + grid / 2) / grid * grid);
+        for (int i = 0; i < m_compntIdx.size(); i++) {
+            wxPoint rawPos = m_compntPos[i];
+            m_canvas->m_elements[m_compntIdx[i]].SetPos(rawPos + delta);
+        }
+        for (int i = 0; i < m_textElemIdx.size(); i++) {
+            wxPoint rawPos = m_textElemPos[i];
+            m_canvas->m_textElements[m_textElemIdx[i]].SetPosition(rawPos + raw);
+
+        }
+        for (int i = 0; i < m_wireIdx.size(); i++) {
+            for (int j = 0; j < m_canvas->m_wires[m_wireIdx[i]].Size(); j++) {
+				wxPoint rawPos = m_wirePos[i][j];
+                m_canvas->m_wires[m_wireIdx[i]].pts[j].pos = rawPos + delta;
+
+            }
+            m_canvas->m_wires[m_wireIdx[i]].GenerateCells();
+        }
+
+
+
+        m_canvas->SetStatus(wxString::Format("选择工具：动已选中元素(%d, %d)", delta.x, delta.y));
+
+
+        m_eventHandled = true;
+	}
+    else if (m_toolStateMachine->GetSelectState() == SelectToolState::DRAG_SELECT) {
+        wxPoint raw = canvasPos - m_selectedDragPos;
+        const int grid = 20;
+        wxPoint delta((raw.x + grid / 2) / grid * grid, (raw.y + grid / 2) / grid * grid);
+        for (int i = 0; i < m_compntIdx.size(); i++) {
+            wxPoint rawPos = m_compntPos[i];
+            m_canvas->m_elements[m_compntIdx[i]].SetPos(rawPos + delta);
+            }
+        // 更新所有相关导线端点
+        //bool firstWire = true;
+        //for (const auto& aw : m_movingWires) {
+        //    if (aw.wireIdx >= m_canvas->m_wires.size()) continue;
+
+        //    Wire& wire = m_canvas->m_wires[aw.wireIdx];
+
+        //    // 计算新引脚世界坐标
+        //    const auto& elem = m_canvas->m_elements[m_draggingElementIndex];
+        //    const auto& pins = aw.isInput ? elem.GetInputPins() : elem.GetOutputPins();
+        //    if (aw.pinIdx >= pins.size()) continue;
+
+        //    wxPoint pinOffset = wxPoint(pins[aw.pinIdx].pos.x, pins[aw.pinIdx].pos.y);
+        //    wxPoint newPinPos = elem.GetPos() + pinOffset;
+
+
+        //    // 更新导线端点
+        //    if (aw.ptIdx == 0)
+        //        wire.pts.front().pos = newPinPos;
+        //    else
+        //        wire.pts.back().pos = newPinPos;
+
+        //    // 重新生成导线路径
+        //    wire.pts = Wire::Route(wire.pts.front(), wire.pts.back());
+        //    wire.GenerateCells();
+        //}
+        for (int i = 0; i < m_textElemIdx.size(); i++) {
+            wxPoint rawPos = m_textElemPos[i];
+            m_canvas->m_textElements[m_textElemIdx[i]].SetPosition(rawPos + raw);
+
+        }
+        for (int i = 0; i < m_wireIdx.size(); i++) {
+            for (int j = 0; j < m_canvas->m_wires[m_wireIdx[i]].Size(); j++) {
+                wxPoint rawPos = m_wirePos[i][j];
+                m_canvas->m_wires[m_wireIdx[i]].pts[j].pos = rawPos + delta;
+            }
+            m_canvas->m_wires[m_wireIdx[i]].GenerateCells();
+        }
+        m_canvas->SetStatus(wxString::Format("选择工具：动已选中元素(%d, %d)", delta.x, delta.y));
+
+
+        m_eventHandled = true;
+    }
+    else if (m_toolStateMachine->GetSelectState() == SelectToolState::RECTANGLE_SELECT) {
+        wxRect selectionRect(
+            wxPoint(std::min(m_selectStartPos.x, canvasPos.x),
+                std::min(m_selectStartPos.y, canvasPos.y)),
+            wxSize(std::abs(canvasPos.x - m_selectStartPos.x),
+                std::abs(canvasPos.y - m_selectStartPos.y))
+		);
+		m_canvas->m_selectRect = selectionRect;
+		m_canvas->Refresh();
         m_eventHandled = true;
     }
     else if (m_toolStateMachine->GetDragState() == DragToolState::COMPONENT_DRAGGING) {
@@ -907,14 +1197,14 @@ void CanvasEventHandler::UpdatePanning(const wxPoint& currentPos) {
     }
 }
 
-void CanvasEventHandler::OnCanvasRightDown(const wxPoint& canvasPos){
-    wxPoint toolBarPos = canvasPos + wxPoint(240, 124);
+void CanvasEventHandler::OnCanvasRightDown(wxMouseEvent& evt){
+    wxPoint toolBarPos = evt.GetPosition() + wxPoint(240, 124);
 	m_canvas->m_HandyToolKit->SetPosition(toolBarPos);
 	m_canvas->m_HandyToolKit->Show();
 	m_canvas->m_HandyToolKit->SetFocus();
 }
 
-void CanvasEventHandler::OnCanvasRightUp(const wxPoint& canvasPos) {
+void CanvasEventHandler::OnCanvasRightUp(wxMouseEvent& evt) {
     m_canvas->m_HandyToolKit->Hide();
 }
 
@@ -1141,4 +1431,57 @@ void CanvasEventHandler::OnHiddenTextCtrlEnter(wxCommandEvent& evt) {
 void CanvasEventHandler::OnHiddenTextCtrlKillFocus(wxFocusEvent& evt) {
     FinishTextEditing();
     evt.Skip();
+}
+
+void CanvasEventHandler::StartSelectedDragging(const wxPoint& startPos) {
+    m_selectedDragPos = startPos;
+    m_compntPos.clear();
+    m_textElemPos.clear();
+    m_wirePos.clear();
+
+    std::vector<wxPoint> points;
+    for (int i = 0; i < m_compntIdx.size(); i++) {
+        _StartElementDragging(m_compntIdx[i]);
+        m_compntPos.push_back(m_canvas->m_elements[m_compntIdx[i]].GetPos());
+    }
+    for (int i = 0; i < m_textElemIdx.size(); i++) {
+        m_textElemPos.push_back(m_canvas->m_textElements[m_textElemIdx[i]].GetPosition());
+    }
+    for (int i = 0; i < m_wireIdx.size(); i++) {
+        points.clear();
+        for (int j = 0; j < m_canvas->m_wires[m_wireIdx[i]].Size(); j++) {
+            points.push_back(m_canvas->m_wires[m_wireIdx[i]].pts[j].pos);
+        }
+        m_wirePos.push_back(points);
+    }
+}
+
+void CanvasEventHandler::_StartElementDragging(int elementIndex) {
+    if (elementIndex < 0 || elementIndex >= (int)m_canvas->m_elements.size()) return;
+
+    //m_isDraggingElement = true;
+    m_draggingElementIndex = elementIndex;
+    m_elementStartCanvasPos = m_canvas->m_elements[elementIndex].GetPos();
+
+    // 收集该元件所有引脚对应的导线端点
+    const auto& elem = m_canvas->m_elements[elementIndex];
+    auto collect = [&](const auto& pins, bool isIn) {
+        for (size_t p = 0; p < pins.size(); ++p) {
+            wxPoint pinWorld = elem.GetPos() + wxPoint(pins[p].pos.x, pins[p].pos.y);
+            for (size_t w = 0; w < m_canvas->m_wires.size(); ++w) {
+                const auto& wire = m_canvas->m_wires[w];
+                if (!wire.pts.empty() && wire.pts.front().type == CPType::Pin &&
+                    wire.pts.front().pos == pinWorld)
+                    m_movingWires.push_back({ w, 0, isIn, p });
+
+                if (wire.pts.size() > 1 &&
+                    wire.pts.back().type == CPType::Pin &&
+                    wire.pts.back().pos == pinWorld)
+                    m_movingWires.push_back({ w, wire.pts.size() - 1, isIn, p });
+            }
+        }
+        };
+
+    collect(elem.GetInputPins(), true);
+    collect(elem.GetOutputPins(), false);
 }

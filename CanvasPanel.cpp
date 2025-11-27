@@ -30,7 +30,7 @@ CanvasPanel::CanvasPanel(MainFrame* parent)
     : wxPanel(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize,
         wxFULL_REPAINT_ON_RESIZE | wxBORDER_NONE),
     m_mainFrame(parent),
-    m_offset(0, 0), m_isPanning(false), m_scale(1.0f),
+    m_offset(0, 0), m_scale(1.0f),
     m_selectedIndex(-1), m_isDragging(false), m_hoverInfo{}, m_hasFocus(false),
     m_hiddenTextCtrl(nullptr),
     m_isUsingHiddenCtrl(false), m_currentEditingTextIndex(-1) {
@@ -38,9 +38,6 @@ CanvasPanel::CanvasPanel(MainFrame* parent)
 
     // 工具状态机
     m_toolStateMachine = new ToolStateMachine(this);
-
-
-    m_cursorTimer.Start(100);
 
 	// 工具管理器
 	m_CanvasEventHandler = new CanvasEventHandler(this, m_toolStateMachine);
@@ -101,7 +98,7 @@ void CanvasPanel::OnLeftDown(wxMouseEvent& evt)
 
     // 3. 交给ToolManager处理
     if (m_CanvasEventHandler) {
-        m_CanvasEventHandler->OnCanvasLeftDown(rawCanvasPos);
+        m_CanvasEventHandler->OnCanvasLeftDown(evt);
     }
 
     // 4. 如果没有点击元件且ToolManager没处理，清除选择
@@ -198,7 +195,7 @@ void CanvasPanel::OnMouseMove(wxMouseEvent& evt) {
     // 交给工具管理器处理
         // 交给工具管理器处理
     if (m_CanvasEventHandler) {
-        m_CanvasEventHandler->OnCanvasMouseMove(rawCanvasPos);
+        m_CanvasEventHandler->OnCanvasMouseMove(evt);
         if (m_CanvasEventHandler->IsEventHandled()) {
             return; // 工具管理器已处理事件
         }
@@ -271,7 +268,7 @@ void CanvasPanel::OnLeftUp(wxMouseEvent& evt)
 
     MainFrame* mainFrame = wxDynamicCast(GetParent(), MainFrame);
     if (m_CanvasEventHandler) {
-        m_CanvasEventHandler->OnCanvasLeftUp(canvasPos);
+        m_CanvasEventHandler->OnCanvasLeftUp(evt);
     }
 
     // 检测是否新增了导线
@@ -298,7 +295,7 @@ void CanvasPanel::OnLeftUp(wxMouseEvent& evt)
             wxPoint canvasPos = ScreenToCanvas(screenpos);
 
             if (m_CanvasEventHandler) {
-                m_CanvasEventHandler->OnCanvasLeftUp(canvasPos);
+                m_CanvasEventHandler->OnCanvasLeftUp(evt);
                 if (m_CanvasEventHandler->IsEventHandled()) {
                     return; // 工具管理器已处理事件
                 }
@@ -461,15 +458,8 @@ void CanvasPanel::OnPaint(wxPaintEvent&) {
         // 2. 绘制元素（使用矢量绘制）
         for (size_t i = 0; i < m_elements.size(); ++i) {
             m_elements[i].Draw(*gcdc); // 确保元素内部使用gc绘制
-
-            // 选中状态边框（虚线宽度随缩放调整）
-            if ((int)i == m_selectedIndex) {
-                wxRect b = m_elements[i].GetBounds();
-                gc->SetPen(wxPen(*wxRED, 2.0 / m_scale, wxPENSTYLE_DOT));
-                gc->SetBrush(*wxTRANSPARENT_BRUSH);
-                gc->DrawRectangle(b.x, b.y, b.width, b.height);
-            }
         }
+       
 
         // 3. 绘制导线（矢量线段）
         gc->SetPen(wxPen(*wxBLACK, 1.5 / m_scale)); // 导线宽度自适应
@@ -493,6 +483,34 @@ void CanvasPanel::OnPaint(wxPaintEvent&) {
         for (auto& textElem : m_textElements) {
             textElem.Draw(*gcdc);
         }
+
+        // 绘制选中边框
+        for (size_t i = 0; i < m_CanvasEventHandler->m_compntIdx.size(); i++) {
+            wxRect b = m_elements[m_CanvasEventHandler->m_compntIdx[i]].GetBounds();
+            gc->SetPen(wxPen(*wxRED, 2.0 / m_scale, wxPENSTYLE_DOT));
+            gc->SetBrush(*wxTRANSPARENT_BRUSH);
+            gc->DrawRectangle(b.x, b.y, b.width, b.height);
+        }
+        for (size_t i = 0; i < m_CanvasEventHandler->m_textElemIdx.size(); i++) {
+            wxRect b = m_textElements[m_CanvasEventHandler->m_textElemIdx[i]].GetBounds();
+            gc->SetPen(wxPen(*wxRED, 2.0 / m_scale, wxPENSTYLE_DOT));
+            gc->SetBrush(*wxTRANSPARENT_BRUSH);
+            gc->DrawRectangle(b.x, b.y, b.width, b.height);
+        }
+        for (size_t i = 0; i < m_CanvasEventHandler->m_wireIdx.size(); i++) {
+            m_wires[m_CanvasEventHandler->m_wireIdx[i]].DrawColor(*gcdc);
+
+        }
+
+        // 绘制选择边框
+        if (m_toolStateMachine->GetSelectState() == SelectToolState::RECTANGLE_SELECT) {
+            wxRect selRect = m_selectRect;
+			gc->SetPen(wxPen(*wxBLUE, 1.5 / m_scale, wxPENSTYLE_DOT));
+			gc->SetBrush(*wxTRANSPARENT_BRUSH);
+			gc->DrawRectangle(selRect.x, selRect.y, selRect.width, selRect.height);
+        }
+
+
         delete gcdc; // 释放资源
     }
     else {
@@ -756,7 +774,7 @@ void CanvasPanel::DeleteSelectedElement() {
     // 3. 重置选中状态
     m_selectedIndex = -1;
     m_isDragging = false;
-    m_movingWires.clear();
+    //m_movingWires.clear();
 
     // 4. 刷新画布
     Refresh();
@@ -792,7 +810,7 @@ bool CanvasPanel::IsClickOnEmptyAreaPublic(const wxPoint& canvasPos) {
         // 交给工具管理器处理
 
         if (m_CanvasEventHandler) {
-            m_CanvasEventHandler->OnCanvasRightDown(rawScreenPos);
+            m_CanvasEventHandler->OnCanvasRightDown(evt);
             if (m_CanvasEventHandler->IsEventHandled()) {
                 return; // 工具管理器已处理事件
             }
@@ -806,7 +824,7 @@ bool CanvasPanel::IsClickOnEmptyAreaPublic(const wxPoint& canvasPos) {
         wxPoint rawCanvasPos = ScreenToCanvas(rawScreenPos);
         // 交给工具管理器处理
         if (m_CanvasEventHandler) {
-            m_CanvasEventHandler->OnCanvasRightUp(rawScreenPos);
+            m_CanvasEventHandler->OnCanvasRightUp(evt);
             if (m_CanvasEventHandler->IsEventHandled()) {
                 return; // 工具管理器已处理事件
             }
@@ -1010,4 +1028,11 @@ void CanvasPanel::CreateTextElement(const wxPoint& position) {
 
 void CanvasPanel::StartTextEditing(int index) {
     AttachHiddenTextCtrlToElement(index);
+}
+
+int CanvasPanel::HitTestText(wxPoint canvasPos) {
+    for (int i = 0; i < m_textElements.size(); i++) {
+        if (m_textElements[i].Contains(canvasPos)) return i;
+    }
+    return -1;
 }

@@ -21,10 +21,13 @@ public:
 
     // 核心接口
     void Draw(wxDC& dc) const;                          // 画线
+    void DrawColor(wxDC& dc) const;
     void AddPoint(const ControlPoint& cp) { pts.push_back(cp); }
     void Clear() { pts.clear(); }
     bool Empty() const { return pts.empty(); }
     size_t Size() const { return pts.size(); }
+
+    wxRect GetBounds() const;
 
     CanvasPanel* m_canvas;
     std::vector<wxPoint> cells;          // 每 2 px 小格中心

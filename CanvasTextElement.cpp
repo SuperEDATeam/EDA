@@ -176,3 +176,11 @@ void CanvasTextElement::OnTextEnter() {
 void CanvasTextElement::OnTextKillFocus() {
     StopEditing();
 }
+
+wxRect CanvasTextElement::GetBounds() const{
+    return wxRect(m_position, m_size);
+}
+
+wxPoint CanvasTextElement::GetPosition() const {
+	return m_position;
+}

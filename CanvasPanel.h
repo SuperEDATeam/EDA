@@ -71,9 +71,6 @@ public:
     wxPoint CanvasToScreen(const wxPoint& canvasPos) const;
 
     wxPoint m_offset;          // 画布偏移量（平移坐标）
-    bool m_isPanning;          // 是否正在拖拽平移
-    wxPoint m_panStartPos;     // 平移开始时的屏幕坐标
-
 
       // 新增：判断是否点击在空白区域（无元素）
     bool IsClickOnEmptyArea(const wxPoint& canvasPos);
@@ -122,7 +119,6 @@ public:
 public:
     // 文本元素相关
     std::vector<CanvasTextElement> m_textElements;
-    wxTimer m_cursorTimer;
 	int inWhichTextBox(const wxPoint& canvasPos);
     void CreateTextElement(const wxPoint& position);
 	void SetFocusToTextElement(int index);
@@ -148,9 +144,6 @@ public:
     std::vector<Wire> m_wires;   // 已定型的连线
     Wire m_tempWire;             // 正在拖动/预览的连线
 
-    ControlPoint m_startCP;      // 连线起点
-    wxPoint m_curSnap;           // 当前吸附/预览点
-
 
     float m_scale = 1.0f;
 
@@ -162,9 +155,8 @@ public:
     // 吸附：网格 + 引脚
     wxPoint Snap(const wxPoint& raw, bool* snapped);
 
-    std::vector<WireAnchor> m_movingWires;
 
-    int  HitHoverPin(const wxPoint& raw, bool* isInput, wxPoint* worldPos);
+    int HitHoverPin(const wxPoint& raw, bool* isInput, wxPoint* worldPos);
 
     int HitHoverCell(const wxPoint& raw, int* wireIdx, int* cellIdx, wxPoint* cellPos);
 
@@ -214,4 +206,8 @@ public:
 
     wxTextCtrl* m_sharedTextCtrl;
     wxDECLARE_EVENT_TABLE();
+
+public:
+    int HitTestText(wxPoint canvasPos);
+    wxRect m_selectRect;
 };

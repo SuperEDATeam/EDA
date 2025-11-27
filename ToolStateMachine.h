@@ -31,7 +31,7 @@ enum class SelectToolState {
     IDLE,
     CLICK_SELECT,           // 点击选择
     RECTANGLE_SELECT,       // 矩形框选
-    MULTI_SELECT           // 多选状态
+    DRAG_SELECT,
 };
 
 // 文本工具状态

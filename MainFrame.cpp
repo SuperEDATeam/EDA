@@ -36,7 +36,7 @@ MainFrame::MainFrame()
     /* ²Ëµ¥ & ×´Ì¬À¸ */
     SetMenuBar(new MainMenuBar(this));
     CreateStatusBar(1);
-    int widths[] = { 400, 200, 200, 100 };
+    int widths[] = { 400, 200, 400, 100 };
 	int style[] = { wxSB_NORMAL, wxSB_NORMAL, wxSB_FLAT, wxSB_FLAT };
     GetStatusBar()->SetFieldsCount(4, widths);
 	GetStatusBar()->SetStatusStyles(4, style);

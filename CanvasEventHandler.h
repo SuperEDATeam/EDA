@@ -26,7 +26,7 @@ private:
     ControlPoint m_startCP;
     ControlPoint m_endCP;
 
-    ControlPoint m_startBP;
+    std::vector<WireAnchor> m_movingWires;
 
     wxPoint m_panStartPos;
     wxPoint m_fakeStartPos;
@@ -48,6 +48,23 @@ private:
 	// 文本框编辑相关
     int m_editingTextIndex;
     std::map<wxTextCtrl*, int> m_textCtrlBindings;
+
+public:
+    // 选中工具相关
+    std::vector<int> m_textElemIdx;
+    std::vector<int> m_compntIdx;
+    std::vector<int> m_wireIdx;
+	wxPoint m_selectStartPos;
+    wxPoint m_selectedDragPos;
+
+    std::vector<wxPoint> m_textElemPos;
+    std::vector<wxPoint> m_compntPos;
+    std::vector<std::vector<wxPoint>> m_wirePos;
+
+    int m_selectedIndex;
+    int m_tmpwireIdx;
+    int m_textIdx;
+    bool preIn;
 
 public:
     
@@ -80,7 +97,7 @@ public:
     void CleanTempTool();
 
     // 工具行为方法
-    void HandleSelectTool(const wxPoint& canvasPos);
+    void HandleSelectTool(wxMouseEvent& evt);
     void HandleTextTool(const wxPoint& canvasPos);
     void HandleComponentTool(const wxPoint& canvasPos);
     void HandleWireTool(const wxPoint& canvasPos);
@@ -88,13 +105,13 @@ public:
     // HandleDefaultTool 可以移除，逻辑并入 OnCanvasLeftDown 的 DRAG_TOOL 处理中
 
     // 画布事件转发
-    void OnCanvasLeftDown(const wxPoint& canvasPos);
-    void OnCanvasLeftUp(const wxPoint& canvasPos);
-    void OnCanvasMouseMove(const wxPoint& canvasPos);
+    void OnCanvasLeftDown(wxMouseEvent& evt);
+    void OnCanvasLeftUp(wxMouseEvent& evt);
+    void OnCanvasMouseMove(wxMouseEvent& evt);
     void OnCanvasKeyDown(wxKeyEvent& evt);
     void OnCanvasMouseWheel(wxMouseEvent& evt);
-    void OnCanvasRightDown(const wxPoint& canvasPos);
-    void OnCanvasRightUp(const wxPoint& canvasPos);
+    void OnCanvasRightDown(wxMouseEvent& evt);
+    void OnCanvasRightUp(wxMouseEvent& evt);
     bool IsCharacterKey(const wxKeyEvent& event);
 
     // 动作开启/更新/结束方法
@@ -118,7 +135,8 @@ public:
 
     void SetCurrentComponent(const wxString& componentName);
 
-    void StartBranchFromWire(size_t wireIdx, size_t cellIdx, const wxPoint& startPos);
-    void UpdateElementBranching(const wxPoint& currentPos);
-    void CompleteBranchConnection();
+    void StartSelectedDragging(const wxPoint& startPos);
+    //void UpdateSelectedDragging(const wxPoint& startPos);
+    //void FinishSelectedDragging(const wxPoint& startPos);
+    void _StartElementDragging(int elementIndex);
 };
