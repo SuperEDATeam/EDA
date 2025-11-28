@@ -10,7 +10,11 @@ void Wire::Draw(wxDC& dc) const {
 
 void Wire::DrawColor(wxDC& dc) const {
     if (pts.size() < 2) return;
-    dc.SetPen(wxPen(*wxRED, 2));
+    dc.SetPen(wxPen(wxColor(44, 145, 224), 2));
+    for (size_t i = 1; i < pts.size(); ++i)
+        dc.DrawLine(pts[i - 1].pos, pts[i].pos);
+
+    dc.SetPen(wxPen(wxColor(44, 145, 224, 32), 8));
     for (size_t i = 1; i < pts.size(); ++i)
         dc.DrawLine(pts[i - 1].pos, pts[i].pos);
 }

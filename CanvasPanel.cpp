@@ -371,15 +371,31 @@ void CanvasPanel::OnPaint(wxPaintEvent&) {
         // 绘制选中边框
         for (size_t i = 0; i < m_CanvasEventHandler->m_compntIdx.size(); i++) {
             wxRect b = m_elements[m_CanvasEventHandler->m_compntIdx[i]].GetBounds();
-            gc->SetPen(wxPen(*wxRED, 2.0 / m_scale, wxPENSTYLE_DOT));
+            gc->SetPen(wxPen(wxColor(44, 145, 224), 2.0 ));
             gc->SetBrush(*wxTRANSPARENT_BRUSH);
-            gc->DrawRectangle(b.x, b.y, b.width, b.height);
+            gc->DrawRectangle(b.x-2, b.y-3, b.width+5, b.height+5);
+
+            gc->SetPen(wxPen(wxColor(44, 145, 224, 32), 2.0));
+            gc->SetBrush(*wxTRANSPARENT_BRUSH);
+            gc->DrawRectangle(b.x - 4, b.y - 5, b.width + 9, b.height + 9);
+
+            gc->SetPen(wxPen(wxColor(44, 145, 224, 32), 4.0));
+            gc->SetBrush(*wxTRANSPARENT_BRUSH);
+            gc->DrawRectangle(b.x - 6, b.y - 7, b.width + 13, b.height + 13);
         }
         for (size_t i = 0; i < m_CanvasEventHandler->m_textElemIdx.size(); i++) {
             wxRect b = m_textElements[m_CanvasEventHandler->m_textElemIdx[i]].GetBounds();
-            gc->SetPen(wxPen(*wxRED, 2.0 / m_scale, wxPENSTYLE_DOT));
+            gc->SetPen(wxPen(wxColor(44, 145, 224), 2.0));
             gc->SetBrush(*wxTRANSPARENT_BRUSH);
-            gc->DrawRectangle(b.x, b.y, b.width, b.height);
+            gc->DrawRectangle(b.x - 3, b.y - 3, b.width + 5, b.height + 5);
+
+            gc->SetPen(wxPen(wxColor(44, 145, 224, 32), 2.0));
+            gc->SetBrush(*wxTRANSPARENT_BRUSH);
+            gc->DrawRectangle(b.x - 5, b.y - 5, b.width + 9, b.height + 9);
+
+            gc->SetPen(wxPen(wxColor(44, 145, 224, 32), 4.0));
+            gc->SetBrush(*wxTRANSPARENT_BRUSH);
+            gc->DrawRectangle(b.x - 7, b.y - 7, b.width + 13, b.height + 13);
         }
         for (size_t i = 0; i < m_CanvasEventHandler->m_wireIdx.size(); i++) {
             m_wires[m_CanvasEventHandler->m_wireIdx[i]].DrawColor(*gcdc);
@@ -389,8 +405,8 @@ void CanvasPanel::OnPaint(wxPaintEvent&) {
         // 绘制选择边框
         if (m_toolStateMachine->GetSelectState() == SelectToolState::RECTANGLE_SELECT) {
             wxRect selRect = m_selectRect;
-			gc->SetPen(wxPen(*wxBLUE, 1.5 / m_scale, wxPENSTYLE_DOT));
-			gc->SetBrush(*wxTRANSPARENT_BRUSH);
+			gc->SetPen(wxPen(wxColor(44, 145, 224), 2 / m_scale));
+			gc->SetBrush(wxColor(44, 145, 224, 32));
 			gc->DrawRectangle(selRect.x, selRect.y, selRect.width, selRect.height);
         }
 

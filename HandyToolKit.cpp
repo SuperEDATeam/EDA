@@ -42,8 +42,8 @@ void HandyToolKit::CreateTools()
     text.Rescale(text, wxSize(24, 24));
     wxBitmap wire("res\\icons\\wiring.png", wxBITMAP_TYPE_PNG);
     wire.Rescale(wire, wxSize(24, 24));
-    m_tools.push_back({ "Choose", choose, wxRect(0, 0, 24, 24), [this](void) {m_CanvasEventHandler->SetCurrentTool(ToolType::SELECT_TOOL); } });
-    m_tools.push_back({ "Drag", drag, wxRect(24, 0, 24, 24), [this](void) {m_CanvasEventHandler->SetCurrentTool(ToolType::DRAG_TOOL); } });
+    m_tools.push_back({ "Choose", choose, wxRect(24, 0, 24, 24), [this](void) {m_CanvasEventHandler->SetCurrentTool(ToolType::SELECT_TOOL); } });
+    m_tools.push_back({ "Drag", drag, wxRect(0, 0, 24, 24), [this](void) {m_CanvasEventHandler->SetCurrentTool(ToolType::DRAG_TOOL); } });
     m_tools.push_back({ "Text", text, wxRect(48, 0, 24, 24), [this](void) {m_CanvasEventHandler->SetCurrentTool(ToolType::TEXT_TOOL); } });
     m_tools.push_back({ "Wire", wire, wxRect(72, 0, 24, 24), [this](void) {m_CanvasEventHandler->SetCurrentTool(ToolType::WIRE_TOOL); } });
 

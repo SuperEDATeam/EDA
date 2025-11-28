@@ -1161,7 +1161,7 @@ void CanvasEventHandler::OnCanvasMouseMove(wxMouseEvent& evt) {
         bool snapped = false;
         wxPoint snappedPos = m_canvas->Snap(canvasPos, &snapped);
 		m_canvas->SetPreviewElement(m_currentComponent, snappedPos);
-        m_canvas->SetStatus(wxString::Format("∑≈÷√%s: (%d, %d)", m_currentComponent, canvasPos.x, canvasPos.y));
+        m_canvas->SetStatus(wxString::Format("∑≈÷√%s: (%d, %d)", m_currentComponent, snappedPos.x, snappedPos.y));
         m_eventHandled = true;
 	}
     else {

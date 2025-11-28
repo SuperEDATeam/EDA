@@ -86,16 +86,18 @@ void CanvasTextElement::Draw(wxDC& dc) {
 }
 
 void CanvasTextElement::DrawNormalState(wxDC& dc) {
-    dc.SetBrush(wxBrush(wxColour(255, 255, 255, 230)));
-    dc.SetPen(wxPen(wxColour(200, 200, 200), 1));
-    DrawRoundedRect(dc, wxRect(m_position, m_size), 4);
+    dc.SetBrush(*wxTRANSPARENT_BRUSH);
+    dc.SetPen(wxPen(wxColour(*wxLIGHT_GREY), 3));
+    dc.DrawRectangle(wxRect(m_position - wxPoint(1, 1), m_size + wxSize(2, 2)));
+    //DrawRoundedRect(dc, wxRect(m_position, m_size+wxSize(2,2)), 4);
     DrawTextContent(dc);
 }
 
 void CanvasTextElement::DrawEditingState(wxDC& dc) {
-    dc.SetBrush(wxBrush(wxColour(255, 255, 255, 240)));
-    dc.SetPen(wxPen(wxColour(100, 150, 255), 2));
-    DrawRoundedRect(dc, wxRect(m_position, m_size), 4);
+    dc.SetBrush(*wxTRANSPARENT_BRUSH);
+    dc.SetPen(wxPen(wxColour(*wxBLACK), 3));
+    dc.DrawRectangle(wxRect(m_position - wxPoint(1, 1), m_size + wxSize(2, 2)));
+    //DrawRoundedRect(dc, wxRect(m_position, m_size + wxSize(2, 2)), 4);
     DrawTextContent(dc);
 
     // 绘制光标（模拟）
