@@ -216,7 +216,6 @@ void CanvasEventHandler::OnCanvasLeftDown(wxMouseEvent& evt) {
     case ToolType::DRAG_TOOL: {
         HandleDragTool(m_canvas->CanvasToScreen(canvasPos));
         wxLogDebug("拖拽工具常用");
-        m_eventHandled = true;
         break;
     }
     }
@@ -253,8 +252,11 @@ void CanvasEventHandler::HandleWireTool(const wxPoint& canvasPos) {
 
 void CanvasEventHandler::HandleDragTool(const wxPoint& canvasPos) {
     // 专门的平移工具
-    StartPanning(canvasPos);
-    m_eventHandled = true;
+    if (m_canvas->IsClickOnEmptyAreaPublic(canvasPos)) {
+        StartPanning(canvasPos);
+        m_eventHandled = true;
+    }
+    
 }
 
 void CanvasEventHandler::StartWireDrawing(const wxPoint& startPos, CPType startType) {
@@ -1134,7 +1136,7 @@ void CanvasEventHandler::OnCanvasMouseMove(wxMouseEvent& evt) {
         wxString toolInfo;
         switch (m_toolStateMachine->GetCurrentTool()) {
             case ToolType::DRAG_TOOL:{
-                toolInfo = wxString::Format("工具: 拖拽工具");
+                toolInfo = wxString::Format("工具: 拖拽工具，长按空白处拖动画布，单击Pin元件可改变状态");
 				break;
             }
             case ToolType::SELECT_TOOL: {

@@ -69,11 +69,6 @@ void CanvasPanel::OnLeftDown(wxMouseEvent& evt)
         m_CanvasEventHandler->OnCanvasLeftDown(evt);
     }
 
-    // 如果点击空白区域，清除选择
-    if (idx == -1 && m_CanvasEventHandler && !m_CanvasEventHandler->IsEventHandled()) {
-        ClearSelection();
-    }
-
     evt.Skip();
 }
 
@@ -144,7 +139,7 @@ void CanvasPanel::OnLeftUp(wxMouseEvent& evt)
 
     // 【核心逻辑】检查是否点击 Pin 且工具是 SELECT_TOOL
     if (!wasDragging && elapsedMs <= CLICK_MAX_MS && clickedElement != -1 &&
-        currentTool == ToolType::SELECT_TOOL)
+        currentTool == ToolType::DRAG_TOOL)
     {
         if (clickedElement >= 0 && clickedElement < (int)m_elements.size())
         {
@@ -232,13 +227,15 @@ void CanvasPanel::OnMouseWheel(wxMouseEvent& evt) {
 
 bool CanvasPanel::IsClickOnEmptyArea(const wxPoint& canvasPos)
 {
-    // 遍历所有元素，判断点击位置是否在任何元素内部
-    for (const auto& elem : m_elements) {
-        if (elem.GetBounds().Contains(canvasPos)) {
-            return false; // 点击在元素上，不是空白区域
-        }
-    }
-    return true; // 空白区域
+    //// 遍历所有元素，判断点击位置是否在任何元素内部
+    //for (const auto& elem : m_elements) {
+    //    if (elem.GetBounds().Contains(canvasPos)) {
+    //        return false; // 点击在元素上，不是空白区域
+    //    }
+    //}
+    //return true; // 空白区域
+    if (m_hoverInfo.IsOverCell() || m_hoverInfo.IsOverElement() || m_hoverInfo.IsOverPin()) return false;
+    else return true;
 }  
 
 // 新增：设置缩放比例（限制范围0.1~5.0，避免过度缩放）
