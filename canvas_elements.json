@@ -326,21 +326,41 @@
       {"type": "text", "x": 30, "y": 30, "text": "0", "fontSize": 20, "color": "white"}
     ]
   },
-  {
-    "id": "Pin_Output",
-    "name": "Pin (Output)",
-    "anchorPoint": [40, 40],
-    "inputPins": [],
-    "outputPins": [{"name": "Output", "x": 20, "y": 40}],
-    "shapes": [
-      {"type": "circle", "x": 40, "y": 40, "r": 13, "color": "#CCE099", "fill": true, "fillColor": "#CCE099"},
-      {"type": "line", "start": {"x": 20, "y": 20}, "end": {"x": 20, "y": 60}, "color": "#333333"},
-      {"type": "line", "start": {"x": 20, "y": 20}, "end": {"x": 60, "y": 20}, "color": "#333333"},
-      {"type": "line", "start": {"x": 20, "y": 60}, "end": {"x": 60, "y": 60}, "color": "#333333"},
-      {"type": "line", "start": {"x": 60, "y": 20}, "end": {"x": 60, "y": 60}, "color": "#333333"},
-      {"type": "text", "x": 30, "y": 30, "text": "X", "fontSize": 20, "color": "white"}
-    ]
-  },
+ {
+  "id": "Pin_Output",
+  "name": "Pin (Output)",
+  "anchorPoint": [40, 40],
+  "inputPins": [],
+  "outputPins": [{"name": "Output", "x": 18, "y": 40}],
+  "shapes": [
+    {
+      "type": "circle",
+      "x": 40,
+      "y": 40,
+      "r": 23,
+      "color": "#333333",
+      "fill": false,
+      "fillColor": "#FFFFFF"
+    },
+    {
+      "type": "circle",
+      "x": 40,
+      "y": 40,
+      "r": 13,
+      "color": "#CCE099",
+      "fill": true,
+      "fillColor": "#CCE099"
+    },
+    {
+      "type": "text",
+      "x": 30,
+      "y": 30,
+      "text": "X",
+      "fontSize": 20,
+      "color": "white"
+    }
+  ]
+},
   {
     "id": "Probe",
     "name": "Probe",

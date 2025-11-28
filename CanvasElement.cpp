@@ -84,36 +84,46 @@ void CanvasElement::DrawVector(wxGCDC& gcdc) const
             // 绘制Pin_Output元件，根据状态显示不同内容
             // 在CanvasElement.cpp的DrawVector方法中，在Pin_Input的绘制逻辑后添加Pin_Output的处理：
 
-            // 绘制Pin_Output元件，根据状态显示不同内容
             if (m_id == "Pin_Output") {
                 if constexpr (std::is_same_v<T, Circle>) {
-                    // 根据状态选择颜色
-                    wxColour circleColor, fillColor;
-                    wxString displayText;
-
-                    switch (m_outputState) {
-                    case 1: // 状态0
-                        circleColor = wxColour(0, 255, 0); // 绿色
-                        fillColor = wxColour(0, 255, 0);
-                        displayText = "0";
-                        break;
-                    case 2: // 状态1
-                        circleColor = wxColour(0, 128, 0); // 深绿色
-                        fillColor = wxColour(0, 128, 0);
-                        displayText = "1";
-                        break;
-                    default: // 状态X（默认）
-                        circleColor = wxColour(0xCC, 0xE0, 0x99); // #CCE099
-                        fillColor = wxColour(0xCC, 0xE0, 0x99);
-                        displayText = "X";
-                        break;
+                    // 根据半径区分外圈和内圈
+                    if (s.radius == 23) {
+                        // 外圈：保持原始绘制（不填充）
+                        gc->SetPen(wxPen(s.color, 3.0));
+                        gc->SetBrush(*wxTRANSPARENT_BRUSH);
+                        gc->DrawEllipse(s.center.x - s.radius, s.center.y - s.radius,
+                            s.radius * 2, s.radius * 2);
+                        // 不返回，继续处理内圈
                     }
+                    else if (s.radius == 13) {
+                        // 内圈：根据状态绘制
+                        wxColour circleColor, fillColor;
+                        wxString displayText;
 
-                    gc->SetPen(wxPen(circleColor, 3.0));
-                    gc->SetBrush(wxBrush(fillColor));
-                    gc->DrawEllipse(s.center.x - s.radius, s.center.y - s.radius,
-                        s.radius * 2, s.radius * 2);
-                    return; // 跳过原始绘制
+                        switch (m_outputState) {
+                        case 1: // 状态0
+                            circleColor = wxColour(0, 255, 0); // 绿色
+                            fillColor = wxColour(0, 255, 0);
+                            displayText = "0";
+                            break;
+                        case 2: // 状态1
+                            circleColor = wxColour(0, 128, 0); // 深绿色
+                            fillColor = wxColour(0, 128, 0);
+                            displayText = "1";
+                            break;
+                        default: // 状态X（默认）
+                            circleColor = wxColour(0xCC, 0xE0, 0x99); // #CCE099
+                            fillColor = wxColour(0xCC, 0xE0, 0x99);
+                            displayText = "X";
+                            break;
+                        }
+
+                        gc->SetPen(wxPen(circleColor, 3.0));
+                        gc->SetBrush(wxBrush(fillColor));
+                        gc->DrawEllipse(s.center.x - s.radius, s.center.y - s.radius,
+                            s.radius * 2, s.radius * 2);
+                        return; // 内圈绘制后返回
+                    }
                 }
                 else if constexpr (std::is_same_v<T, Text>) {
                     wxString displayText;
@@ -247,39 +257,49 @@ void CanvasElement::DrawFallback(wxDC& dc) const
                 }
             }
 
-            // 在DrawFallback方法中，在Pin_Input的处理后添加Pin_Output的处理：
             if (m_id == "Pin_Output") {
                 if constexpr (std::is_same_v<T, Circle>) {
-                    wxColour circleColor, fillColor;
-                    wxString displayText;
-
-                    switch (m_outputState) {
-                    case 1: // 状态0
-                        circleColor = wxColour(0, 255, 0);
-                        fillColor = wxColour(0, 255, 0);
-                        displayText = "0";
-                        break;
-                    case 2: // 状态1
-                        circleColor = wxColour(0, 128, 0);
-                        fillColor = wxColour(0, 128, 0);
-                        displayText = "1";
-                        break;
-                    default: // 状态X
-                        circleColor = wxColour(0xCC, 0xE0, 0x99);
-                        fillColor = wxColour(0xCC, 0xE0, 0x99);
-                        displayText = "X";
-                        break;
-                    }
-
-                    if (arg.fill) {
-                        dc.SetBrush(wxBrush(fillColor));
-                    }
-                    else {
+                    // 根据半径区分外圈和内圈
+                    if (arg.radius == 23) {
+                        // 外圈：保持原始绘制
                         dc.SetBrush(*wxTRANSPARENT_BRUSH);
+                        dc.SetPen(wxPen(arg.color, 1));
+                        dc.DrawCircle(off(arg.center), arg.radius);
+                        return;
                     }
-                    dc.SetPen(wxPen(circleColor, 1));
-                    dc.DrawCircle(off(arg.center), arg.radius);
-                    return;
+                    else if (arg.radius == 13) {
+                        // 内圈：根据状态绘制
+                        wxColour circleColor, fillColor;
+                        wxString displayText;
+
+                        switch (m_outputState) {
+                        case 1: // 状态0
+                            circleColor = wxColour(0, 255, 0);
+                            fillColor = wxColour(0, 255, 0);
+                            displayText = "0";
+                            break;
+                        case 2: // 状态1
+                            circleColor = wxColour(0, 128, 0);
+                            fillColor = wxColour(0, 128, 0);
+                            displayText = "1";
+                            break;
+                        default: // 状态X
+                            circleColor = wxColour(0xCC, 0xE0, 0x99);
+                            fillColor = wxColour(0xCC, 0xE0, 0x99);
+                            displayText = "X";
+                            break;
+                        }
+
+                        if (arg.fill) {
+                            dc.SetBrush(wxBrush(fillColor));
+                        }
+                        else {
+                            dc.SetBrush(*wxTRANSPARENT_BRUSH);
+                        }
+                        dc.SetPen(wxPen(circleColor, 1));
+                        dc.DrawCircle(off(arg.center), arg.radius);
+                        return;
+                    }
                 }
                 else if constexpr (std::is_same_v<T, Text>) {
                     wxString displayText;
