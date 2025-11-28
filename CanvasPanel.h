@@ -205,7 +205,7 @@ public:
     void StartTextEditing(int index);
 
     wxTextCtrl* m_sharedTextCtrl;
-    wxDECLARE_EVENT_TABLE();
+
 
 public:
     int HitTestText(wxPoint canvasPos);
@@ -217,7 +217,6 @@ private:
 
 public:
     void LayoutScrollbars();
-    void UpdateScrollbars();   // 更新滚动条状态
     void OnScroll(wxScrollEvent& event);
     std::pair<wxPoint, wxPoint> ValidSetOffRange();
     std::pair<float, float> ValidScaleRange();
@@ -227,4 +226,19 @@ public:
     wxPoint LogicToDevice(const wxPoint& logicPoint) const;
     // 设备坐标 → 逻辑坐标  
     wxPoint DeviceToLogic(const wxPoint& devicePoint) const;
+
+private:
+	CanvasElement m_previewElement = CanvasElement("AND GATE", wxPoint(0,0)); // 预览元件指针
+public:
+    void SetPreviewElement(const wxString& name, wxPoint pos);
+
+
+
+
+
+
+
+
+
+wxDECLARE_EVENT_TABLE();
 };

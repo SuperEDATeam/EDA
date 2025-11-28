@@ -334,6 +334,11 @@ void CanvasPanel::OnPaint(wxPaintEvent&) {
             gc->StrokeLine(0, y, maxX, y);
         }
 
+        // 绘制预览元素
+        if (m_toolStateMachine->GetComponentState() == ComponentToolState::COMPONENT_PREVIEW) {
+            m_previewElement.Draw(*gcdc);
+        }
+
         // 2. 绘制元素（使用矢量绘制）
         for (size_t i = 0; i < m_elements.size(); ++i) {
             m_elements[i].Draw(*gcdc); // 确保元素内部使用gc绘制
@@ -411,6 +416,11 @@ void CanvasPanel::OnPaint(wxPaintEvent&) {
         for (int y = 0; y < maxY; y += grid)
             dc.DrawLine(0, y, maxX, y);
 
+        // 绘制预览元素
+        if (m_toolStateMachine->GetComponentState() == ComponentToolState::COMPONENT_PREVIEW) {
+            m_previewElement.Draw(dc);
+		}
+
         // 2. 绘制元素（元素坐标已在CanvasElement内部维护，缩放由DC自动处理）
         for (size_t i = 0; i < m_elements.size(); ++i) {
             m_elements[i].Draw(dc);
@@ -462,15 +472,16 @@ void CanvasPanel::PlaceElement(const wxString& name, const wxPoint& pos){
     const auto& outputPins = clone.GetOutputPins();
     const auto& inputPins = clone.GetInputPins();
 
+    int grid = 20;
     if (!outputPins.empty()) {
         // 优先使用输出引脚
         Pin standardPin = outputPins[0];
-        standardpos = pos - wxPoint(standardPin.pos.x, standardPin.pos.y);
+        standardpos = pos - wxPoint(standardPin.pos.x + grid, standardPin.pos.y - grid);
     }
     else if (!inputPins.empty()) {
         // 如果没有输出引脚，使用输入引脚
         Pin standardPin = inputPins[0];
-        standardpos = pos - wxPoint(standardPin.pos.x, standardPin.pos.y);
+        standardpos = pos - wxPoint(standardPin.pos.x + grid, standardPin.pos.y - grid);
     }
     // 如果都没有引脚，直接使用原位置
 
@@ -747,6 +758,7 @@ bool CanvasPanel::IsClickOnEmptyAreaPublic(const wxPoint& canvasPos) {
     void CanvasPanel::SetCurrentComponent(const wxString& componentName) {
         if (m_toolStateMachine->GetCurrentTool() != ToolType::COMPONENT_TOOL) {
             m_toolStateMachine->SetCurrentTool(ToolType::COMPONENT_TOOL);
+			m_toolStateMachine->SetComponentState(ComponentToolState::COMPONENT_PREVIEW);
 		}
 		m_CanvasEventHandler->SetCurrentComponent(componentName);
     }
@@ -996,4 +1008,30 @@ std::pair<float, float> CanvasPanel::ValidScaleRange() {
     float minScale = std::max(minScaleX, minScaleY);
 	float maxScale = 5.0f; // 最大缩放比例
 	return std::make_pair(minScale, maxScale);
+}
+
+void CanvasPanel::SetPreviewElement(const wxString& name, wxPoint pos) {
+    extern std::vector<CanvasElement> g_elements;
+    auto it = std::find_if(g_elements.begin(), g_elements.end(),
+        [&](const CanvasElement& e) { return e.GetName() == name; });
+    if (it == g_elements.end()) return;
+    CanvasElement clone = *it;
+    wxPoint standardpos = pos;
+    const auto& outputPins = clone.GetOutputPins();
+    const auto& inputPins = clone.GetInputPins();
+
+    int grid = 20;
+    if (!outputPins.empty()) {
+        // 优先使用输出引脚
+        Pin standardPin = outputPins[0];
+        standardpos = pos - wxPoint(standardPin.pos.x + grid, standardPin.pos.y - grid);
+    }
+    else if (!inputPins.empty()) {
+        // 如果没有输出引脚，使用输入引脚
+        Pin standardPin = inputPins[0];
+        standardpos = pos - wxPoint(standardPin.pos.x + grid, standardPin.pos.y - grid);
+    }
+    clone.SetPos(standardpos);
+	m_previewElement = clone;
+    Refresh();
 }

@@ -1157,6 +1157,13 @@ void CanvasEventHandler::OnCanvasMouseMove(wxMouseEvent& evt) {
         UpdatePanning(m_canvas->CanvasToScreen(canvasPos));
         m_eventHandled = true;
     }
+    else if (m_toolStateMachine->GetComponentState() == ComponentToolState::COMPONENT_PREVIEW) {
+        bool snapped = false;
+        wxPoint snappedPos = m_canvas->Snap(canvasPos, &snapped);
+		m_canvas->SetPreviewElement(m_currentComponent, snappedPos);
+        m_canvas->SetStatus(wxString::Format("·ÅÖÃ%s: (%d, %d)", m_currentComponent, canvasPos.x, canvasPos.y));
+        m_eventHandled = true;
+	}
     else {
         wxString toolInfo;
         switch (m_toolStateMachine->GetCurrentTool()) {

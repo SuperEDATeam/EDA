@@ -216,26 +216,22 @@ void ToolStateMachine::ResetAllStates() {
 }
 
 void ToolStateMachine::ResetCurrentToolState() {
-    switch (m_currentTool) {
-    case ToolType::DRAG_TOOL:
-        SetDragState(DragToolState::IDLE);
-        break;
-    case ToolType::SELECT_TOOL:
-        SetSelectState(SelectToolState::IDLE);
-        break;
-    case ToolType::TEXT_TOOL:
-        SetTextState(TextToolState::IDLE);
-        break;
-    case ToolType::COMPONENT_TOOL:
-        SetComponentState(ComponentToolState::IDLE);
-        break;
-    case ToolType::WIRE_TOOL:
-        SetWireState(WireToolState::IDLE);
-        break;
-    case ToolType::DRAWING_TOOL:
-        SetDrawingState(DrawingToolState::IDLE);
-        break;
-    }
+
+    SetDragState(DragToolState::IDLE);
+
+
+    SetSelectState(SelectToolState::IDLE);
+
+
+    SetTextState(TextToolState::IDLE);
+ 
+
+    SetComponentState(ComponentToolState::IDLE);
+
+    SetWireState(WireToolState::IDLE);
+
+    SetDrawingState(DrawingToolState::IDLE);
+
 }
 
 wxString ToolStateMachine::GetCurrentStateString() const {
