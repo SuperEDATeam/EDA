@@ -63,7 +63,7 @@ class CanvasPanel : public wxPanel
     static const int CLICK_MAX_MS = 250;      // 单击最大时长
     static const int DRAG_THRESHOLD_PX = 6;   // 拖动阈值像素
 public:
-    CanvasPanel(MainFrame* parent);
+    CanvasPanel(MainFrame* parent, size_t size_x, size_t size_y);
     void AddElement(const CanvasElement& elem);
     void PlaceElement(const wxString& name, const wxPoint& pos);
 
@@ -145,6 +145,7 @@ public:
 
 
     float m_scale = 1.0f;
+    wxPoint m_size;
 
 
     void OnPaint(wxPaintEvent& evt);
@@ -209,4 +210,21 @@ public:
 public:
     int HitTestText(wxPoint canvasPos);
     wxRect m_selectRect;
+
+private:
+    wxScrollBar* m_hScroll;    // 水平滚动条
+    wxScrollBar* m_vScroll;    // 垂直滚动条
+
+public:
+    void LayoutScrollbars();
+    void UpdateScrollbars();   // 更新滚动条状态
+    void OnScroll(wxScrollEvent& event);
+    std::pair<wxPoint, wxPoint> ValidSetOffRange();
+    std::pair<float, float> ValidScaleRange();
+    void SetoffSet(wxPoint offset);
+
+    // 逻辑坐标 → 设备坐标
+    wxPoint LogicToDevice(const wxPoint& logicPoint) const;
+    // 设备坐标 → 逻辑坐标  
+    wxPoint DeviceToLogic(const wxPoint& devicePoint) const;
 };

@@ -22,17 +22,24 @@ EVT_KEY_DOWN(CanvasPanel::OnKeyDown)
 EVT_MOUSEWHEEL(CanvasPanel::OnMouseWheel)
 EVT_SET_FOCUS(CanvasPanel::OnFocus)   
 EVT_KILL_FOCUS(CanvasPanel::OnKillFocus)
+EVT_SCROLL(CanvasPanel::OnScroll)
 wxEND_EVENT_TABLE()
 
-CanvasPanel::CanvasPanel(MainFrame* parent)
+CanvasPanel::CanvasPanel(MainFrame* parent, size_t size_x, size_t size_y)
     : wxPanel(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize,
         wxFULL_REPAINT_ON_RESIZE | wxBORDER_NONE),
     m_mainFrame(parent),
+    m_size{wxPoint(size_x,size_y)},
     m_offset(0, 0), m_scale(1.0f),
     m_selectedIndex(-1), m_isDragging(false), m_hoverInfo{}, m_hasFocus(false),
     m_hiddenTextCtrl(nullptr),
     m_isUsingHiddenCtrl(false), m_currentEditingTextIndex(-1) {
     SetupHiddenTextCtrl();
+
+    //滚动条
+	m_vScroll = new wxScrollBar(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxSB_VERTICAL);
+	m_hScroll = new wxScrollBar(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxSB_HORIZONTAL);
+    LayoutScrollbars();
 
     // 工具状态机
     m_toolStateMachine = new ToolStateMachine(this);
@@ -243,15 +250,12 @@ bool CanvasPanel::IsClickOnEmptyArea(const wxPoint& canvasPos)
 // 新增：设置缩放比例（限制范围0.1~5.0，避免过度缩放）
 void CanvasPanel::SetScale(float scale)
 {
-    if (scale < 0.1f) scale = 0.1f;
-    if (scale > 5.0f) scale = 5.0f;
+	float min_scale, max_scale;
+	std::tie(min_scale, max_scale) = ValidScaleRange();
+    if (scale < min_scale) scale = min_scale;
+    if (scale > max_scale) scale = max_scale;
     m_scale = scale;
     Refresh();  // 触发重绘
-    // 更新状态栏显示缩放比例（如果需要）
-    MainFrame* mf = wxDynamicCast(GetParent(), MainFrame);
-    if (mf) {
-        mf->SetStatusText(wxString::Format("Zoom: %.0f%%", m_scale * 100));
-    }
 }
 
 
@@ -287,6 +291,7 @@ void CanvasPanel::AddElement(const CanvasElement& elem)
 
 //================= 绘制 =================
 void CanvasPanel::OnPaint(wxPaintEvent&) {
+    LayoutScrollbars();
     wxAutoBufferedPaintDC dc(this);
     dc.Clear();
 
@@ -315,9 +320,10 @@ void CanvasPanel::OnPaint(wxPaintEvent&) {
         // 1. 绘制网格（逻辑坐标，线宽随缩放自适应）
         const int grid = 20;
         const wxColour gridColor(240, 240, 240);
+        //const wxColour gridColor(50, 60, 80);
         gc->SetPen(wxPen(gridColor, 1.0 / m_scale)); // 笔宽在逻辑坐标下调整
 
-        wxSize sz = GetClientSize();
+        wxSize sz = wxSize(m_size.x+1, m_size.y+1);
         int maxX = static_cast<int>(sz.x);
         int maxY = static_cast<int>(sz.y);
 
@@ -908,4 +914,86 @@ int CanvasPanel::HitTestText(wxPoint canvasPos) {
         if (m_textElements[i].Contains(canvasPos)) return i;
     }
     return -1;
+}
+
+void CanvasPanel::OnScroll(wxScrollEvent& event) {
+    if (event.GetOrientation() == wxHORIZONTAL) {
+        m_offset.x = -event.GetPosition() * m_scale;
+    }
+    else {
+        m_offset.y = -event.GetPosition() * m_scale;
+    }
+    Refresh();
+}
+
+void CanvasPanel::LayoutScrollbars()
+{
+    wxSize clientSize = GetClientSize();
+    int scrollbarSize = wxSystemSettings::GetMetric(wxSYS_VSCROLL_X);
+    int width = 24;
+
+
+    // 水平滚动条：底部，宽度要减去垂直滚动条的宽度
+    m_hScroll->SetSize(clientSize.x- width, width);
+    m_hScroll->SetPosition(wxPoint(0, clientSize.y-width));
+    m_hScroll->SetThumbSize((clientSize.x - width -1)/m_scale);
+    m_hScroll->SetRange(m_size.x);
+    m_hScroll->SetThumbPosition(-m_offset.x / m_scale);
+
+    // 垂直滚动条：右侧，高度要减去水平滚动条的高度   
+    m_vScroll->SetSize(width, clientSize.y);
+    m_vScroll->SetPosition(wxPoint(clientSize.x- width, 0));
+    m_vScroll->SetThumbSize((clientSize.y - width - 1) / m_scale);
+    m_vScroll->SetRange(m_size.y);
+    m_vScroll->SetThumbPosition(-m_offset.y / m_scale);
+
+    Refresh();
+}
+
+void CanvasPanel::SetoffSet(wxPoint offset) {
+	wxPoint min_offset, max_offset;
+	std::tie(min_offset, max_offset) = ValidSetOffRange();
+	if (offset.x < min_offset.x) offset.x = min_offset.x;
+	if (offset.x > max_offset.x) offset.x = max_offset.x;
+	if (offset.y < min_offset.y) offset.y = min_offset.y;
+	if (offset.y > max_offset.y) offset.y = max_offset.y;
+	m_offset = offset;
+}
+
+wxPoint CanvasPanel::LogicToDevice(const wxPoint& logicPoint) const
+{
+    return wxPoint(
+        static_cast<int>(logicPoint.x * m_scale + m_offset.x),
+        static_cast<int>(logicPoint.y * m_scale + m_offset.y)
+    );
+}
+
+// 设备坐标 → 逻辑坐标  
+wxPoint CanvasPanel::DeviceToLogic(const wxPoint& devicePoint) const
+{
+    return wxPoint(
+        static_cast<int>((devicePoint.x - m_offset.x) / m_scale),
+        static_cast<int>((devicePoint.y - m_offset.y) / m_scale)
+    );
+}
+
+std::pair<wxPoint, wxPoint> CanvasPanel::ValidSetOffRange() {
+	// (0, 0)的逻辑坐标对应的设备坐标为 m_offset，因此m_offset的最大值为(0,0)
+    wxPoint maxOffset(0, 0);
+	// 计算逻辑坐标 (m_size.x, m_size.y) 对应的设备坐标的最大值为 (GetClientSize().x- m_hScroll->GetSize().y - 1, GetClientSize().y- m_hScroll->GetSize().y - 1)，此时的 m_offset 即为最小值
+    wxPoint minOffset(
+        GetClientSize().x - static_cast<int>(m_size.x * m_scale) - m_hScroll->GetSize().y - 1,
+        GetClientSize().y - static_cast<int>(m_size.y * m_scale) - m_hScroll->GetSize().y - 1
+	);
+
+	return std::make_pair(minOffset, maxOffset);
+}
+
+std::pair<float, float> CanvasPanel::ValidScaleRange() {
+	// 对于最右侧最下侧的逻辑坐标 (m_size.x, m_size.y) 对应的设备坐标恰好为 (GetClientSize().x- m_hScroll->GetSize().y - 1, GetClientSize().y- m_hScroll->GetSize().y - 1) 时，计算出最小缩放比例
+    float minScaleX = static_cast<float>((GetClientSize().x - m_hScroll->GetSize().y - 1) - m_offset.x) / static_cast<float>(m_size.x);
+    float minScaleY = static_cast<float>((GetClientSize().y - m_hScroll->GetSize().y - 1) - m_offset.y) / static_cast<float>(m_size.y);
+    float minScale = std::max(minScaleX, minScaleY);
+	float maxScale = 5.0f; // 最大缩放比例
+	return std::make_pair(minScale, maxScale);
 }

@@ -593,20 +593,22 @@ void CanvasEventHandler::OnCanvasMouseWheel(wxMouseEvent& evt) {
 
         // 调整偏移量，使鼠标指向的画布位置保持不变
         wxPoint newMouseScreenPos = m_canvas->CanvasToScreen(mouseCanvasPos);
-        m_canvas->m_offset += mouseScreenPos - newMouseScreenPos;
+        wxPoint offset = m_canvas->m_offset;
+        m_canvas->SetoffSet(offset + mouseScreenPos - newMouseScreenPos);
 
 		m_canvas->SetStatus(wxString::Format("缩放画布: %.2f%%", newScale * 100.0f));
 
         evt.Skip(false);  // 已处理
     }
     else if(evt.ShiftDown() || evt.GetWheelAxis() == wxMOUSE_WHEEL_HORIZONTAL){
+        wxPoint offset = m_canvas->m_offset;
 
         wxPoint delta = wxPoint(40, 0);
         if (evt.GetWheelRotation() > 0) {
-            m_canvas->m_offset -= delta;;  // 右移
+            m_canvas->SetoffSet(offset - delta);;  // 右移
         }
         else {
-            m_canvas->m_offset += delta;;  // 左移
+            m_canvas->SetoffSet(offset + delta);;  // 左移
         }
 
     
@@ -618,11 +620,12 @@ void CanvasEventHandler::OnCanvasMouseWheel(wxMouseEvent& evt) {
     else {
 
         wxPoint delta = wxPoint(0, 40);
+        wxPoint offset = m_canvas->m_offset;
         if (evt.GetWheelRotation() > 0) {
-            m_canvas->m_offset += delta;;  // 上移
+            m_canvas->SetoffSet(offset + delta);;  // 上移
         }
         else {
-            m_canvas->m_offset -= delta;;  // 下移
+            m_canvas->SetoffSet(offset - delta);;  // 下移
         }
 
         m_canvas->Refresh();
@@ -1208,7 +1211,9 @@ void CanvasEventHandler::UpdatePanning(const wxPoint& currentPos) {
     if (m_toolStateMachine->GetDragState() != DragToolState::CANVAS_DRAGGING) return;
 
     wxPoint delta = currentPos - m_fakeStartPos;
-    m_canvas->m_offset += delta;
+    //m_canvas->m_offset += delta;
+    wxPoint offset = m_canvas->m_offset;
+    m_canvas->SetoffSet(offset + delta);
     m_fakeStartPos = currentPos;
 
 	wxPoint realDelta = currentPos - m_panStartPos;

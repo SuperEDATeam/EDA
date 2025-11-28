@@ -46,9 +46,10 @@ MainFrame::MainFrame()
 
     /* 把窗口交给 AUI 管理（必须最先） */
     m_auiMgr.SetManagedWindow(this);
+    
 
     /* 创建中央画布（先空白占位） */
-    m_canvas = new CanvasPanel(this);
+    m_canvas = new CanvasPanel(this, wxGetDisplaySize().x, wxGetDisplaySize().y);
     m_canvas->SetBackgroundColour(*wxWHITE);
 	m_canvas->SetFocus();
 
