@@ -104,12 +104,19 @@ void CanvasEventHandler::OnCanvasLeftDown(wxMouseEvent& evt) {
 		return;
     }
 
+
+    if (currentTool == ToolType::COMPONENT_TOOL){
+        HandleComponentTool(canvasPos);
+        m_eventHandled = true;
+    }
+
+
+
+
     // 清除文本编辑焦点
     if (m_editingTextIndex != -1) {
         FinishTextEditing();
     }
-
-
 
     // 1. 最高优先级：检查是否点击了导线控制点
     int cellWire, cellIdx;
@@ -195,11 +202,6 @@ void CanvasEventHandler::OnCanvasLeftDown(wxMouseEvent& evt) {
     switch (currentTool) {
     case ToolType::TEXT_TOOL: {
         HandleTextTool(canvasPos);
-        m_eventHandled = true;
-        break;
-    }
-    case ToolType::COMPONENT_TOOL: {
-        HandleComponentTool(canvasPos);
         m_eventHandled = true;
         break;
     }
@@ -360,13 +362,7 @@ void CanvasEventHandler::HandleComponentTool(const wxPoint& canvasPos) {
 		bool snapped = false;
 		wxPoint snappedPos = m_canvas->Snap(canvasPos, &snapped);
         m_canvas->PlaceElement(m_currentComponent, snappedPos);
-        SetCurrentTool(ToolType::DRAG_TOOL);
-        m_currentComponent.Clear(); // 清空当前元件
-        SetCurrentTool(ToolType::DRAG_TOOL);
-        m_currentComponent.Clear(); // 清空当前元件
-        SetCurrentTool(ToolType::DRAG_TOOL);
-        m_currentComponent.Clear(); // 清空当前元件
-        SetCurrentTool(ToolType::DRAG_TOOL);
+        SetCurrentTool(ToolType::SELECT_TOOL);
         m_currentComponent.Clear(); // 清空当前元件
 
         if (true) {
@@ -587,10 +583,10 @@ void CanvasEventHandler::OnCanvasMouseWheel(wxMouseEvent& evt) {
         float newScale;
 
         if (evt.GetWheelRotation() > 0) {
-            newScale = oldScale * 1.2f;  // 放大
+            newScale = oldScale * 1.1f;  // 放大
         }
         else {
-            newScale = oldScale / 1.2f;  // 缩小
+            newScale = oldScale / 1.1f;  // 缩小
         }
 
         m_canvas->SetScale(newScale);
@@ -603,8 +599,34 @@ void CanvasEventHandler::OnCanvasMouseWheel(wxMouseEvent& evt) {
 
         evt.Skip(false);  // 已处理
     }
+    else if(evt.ShiftDown() || evt.GetWheelAxis() == wxMOUSE_WHEEL_HORIZONTAL){
+
+        wxPoint delta = wxPoint(40, 0);
+        if (evt.GetWheelRotation() > 0) {
+            m_canvas->m_offset -= delta;;  // 右移
+        }
+        else {
+            m_canvas->m_offset += delta;;  // 左移
+        }
+
+    
+
+        m_canvas->Refresh();
+        //m_canvas->SetStatus(wxString::Format("平移画布: 偏移(%d, %d)", realDelta.x, 0));
+            //m_canvas->SetStatus(wxString::Format("平移画布: 偏移(%d, %d), (%d, %d)", m_panStartPos.x, m_panStartPos.y, currentPos.x, currentPos.y));
+    }
     else {
-        evt.Skip();  // 非Ctrl滚轮继续传递
+
+        wxPoint delta = wxPoint(0, 40);
+        if (evt.GetWheelRotation() > 0) {
+            m_canvas->m_offset += delta;;  // 上移
+        }
+        else {
+            m_canvas->m_offset -= delta;;  // 下移
+        }
+
+        m_canvas->Refresh();
+
     }
 }
 

@@ -43,6 +43,8 @@ CanvasPanel::CanvasPanel(MainFrame* parent)
     // 快捷工具栏
     m_HandyToolKit = new HandyToolKit(this, m_CanvasEventHandler);
 
+	m_CanvasEventHandler->SetCurrentTool(ToolType::SELECT_TOOL);
+
     SetBackgroundStyle(wxBG_STYLE_PAINT);
     SetBackgroundColour(*wxWHITE);
 
