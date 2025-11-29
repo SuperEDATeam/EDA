@@ -26,7 +26,7 @@ private:
     ControlPoint m_startCP;
     ControlPoint m_endCP;
 
-    std::vector<WireAnchor> m_movingWires;
+    std::vector<std::vector<WireAnchor>> m_movingWires;
 
     wxPoint m_panStartPos;
     wxPoint m_fakeStartPos;
@@ -138,5 +138,5 @@ public:
     void StartSelectedDragging(const wxPoint& startPos);
     //void UpdateSelectedDragging(const wxPoint& startPos);
     //void FinishSelectedDragging(const wxPoint& startPos);
-    void _StartElementDragging(int elementIndex);
+    void _StartElementDragging(int i);
 };

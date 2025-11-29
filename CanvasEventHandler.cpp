@@ -776,39 +776,39 @@ void CanvasEventHandler::FinishWireDrawing(const wxPoint& endPos) {
     Wire& newWire = m_canvas->m_wires.back();
     newWire.GenerateCells();
 
-    // 记录连接关系（如果连接到引脚）
-    auto recordConnection = [&](const wxPoint& pinPos, size_t ptIdx) {
-        for (size_t i = 0; i < m_canvas->m_elements.size(); ++i) {
-            const auto& elem = m_canvas->m_elements[i];
-            auto test = [&](const auto& pins, bool isIn) {
-                for (size_t p = 0; p < pins.size(); ++p) {
-                    wxPoint w = elem.GetPos() + wxPoint(pins[p].pos.x, pins[p].pos.y);
-                    if (w == pinPos) {
-                        m_movingWires.push_back({ m_canvas->m_wires.size() - 1, ptIdx, isIn, p });
-                        return true;
-                    }
-                }
-                return false;
-                };
-            if (test(elem.GetInputPins(), true)) return;
-            test(elem.GetOutputPins(), false);
-        }
-        };
+    //// 记录连接关系（如果连接到引脚）
+    //auto recordConnection = [&](const wxPoint& pinPos, size_t ptIdx) {
+    //    for (size_t i = 0; i < m_canvas->m_elements.size(); ++i) {
+    //        const auto& elem = m_canvas->m_elements[i];
+    //        auto test = [&](const auto& pins, bool isIn) {
+    //            for (size_t p = 0; p < pins.size(); ++p) {
+    //                wxPoint w = elem.GetPos() + wxPoint(pins[p].pos.x, pins[p].pos.y);
+    //                if (w == pinPos) {
+    //                    m_movingWires.push_back({ m_canvas->m_wires.size() - 1, ptIdx, isIn, p });
+    //                    return true;
+    //                }
+    //            }
+    //            return false;
+    //            };
+    //        if (test(elem.GetInputPins(), true)) return;
+    //        test(elem.GetOutputPins(), false);
+    //    }
+    //    };
 
-    // 记录起点连接
-    if (newWire.pts.front().type == CPType::Pin)
-        recordConnection(newWire.pts.front().pos, 0);
+    //// 记录起点连接
+    //if (newWire.pts.front().type == CPType::Pin)
+    //    recordConnection(newWire.pts.front().pos, 0);
 
-    if (m_isTemporaryAction) {
-        SetCurrentTool(m_previousTool);
-        m_isTemporaryAction = false;
-    }
-    // 记录终点连接
-    if (newWire.pts.back().type == CPType::Pin)
-        recordConnection(newWire.pts.back().pos, newWire.pts.size() - 1);
+    //if (m_isTemporaryAction) {
+    //    SetCurrentTool(m_previousTool);
+    //    m_isTemporaryAction = false;
+    //}
+    //// 记录终点连接
+    //if (newWire.pts.back().type == CPType::Pin)
+    //    recordConnection(newWire.pts.back().pos, newWire.pts.size() - 1);
 
-    // 重置状态
-    //m_isDrawingWire = false;
+    //// 重置状态
+    ////m_isDrawingWire = false;
     m_toolStateMachine->SetWireState(WireToolState::IDLE);
     m_canvas->m_tempWire.Clear();
     if (m_isTemporaryAction) {
@@ -935,7 +935,7 @@ void CanvasEventHandler::StartElementDragging(int elementIndex, const wxPoint& s
     if (elementIndex < 0 || elementIndex >= (int)m_canvas->m_elements.size()) return;
 
     //m_isDraggingElement = true;
-	m_toolStateMachine->SetDragState(DragToolState::COMPONENT_DRAGGING);
+    m_toolStateMachine->SetDragState(DragToolState::COMPONENT_DRAGGING);
     m_draggingElementIndex = elementIndex;
     m_elementDragStartPos = startPos;
     m_elementStartCanvasPos = m_canvas->m_elements[elementIndex].GetPos();
@@ -950,15 +950,18 @@ void CanvasEventHandler::StartElementDragging(int elementIndex, const wxPoint& s
                 const auto& wire = m_canvas->m_wires[w];
                 if (!wire.pts.empty() && wire.pts.front().type == CPType::Pin &&
                     wire.pts.front().pos == pinWorld)
-                    m_movingWires.push_back({ w, 0, isIn, p });
+                    ;
+                    //m_movingWires.push_back({ w, 0, isIn, p });
 
-                if (wire.pts.size() > 1 &&
-                    wire.pts.back().type == CPType::Pin &&
-                    wire.pts.back().pos == pinWorld)
-                    m_movingWires.push_back({ w, wire.pts.size() - 1, isIn, p });
+                    if (wire.pts.size() > 1 &&
+                        wire.pts.back().type == CPType::Pin &&
+                        wire.pts.back().pos == pinWorld)
+                        ;
+                        //m_movingWires.push_back({ w, wire.pts.size() - 1, isIn, p });
+            
             }
         }
-        };
+    };
 
     collect(elem.GetInputPins(), true);
     collect(elem.GetOutputPins(), false);
@@ -988,17 +991,17 @@ void CanvasEventHandler::UpdateElementDragging(const wxPoint& currentPos) {
     // 更新所有相关导线端点
     bool firstWire = true;
     for (const auto& aw : m_movingWires) {
-        if (aw.wireIdx >= m_canvas->m_wires.size()) continue;
+        //if (aw.wireIdx >= m_canvas->m_wires.size()) continue;
 
-        Wire& wire = m_canvas->m_wires[aw.wireIdx];
+        //Wire& wire = m_canvas->m_wires[aw.wireIdx];
 
         // 计算新引脚世界坐标
         const auto& elem = m_canvas->m_elements[m_draggingElementIndex];
-        const auto& pins = aw.isInput ? elem.GetInputPins() : elem.GetOutputPins();
-        if (aw.pinIdx >= pins.size()) continue;
+        //const auto& pins = aw.isInput ? elem.GetInputPins() : elem.GetOutputPins();
+        //if (aw.pinIdx >= pins.size()) continue;
 
-        wxPoint pinOffset = wxPoint(pins[aw.pinIdx].pos.x, pins[aw.pinIdx].pos.y);
-        wxPoint newPinPos = elem.GetPos() + pinOffset;
+        //wxPoint pinOffset = wxPoint(pins[aw.pinIdx].pos.x, pins[aw.pinIdx].pos.y);
+        //wxPoint newPinPos = elem.GetPos() + pinOffset;
 
         // 添加详细导线信息到调试信息 - 分开构建避免格式化问题
         if (!firstWire) {
@@ -1006,24 +1009,24 @@ void CanvasEventHandler::UpdateElementDragging(const wxPoint& currentPos) {
         }
 
         // 分开构建字符串，避免复杂的格式化
-        wxString wireType = aw.isInput ? wxString("输入") : wxString("输出");
-        wxString wireInfo = wxString::Format("导线%d-%s引脚%d(%d,%d)",
-            (int)aw.wireIdx,
-            wireType,
-            (int)aw.pinIdx,
-            newPinPos.x, newPinPos.y);
-        debugInfo += wireInfo;
-        firstWire = false;
+        //wxString wireType = aw.isInput ? wxString("输入") : wxString("输出");
+        //wxString wireInfo = wxString::Format("导线%d-%s引脚%d(%d,%d)",
+        //    (int)aw.wireIdx,
+        //    wireType,
+        //    (int)aw.pinIdx,
+        //    newPinPos.x, newPinPos.y);
+        //debugInfo += wireInfo;
+        //firstWire = false;
 
-        // 更新导线端点
-        if (aw.ptIdx == 0)
-            wire.pts.front().pos = newPinPos;
-        else
-            wire.pts.back().pos = newPinPos;
+        //// 更新导线端点
+        //if (aw.ptIdx == 0)
+        //    wire.pts.front().pos = newPinPos;
+        //else
+        //    wire.pts.back().pos = newPinPos;
 
-        // 重新生成导线路径
-        wire.pts = Wire::Route(wire.pts.front(), wire.pts.back());
-        wire.GenerateCells();
+        //// 重新生成导线路径
+        //wire.pts = Wire::Route(wire.pts.front(), wire.pts.back());
+        //wire.GenerateCells();
     }
 
     debugInfo += "]";
@@ -1093,33 +1096,37 @@ void CanvasEventHandler::OnCanvasMouseMove(wxMouseEvent& evt) {
         for (int i = 0; i < m_compntIdx.size(); i++) {
             wxPoint rawPos = m_compntPos[i];
             m_canvas->m_elements[m_compntIdx[i]].SetPos(rawPos + delta);
+            // 更新所有相关导线端点
+            bool firstWire = true;
+            for (const auto& aw : m_movingWires[i]) {
+                if (aw.wireIdx >= m_canvas->m_wires.size()) continue;
+                auto it = std::find(m_wireIdx.begin(), m_wireIdx.end(), aw.wireIdx);
+                //if (it == m_wireIdx.end()) continue;
+                Wire& wire = m_canvas->m_wires[aw.wireIdx];
+                
+                
+                //auto it = m_wireIdx.find(aw.wireIdx);
+
+                // 计算新引脚世界坐标
+                const auto& elem = m_canvas->m_elements[m_compntIdx[i]];
+                const auto& pins = aw.isInput ? elem.GetInputPins() : elem.GetOutputPins();
+                if (aw.pinIdx >= pins.size()) continue;
+                wxPoint pinOffset = wxPoint(pins[aw.pinIdx].pos.x, pins[aw.pinIdx].pos.y);
+                wxPoint newPinPos = elem.GetPos() + pinOffset;
+
+
+                // 更新导线端点
+                if (aw.ptIdx == 0)
+                    wire.pts.front().pos = newPinPos;
+                else
+                    wire.pts.back().pos = newPinPos;
+
+                // 重新生成导线路径
+                wire.pts = Wire::Route(wire.pts.front(), wire.pts.back());
+                wire.GenerateCells();
             }
-        // 更新所有相关导线端点
-        //bool firstWire = true;
-        //for (const auto& aw : m_movingWires) {
-        //    if (aw.wireIdx >= m_canvas->m_wires.size()) continue;
+            }
 
-        //    Wire& wire = m_canvas->m_wires[aw.wireIdx];
-
-        //    // 计算新引脚世界坐标
-        //    const auto& elem = m_canvas->m_elements[m_draggingElementIndex];
-        //    const auto& pins = aw.isInput ? elem.GetInputPins() : elem.GetOutputPins();
-        //    if (aw.pinIdx >= pins.size()) continue;
-
-        //    wxPoint pinOffset = wxPoint(pins[aw.pinIdx].pos.x, pins[aw.pinIdx].pos.y);
-        //    wxPoint newPinPos = elem.GetPos() + pinOffset;
-
-
-        //    // 更新导线端点
-        //    if (aw.ptIdx == 0)
-        //        wire.pts.front().pos = newPinPos;
-        //    else
-        //        wire.pts.back().pos = newPinPos;
-
-        //    // 重新生成导线路径
-        //    wire.pts = Wire::Route(wire.pts.front(), wire.pts.back());
-        //    wire.GenerateCells();
-        //}
         for (int i = 0; i < m_textElemIdx.size(); i++) {
             wxPoint rawPos = m_textElemPos[i];
             m_canvas->m_textElements[m_textElemIdx[i]].SetPosition(rawPos + raw);
@@ -1476,8 +1483,9 @@ void CanvasEventHandler::StartSelectedDragging(const wxPoint& startPos) {
     m_wirePos.clear();
 
     std::vector<wxPoint> points;
+    m_movingWires.clear();
     for (int i = 0; i < m_compntIdx.size(); i++) {
-        _StartElementDragging(m_compntIdx[i]);
+        _StartElementDragging(i);
         m_compntPos.push_back(m_canvas->m_elements[m_compntIdx[i]].GetPos());
     }
     for (int i = 0; i < m_textElemIdx.size(); i++) {
@@ -1492,15 +1500,13 @@ void CanvasEventHandler::StartSelectedDragging(const wxPoint& startPos) {
     }
 }
 
-void CanvasEventHandler::_StartElementDragging(int elementIndex) {
-    if (elementIndex < 0 || elementIndex >= (int)m_canvas->m_elements.size()) return;
-
-    //m_isDraggingElement = true;
-    m_draggingElementIndex = elementIndex;
-    m_elementStartCanvasPos = m_canvas->m_elements[elementIndex].GetPos();
+void CanvasEventHandler::_StartElementDragging(int i) {
+    if (m_compntIdx[i] < 0 || m_compntIdx[i] >= (int)m_canvas->m_elements.size()) return;
 
     // 收集该元件所有引脚对应的导线端点
-    const auto& elem = m_canvas->m_elements[elementIndex];
+    const auto& elem = m_canvas->m_elements[m_compntIdx[i]];
+
+    std::vector<WireAnchor> tmp;
     auto collect = [&](const auto& pins, bool isIn) {
         for (size_t p = 0; p < pins.size(); ++p) {
             wxPoint pinWorld = elem.GetPos() + wxPoint(pins[p].pos.x, pins[p].pos.y);
@@ -1508,16 +1514,16 @@ void CanvasEventHandler::_StartElementDragging(int elementIndex) {
                 const auto& wire = m_canvas->m_wires[w];
                 if (!wire.pts.empty() && wire.pts.front().type == CPType::Pin &&
                     wire.pts.front().pos == pinWorld)
-                    m_movingWires.push_back({ w, 0, isIn, p });
+                    tmp.push_back({w, 0, isIn, p});
 
                 if (wire.pts.size() > 1 &&
                     wire.pts.back().type == CPType::Pin &&
                     wire.pts.back().pos == pinWorld)
-                    m_movingWires.push_back({ w, wire.pts.size() - 1, isIn, p });
+                    tmp.push_back({ w, wire.pts.size() - 1, isIn, p });
             }
         }
-        };
-
+    };
     collect(elem.GetInputPins(), true);
     collect(elem.GetOutputPins(), false);
+	m_movingWires.push_back(tmp);
 }
