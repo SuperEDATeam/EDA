@@ -1,4 +1,4 @@
-#pragma once
+ï»¿#pragma once
 #include <wx/wx.h>
 #include <vector>
 #include <memory>
@@ -6,15 +6,15 @@
 class CanvasPanel;
 
 struct WireAnchor {
-    size_t wireIdx;   // ÄÄÌõÏß
-    size_t ptIdx;     // ¸ÃÏßµÚ¼¸¸ö¿ØÖÆµã£¨0 »ò ×îºó£©
-    bool   isInput;   // Ôª¼þ²àÊÇÊäÈë»¹ÊÇÊä³öÒý½Å
-    size_t pinIdx;    // Ôª¼þ²àÒý½ÅË÷Òý
-    wxPoint oldPos;   // Ô­À´µÄÎ»ÖÃ£¨ÓÃÓÚ³·Ïú£©
+    size_t wireIdx;   // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    size_t ptIdx;     // ï¿½ï¿½ï¿½ßµÚ¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æµã£¨0 ï¿½ï¿½ ï¿½ï¿½ï¿½
+    bool   isInput;   // Ôªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ë»¹ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    size_t pinIdx;    // Ôªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    wxPoint oldPos;   // Ô­ï¿½ï¿½ï¿½ï¿½Î»ï¿½Ã£ï¿½ï¿½ï¿½ï¿½Ú³ï¿½ï¿½ï¿½ï¿½ï¿½
 };
 
 
-/* ³éÏóÃüÁî */
+/* ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ */
 class Command
 {
 public:
@@ -23,7 +23,7 @@ public:
     virtual wxString GetName() const = 0;
 };
 
-/* ¾ßÌåÃüÁî£º·ÅÖÃÔª¼þ */
+/* ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½î£ºï¿½ï¿½ï¿½ï¿½Ôªï¿½ï¿½ */
 class CmdAddElement : public Command
 {
     wxString m_name;
@@ -36,14 +36,13 @@ public:
     wxString GetName() const override;
 };
 
-/* ¾ßÌåÃüÁî£ºÒÆ¶¯Ôª¼þ */
+/* ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½î£ºï¿½Æ¶ï¿½Ôªï¿½ï¿½ */
 class CmdMoveElement : public Command
 {
 public:
-    CmdMoveElement(size_t idx,
-        const wxPoint& oldPos,
-        const std::vector<WireAnchor>& anchors)
-        : m_index(idx), m_oldPos(oldPos), m_anchors(anchors) {
+    // ï¿½ï¿½Õ¹ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½oldRotationï¿½ï¿½anchors
+    CmdMoveElement(size_t idx, const wxPoint& oldPos, int oldRotation, const std::vector<WireAnchor>& anchors)
+        : m_index(idx), m_oldPos(oldPos), m_oldRotation(oldRotation), m_anchors(anchors) {
     }
 
     void undo(CanvasPanel* canvas) override;
@@ -51,14 +50,15 @@ public:
 
 private:
     size_t m_index;
-    wxPoint m_oldPos;   // ÒÆ¶¯Ç°µÄ×ø±ê
+    wxPoint m_oldPos;   // ï¿½Æ¶ï¿½Ç°ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    int m_oldRotation;
     std::vector<WireAnchor> m_anchors;
 };
 
-/* ¾ßÌåÃüÁî£ºÌí¼Óµ¼Ïß */
+/* ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½î£ºï¿½ï¿½ï¿½Óµï¿½ï¿½ï¿½ */
 class CmdAddWire : public Command
 {
-    size_t m_wireIdx;   // ÔÚ m_wires ÖÐµÄÏÂ±ê
+    size_t m_wireIdx;   // ï¿½ï¿½ m_wires ï¿½Ðµï¿½ï¿½Â±ï¿½
 public:
     CmdAddWire(size_t idx) : m_wireIdx(idx) {}
     void undo(CanvasPanel* canvas) override;
@@ -84,7 +84,7 @@ public:
 };
 
 
-/* ³·ÏúÕ» */
+/* ï¿½ï¿½ï¿½ï¿½Õ» */
 class UndoStack
 {
     std::vector<std::unique_ptr<Command>> m_stack;
@@ -96,4 +96,3 @@ public:
     wxString GetUndoName() const;
     void Clear() { m_stack.clear(); }
 };
-

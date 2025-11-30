@@ -1,9 +1,9 @@
-#include "MainFrame.h"
+ï»¿#include "MainFrame.h"
 #include "MainMenuBar.h"
 #include "CanvasPanel.h"
 #include "PropertyPanel.h"
 #include <wx/msgdlg.h>
-#include "ToolboxPanel.h"   // ÄãµÄ²à±ßÀ¸
+#include "ToolboxPanel.h"   // ï¿½ï¿½Ä²ï¿½ï¿½ï¿½ï¿½
 #include <wx/aui/aui.h>
 #include "CanvasModel.h"
 #include "my_log.h"
@@ -33,67 +33,67 @@ MainFrame::MainFrame()
 
     Bind(wxEVT_CLOSE_WINDOW, &MainFrame::OnClose, this);
 
-    /* ²Ëµ¥ & ×´Ì¬À¸ */
+    /* ï¿½Ëµï¿½ & ×´Ì¬ï¿½ï¿½ */
     SetMenuBar(new MainMenuBar(this));
     CreateStatusBar(1);
     int widths[] = { 400, 200, 400, 100 };
-	int style[] = { wxSB_NORMAL, wxSB_NORMAL, wxSB_FLAT, wxSB_FLAT };
+    int style[] = { wxSB_NORMAL, wxSB_NORMAL, wxSB_FLAT, wxSB_FLAT };
     GetStatusBar()->SetFieldsCount(4, widths);
-	GetStatusBar()->SetStatusStyles(4, style);
+    GetStatusBar()->SetStatusStyles(4, style);
 
     SetTitle("Untitled");
     static_cast<MainMenuBar*>(GetMenuBar())->SetCurrentDocInWindowList("Untitled");
 
-    /* °Ñ´°¿Ú½»¸ø AUI ¹ÜÀí£¨±ØÐë×îÏÈ£© */
+    /* ï¿½Ñ´ï¿½ï¿½Ú½ï¿½ï¿½ï¿½ AUI ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½È£ï¿½ */
     m_auiMgr.SetManagedWindow(this);
-    
 
-    /* ´´½¨ÖÐÑë»­²¼£¨ÏÈ¿Õ°×Õ¼Î»£© */
+
+    /* ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ë»­ï¿½ï¿½ï¿½ï¿½ï¿½È¿Õ°ï¿½Õ¼Î»ï¿½ï¿½ */
     m_canvas = new CanvasPanel(this, wxGetDisplaySize().x, wxGetDisplaySize().y);
     m_canvas->SetBackgroundColour(*wxWHITE);
-	m_canvas->SetFocus();
+    m_canvas->SetFocus();
 
-    // ¹¤¾ßÀ¸
+    // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
     m_toolBars = new ToolBars(this);
     AddToolBarsToAuiManager();
 
-    /* ´´½¨²à±ßÀ¸ + ÊôÐÔ±í£¨ÉÏÏÂµþ·Å£© */
-    wxPanel* sidePanel = new wxPanel(this);  // Íâ¿Ç
+    /* ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ + ï¿½ï¿½ï¿½Ô±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Âµï¿½ï¿½Å£ï¿½ */
+    wxPanel* sidePanel = new wxPanel(this);  // ï¿½ï¿½ï¿½
     wxBoxSizer* sideSizer = new wxBoxSizer(wxVERTICAL);
 
-    ToolboxPanel* toolbox = new ToolboxPanel(sidePanel);  // ¸¸´°¿ÚÊÇ sidePanel
-    sideSizer->Add(toolbox, 1, wxEXPAND);    // ÉÏ£º¹¤¾ßÊ÷£¨¿ÉÀ­Éì£©
+    ToolboxPanel* toolbox = new ToolboxPanel(sidePanel);  // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ sidePanel
+    sideSizer->Add(toolbox, 1, wxEXPAND);    // ï¿½Ï£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ì£©
 
-    m_propPanel = new PropertyPanel(sidePanel);  // ¸¸´°¿ÚÊÇ sidePanel
-    sideSizer->Add(m_propPanel, 1, wxEXPAND);    // ÏÂ£ºÊôÐÔ±í£¨ÏÈ¹Ì¶¨¸ß£©
+    m_propPanel = new PropertyPanel(sidePanel);  // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ sidePanel
+    sideSizer->Add(m_propPanel, 1, wxEXPAND);    // ï¿½Â£ï¿½ï¿½ï¿½ï¿½Ô±ï¿½ï¿½ï¿½ï¿½È¹Ì¶ï¿½ï¿½ß£ï¿½
 
     sidePanel->SetSizer(sideSizer);
 
-    /* °ÑÕû¸ö²à±ßÇø×÷ÎªÒ»¸ö AUI Pane Í£¿¿ */
+    /* ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ÎªÒ»ï¿½ï¿½ AUI Pane Í£ï¿½ï¿½ */
     m_auiMgr.AddPane(sidePanel, wxAuiPaneInfo()
-        .Name("side")               // Í³Ò»Ãû×Ö
+        .Name("side")               // Í³Ò»ï¿½ï¿½ï¿½ï¿½
         .Caption("Toolbox & Properties")
         .Left()
         .Layer(1)
         .Position(1)
         .CloseButton(false)
-        .BestSize(280, 700)        // ×Ü¸ß¶ÈÁô¸øÁ½²¿·Ö
+        .BestSize(280, 700)        // ï¿½Ü¸ß¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
         .MinSize(200, 400)
         .FloatingSize(280, 700)
         .Gripper(true)
         .PaneBorder(false));
 
-    /* »­²¼±£³ÖÔ­Ñù */
+    /* ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ô­ï¿½ï¿½ */
     m_auiMgr.AddPane(m_canvas, wxAuiPaneInfo()
         .Name("canvas")
         .CenterPane()
         .CloseButton(false)
         .MinSize(400, 300));
 
-    /* Ò»´ÎÐÔÌá½» */
+    /* Ò»ï¿½ï¿½ï¿½ï¿½ï¿½á½» */
     m_auiMgr.Update();
 
-    // ¶©ÔÄ³·ÏúÍ¨Öª
+    // ï¿½ï¿½ï¿½Ä³ï¿½ï¿½ï¿½Í¨Öª
     UndoNotifier::Subscribe([this](const wxString& name, bool canUndo) {
         this->OnUndoStackChanged();
         });
@@ -101,7 +101,7 @@ MainFrame::MainFrame()
 
 MainFrame::~MainFrame()
 {
-    m_auiMgr.UnInit();   // ±ØÐëÊÖ¶¯·´³õÊ¼»¯
+    m_auiMgr.UnInit();   // ï¿½ï¿½ï¿½ï¿½ï¿½Ö¶ï¿½ï¿½ï¿½ï¿½ï¿½Ê¼ï¿½ï¿½
 }
 
 void MainFrame::OnToolboxElement(wxCommandEvent& evt)
@@ -114,120 +114,120 @@ void MainFrame::OnToolboxElement(wxCommandEvent& evt)
     if (it == g_elements.end()) return;
 
     CanvasElement clone = *it;
-    clone.SetPos(wxPoint(100, 100));   // ÏÈ·ÅÖÐÑë£¬ºóÐøÓÃÊó±ê×ø±ê
+    clone.SetPos(wxPoint(100, 100));   // ï¿½È·ï¿½ï¿½ï¿½ï¿½ë£¬ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
     //m_canvas->AddElement(clone);     
-	m_canvas->SetCurrentComponent(name);  // ÉèÖÃÎªµ±Ç°ÍÏ×§Ôª¼þ  
+    m_canvas->SetCurrentComponent(name);  // ï¿½ï¿½ï¿½ï¿½Îªï¿½ï¿½Ç°ï¿½ï¿½×§Ôªï¿½ï¿½  
 }
 
-//Ä¿Ç°Ö»ÐÞ¸ÄÁËMainframe¡£ÉÏÃæµÄË½ÓÐ±äÁ¿£¬·½·¨£¬ÒÔ¼°jsonÍ·ÎÄ¼þ
-// ÐÞ¸Ä.hÎÄ¼þGenerateFileContent()µÄÉêÃ÷
+//Ä¿Ç°Ö»ï¿½Þ¸ï¿½ï¿½ï¿½Mainframeï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ë½ï¿½Ð±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ô¼ï¿½jsonÍ·ï¿½Ä¼ï¿½
+// ï¿½Þ¸ï¿½.hï¿½Ä¼ï¿½GenerateFileContent()ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 //TODO 9.24
-//Ö»ÊÇ´ò¿ªÒ»¸öÐÂ´°¿Ú£¬²»»á¶ÔÏÖÓÐ´°¿Ú×öÈÎºÎ¸Ä±ä
+//Ö»ï¿½Ç´ï¿½Ò»ï¿½ï¿½ï¿½Â´ï¿½ï¿½Ú£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ÎºÎ¸Ä±ï¿½
 void MainFrame::DoFileNew() {
-    // Ö±½Ó´´½¨Ò»¸öÐÂµÄ¿Õ°×MainFrame´°¿Ú
-    MainFrame* newFrame = new MainFrame();  // ¼ÙÉèMainFrame¹¹Ôìº¯Êý»á³õÊ¼»¯¿Õ°××´Ì¬
+    // Ö±ï¿½Ó´ï¿½ï¿½ï¿½Ò»ï¿½ï¿½ï¿½ÂµÄ¿Õ°ï¿½MainFrameï¿½ï¿½ï¿½ï¿½
+    MainFrame* newFrame = new MainFrame();  // ï¿½ï¿½ï¿½ï¿½MainFrameï¿½ï¿½ï¿½ìº¯ï¿½ï¿½ï¿½ï¿½ï¿½Ê¼ï¿½ï¿½ï¿½Õ°ï¿½×´Ì¬
 
-    // ÏÔÊ¾ÐÂ´°¿Ú£¨¾ÓÖÐÏÔÊ¾£©
+    // ï¿½ï¿½Ê¾ï¿½Â´ï¿½ï¿½Ú£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê¾ï¿½ï¿½
     newFrame->Centre(wxBOTH);
     newFrame->Show(true);
 
-    // £¨¿ÉÑ¡£©Èç¹ûÐèÒª¼ÇÂ¼ËùÓÐ´ò¿ªµÄ´°¿Ú£¬¿ÉÌí¼Óµ½´°¿ÚÁÐ±íÖÐ
-    // m_allFrames.push_back(newFrame);  // ÐèÒªÔÚMainFrameÀàÖÐÉùÃ÷m_allFrames
+    // ï¿½ï¿½ï¿½ï¿½Ñ¡ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Òªï¿½ï¿½Â¼ï¿½ï¿½ï¿½Ð´ò¿ªµÄ´ï¿½ï¿½Ú£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Óµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð±ï¿½ï¿½ï¿½
+    // m_allFrames.push_back(newFrame);  // ï¿½ï¿½Òªï¿½ï¿½MainFrameï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½m_allFrames
 }
 
-//±£´æÎÄ¼þµÄÊµÏÖ£¬°üº¬ºóÃæËÄ¸ö·½·¨
+//ï¿½ï¿½ï¿½ï¿½ï¿½Ä¼ï¿½ï¿½ï¿½Êµï¿½Ö£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä¸ï¿½ï¿½ï¿½ï¿½ï¿½
 void MainFrame::DoFileSave() {
-    // 1. Èç¹ûµ±Ç°ÎÄµµÃ»ÓÐÂ·¾¶£¨Î´±£´æ¹ý£©£¬Ôòµ÷ÓÃ"Áí´æÎª"
+    // 1. ï¿½ï¿½ï¿½ï¿½ï¿½Ç°ï¿½Äµï¿½Ã»ï¿½ï¿½Â·ï¿½ï¿½ï¿½ï¿½Î´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½"ï¿½ï¿½ï¿½ï¿½Îª"
     if (m_currentFilePath.IsEmpty()) {
-        // µ÷ÓÃDoFileSaveAs()´¦ÀíÊ×´Î±£´æ£¨ÐèÊµÏÖ¸Ã·½·¨£©
+        // ï¿½ï¿½ï¿½ï¿½DoFileSaveAs()ï¿½ï¿½ï¿½ï¿½ï¿½×´Î±ï¿½ï¿½æ£¨ï¿½ï¿½Êµï¿½Ö¸Ã·ï¿½ï¿½ï¿½ï¿½ï¿½
         DoFileSaveAs();
         return;
     }
 
-    // 2. ³¢ÊÔ½«µ±Ç°ÎÄµµÄÚÈÝÐ´ÈëÎÄ¼þ
+    // 2. ï¿½ï¿½ï¿½Ô½ï¿½ï¿½ï¿½Ç°ï¿½Äµï¿½ï¿½ï¿½ï¿½ï¿½Ð´ï¿½ï¿½ï¿½Ä¼ï¿½
     bool saveSuccess = SaveToFile(m_currentFilePath);
 
-    // 3. ¸ù¾Ý±£´æ½á¹û¸üÐÂ×´Ì¬
+    // 3. ï¿½ï¿½ï¿½Ý±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½×´Ì¬
     if (saveSuccess) {
-        m_isModified = false;  // ±£´æ³É¹¦£¬±ê¼ÇÎªÎ´ÐÞ¸Ä
-        //UpdateTitle();         // ¸üÐÂ´°¿Ú±êÌâ£¨ÒÆ³ý"*"µÈÐÞ¸Ä±ê¼Ç£©
-        SetStatusText(wxString::Format("ÒÑ±£´æ: %s", m_currentFilePath));
+        m_isModified = false;  // ï¿½ï¿½ï¿½ï¿½É¹ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ÎªÎ´ï¿½Þ¸ï¿½
+        //UpdateTitle();         // ï¿½ï¿½ï¿½Â´ï¿½ï¿½Ú±ï¿½ï¿½â£¨ï¿½Æ³ï¿½"*"ï¿½ï¿½ï¿½Þ¸Ä±ï¿½Ç£ï¿½
+        SetStatusText(wxString::Format("ï¿½Ñ±ï¿½ï¿½ï¿½: %s", m_currentFilePath));
     }
     else {
         wxMessageBox(
-            wxString::Format("±£´æÊ§°Ü: %s", m_currentFilePath),
-            "´íÎó",
+            wxString::Format("ï¿½ï¿½ï¿½ï¿½Ê§ï¿½ï¿½: %s", m_currentFilePath),
+            "ï¿½ï¿½ï¿½ï¿½",
             wxOK | wxICON_ERROR,
             this
         );
     }
 }
 
-// ¸¨Öú·½·¨£º½«µ±Ç°ÎÄµµÄÚÈÝÐ´ÈëÖ¸¶¨Â·¾¶£¨ÐÞ¸ÄÎªXML¸ñÊ½£©
+// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ç°ï¿½Äµï¿½ï¿½ï¿½ï¿½ï¿½Ð´ï¿½ï¿½Ö¸ï¿½ï¿½Â·ï¿½ï¿½ï¿½ï¿½ï¿½Þ¸ï¿½ÎªXMLï¿½ï¿½Ê½ï¿½ï¿½
 bool MainFrame::SaveToFile(const wxString& filePath) {
-    // 1. Éú³ÉXMLÄÚÈÝ£¨¼´Ê¹Îª¿ÕÒ²³¢ÊÔÐ´Èë£©
+    // 1. ï¿½ï¿½ï¿½ï¿½XMLï¿½ï¿½ï¿½Ý£ï¿½ï¿½ï¿½Ê¹Îªï¿½ï¿½Ò²ï¿½ï¿½ï¿½ï¿½Ð´ï¿½ë£©
     wxString xmlContent = GenerateFileContent();
 
-    // 2. ³¢ÊÔ´ò¿ªÎÄ¼þÐ´Èë£¨ºöÂÔ´ò¿ªÊ§°ÜµÄÇé¿ö£©
+    // 2. ï¿½ï¿½ï¿½Ô´ï¿½ï¿½Ä¼ï¿½Ð´ï¿½ë£¨ï¿½ï¿½ï¿½Ô´ï¿½Ê§ï¿½Üµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
     wxFile outputFile;
-    outputFile.Open(filePath, wxFile::write);  // ²»ÅÐ¶Ï´ò¿ª½á¹û£¬Ö±½Ó³¢ÊÔÐ´Èë
+    outputFile.Open(filePath, wxFile::write);  // ï¿½ï¿½ï¿½Ð¶Ï´ò¿ª½ï¿½ï¿½ï¿½ï¿½Ö±ï¿½Ó³ï¿½ï¿½ï¿½Ð´ï¿½ï¿½
 
-    // 3. Ð´ÈëÄÚÈÝ£¨²»ÑéÖ¤Ð´Èë½á¹û£©
+    // 3. Ð´ï¿½ï¿½ï¿½ï¿½ï¿½Ý£ï¿½ï¿½ï¿½ï¿½ï¿½Ö¤Ð´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
     outputFile.Write(xmlContent);
     outputFile.Close();
 
-    // 4. Ç¿ÖÆ·µ»Øtrue£¬Ä¬ÈÏ±£´æ³É¹¦
+    // 4. Ç¿ï¿½Æ·ï¿½ï¿½ï¿½trueï¿½ï¿½Ä¬ï¿½Ï±ï¿½ï¿½ï¿½É¹ï¿½
     return true;
 }
 
 wxString MainFrame::GenerateFileContent()
 {
-    // 1. ´´½¨XMLÎÄµµ
+    // 1. ï¿½ï¿½ï¿½ï¿½XMLï¿½Äµï¿½
     wxXmlDocument doc;
 
-    // 2. ¸ù½Úµã <project>
+    // 2. ï¿½ï¿½ï¿½Úµï¿½ <project>
     wxXmlNode* root = new wxXmlNode(wxXML_ELEMENT_NODE, "project");
     root->AddAttribute("source", "2.7.1");
     root->AddAttribute("version", "1.0");
     doc.SetRoot(root);
 
-    // 3. ×¢ÊÍ
+    // 3. ×¢ï¿½ï¿½
     root->AddChild(new wxXmlNode(wxXML_COMMENT_NODE,
         "This file is intended to be loaded by Logisim "
         "(http://www.cburch.com/logisim/)"));
 
-    // 4. ¿âÐÅÏ¢
+    // 4. ï¿½ï¿½ï¿½ï¿½Ï¢
     AddLibraryNode(root, "0", "#Wiring");
     AddLibraryNode(root, "1", "#Gates");
 
-    // 5. µçÂ·½Úµã
+    // 5. ï¿½ï¿½Â·ï¿½Úµï¿½
     wxXmlNode* circuit = new wxXmlNode(wxXML_ELEMENT_NODE, "circuit");
     circuit->AddAttribute("name", "main");
     root->AddChild(circuit);
 
-    // ±£´æÔª¼þÐÅÏ¢£¨ÒÆ³ýÐý×ª½Ç¶ÈÏà¹Ø´úÂë£©
+    // ï¿½ï¿½ï¿½ï¿½Ôªï¿½ï¿½ï¿½ï¿½Ï¢ï¿½ï¿½ï¿½Æ³ï¿½ï¿½ï¿½×ªï¿½Ç¶ï¿½ï¿½ï¿½Ø´ï¿½ï¿½ë£©
     for (const auto& elem : m_canvas->GetElements()) {
         wxXmlNode* element = new wxXmlNode(wxXML_ELEMENT_NODE, "element");
-        element->AddAttribute("name", elem.GetName());  // ±£ÁôÔª¼þÃû³Æ
-        element->AddAttribute("x", wxString::Format("%d", elem.GetPos().x));  // ±£ÁôX×ø±ê
-        element->AddAttribute("y", wxString::Format("%d", elem.GetPos().y));  // ±£ÁôY×ø±ê
-        // ÒÆ³ýÏÂÃæÕâÐÐ¹ØÓÚrotationµÄ´úÂë
+        element->AddAttribute("name", elem.GetName());  // ï¿½ï¿½ï¿½ï¿½Ôªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+        element->AddAttribute("x", wxString::Format("%d", elem.GetPos().x));  // ï¿½ï¿½ï¿½ï¿½Xï¿½ï¿½ï¿½ï¿½
+        element->AddAttribute("y", wxString::Format("%d", elem.GetPos().y));  // ï¿½ï¿½ï¿½ï¿½Yï¿½ï¿½ï¿½ï¿½
+        // ï¿½Æ³ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð¹ï¿½ï¿½ï¿½rotationï¿½Ä´ï¿½ï¿½ï¿½
         // element->AddAttribute("rotation", wxString::Format("%d", elem.GetRotation()));
         circuit->AddChild(element);
     }
 
-    // 7. ±£´æÁ¬ÏßÐÅÏ¢
+    // 7. ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï¢
     for (const auto& wire : m_canvas->GetWires()) {
-        // Ö±½Ó·ÃÎÊWireÀàµÄpts³ÉÔ±±äÁ¿»ñÈ¡µã¼¯ºÏ
-        const auto& pts = wire.pts;  // ¹Ø¼üÐÞ¸Ä£ºÊ¹ÓÃwire.ptsÌæ´úwire.GetPoints()
+        // Ö±ï¿½Ó·ï¿½ï¿½ï¿½Wireï¿½ï¿½ï¿½ptsï¿½ï¿½Ô±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½È¡ï¿½ã¼¯ï¿½ï¿½
+        const auto& pts = wire.pts;  // ï¿½Ø¼ï¿½ï¿½Þ¸Ä£ï¿½Ê¹ï¿½ï¿½wire.ptsï¿½ï¿½ï¿½wire.GetPoints()
         if (pts.size() < 2) continue;
 
         wxXmlNode* wireNode = new wxXmlNode(wxXML_ELEMENT_NODE, "wire");
-        // ±£´æÆðµã£¨µÚÒ»¸öµã£©ºÍÖÕµã£¨×îºóÒ»¸öµã£©
+        // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ã£¨ï¿½ï¿½Ò»ï¿½ï¿½ï¿½ã£©ï¿½ï¿½ï¿½Õµã£¨ï¿½ï¿½ï¿½Ò»ï¿½ï¿½ï¿½ã£©
         wireNode->AddAttribute("from", wxString::Format("(%d,%d)", pts[0].pos.x, pts[0].pos.y));
         wireNode->AddAttribute("to", wxString::Format("(%d,%d)", pts.back().pos.x, pts.back().pos.y));
 
-        // ±£´æÖÐ¼äµã£¨Èô´æÔÚ£©
+        // ï¿½ï¿½ï¿½ï¿½ï¿½Ð¼ï¿½ã£¨ï¿½ï¿½ï¿½ï¿½ï¿½Ú£ï¿½
         if (pts.size() > 2) {
             wxString midPoints;
             for (size_t i = 1; i < pts.size() - 1; ++i) {
@@ -238,7 +238,7 @@ wxString MainFrame::GenerateFileContent()
         circuit->AddChild(wireNode);
     }
 
-    // 8. Êä³öXMLÄÚÈÝ
+    // 8. ï¿½ï¿½ï¿½XMLï¿½ï¿½ï¿½ï¿½
     wxStringOutputStream strStream;
     doc.Save(strStream, wxXML_DOCUMENT_TYPE_NODE);
     return strStream.GetString();
@@ -248,14 +248,14 @@ void MainFrame::DoFileOpen(const wxString& path)
 {
     wxString filePath = path;
 
-    // Èç¹ûÃ»ÓÐÌá¹©Â·¾¶£¬ÏÔÊ¾ÎÄ¼þÑ¡Ôñ¶Ô»°¿ò
+    // ï¿½ï¿½ï¿½Ã»ï¿½ï¿½ï¿½á¹©Â·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê¾ï¿½Ä¼ï¿½Ñ¡ï¿½ï¿½Ô»ï¿½ï¿½ï¿½
     if (filePath.IsEmpty()) {
         wxFileDialog openDialog(
             this,
-            "´ò¿ªµçÂ·ÎÄ¼þ",
+            "ï¿½ò¿ªµï¿½Â·ï¿½Ä¼ï¿½",
             "",
             "",
-            "µçÂ·ÎÄ¼þ (*.circ)|*.circ|ËùÓÐÎÄ¼þ (*.*)|*.*",
+            "ï¿½ï¿½Â·ï¿½Ä¼ï¿½ (*.circ)|*.circ|ï¿½ï¿½ï¿½ï¿½ï¿½Ä¼ï¿½ (*.*)|*.*",
             wxFD_OPEN | wxFD_FILE_MUST_EXIST
         );
 
@@ -265,37 +265,37 @@ void MainFrame::DoFileOpen(const wxString& path)
         filePath = openDialog.GetPath();
     }
 
-    // ³¢ÊÔ¶ÁÈ¡ÎÄ¼þÄÚÈÝ
+    // ï¿½ï¿½ï¿½Ô¶ï¿½È¡ï¿½Ä¼ï¿½ï¿½ï¿½ï¿½ï¿½
     wxFile file;
     if (!file.Open(filePath, wxFile::read)) {
-        wxMessageBox("ÎÞ·¨´ò¿ªÎÄ¼þ: " + filePath, "´íÎó", wxOK | wxICON_ERROR);
+        wxMessageBox("ï¿½Þ·ï¿½ï¿½ï¿½ï¿½Ä¼ï¿½: " + filePath, "ï¿½ï¿½ï¿½ï¿½", wxOK | wxICON_ERROR);
         return;
     }
 
-    // ¶ÁÈ¡XMLÄÚÈÝ
+    // ï¿½ï¿½È¡XMLï¿½ï¿½ï¿½ï¿½
     wxString xmlContent;
     file.ReadAll(&xmlContent);
     file.Close();
 
-    // ½âÎöXML
+    // ï¿½ï¿½ï¿½ï¿½XML
     wxXmlDocument doc;
     wxStringInputStream stream(xmlContent);
     if (!doc.Load(stream)) {
-        wxMessageBox("ÎÄ¼þ¸ñÊ½´íÎó: " + filePath, "´íÎó", wxOK | wxICON_ERROR);
+        wxMessageBox("ï¿½Ä¼ï¿½ï¿½ï¿½Ê½ï¿½ï¿½ï¿½ï¿½: " + filePath, "ï¿½ï¿½ï¿½ï¿½", wxOK | wxICON_ERROR);
         return;
     }
 
-    // Çå¿Õµ±Ç°»­²¼
+    // ï¿½ï¿½Õµï¿½Ç°ï¿½ï¿½ï¿½ï¿½
     m_canvas->ClearAll();
 
-    // ½âÎö¸ù½Úµã
+    // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Úµï¿½
     wxXmlNode* root = doc.GetRoot();
     if (!root || root->GetName() != "project") {
-        wxMessageBox("ÎÞÐ§µÄµçÂ·ÎÄ¼þ", "´íÎó", wxOK | wxICON_ERROR);
+        wxMessageBox("ï¿½ï¿½Ð§ï¿½Äµï¿½Â·ï¿½Ä¼ï¿½", "ï¿½ï¿½ï¿½ï¿½", wxOK | wxICON_ERROR);
         return;
     }
 
-    // ²éÕÒµçÂ·½Úµã
+    // ï¿½ï¿½ï¿½Òµï¿½Â·ï¿½Úµï¿½
     wxXmlNode* circuit = root->GetChildren();
     while (circuit) {
         if (circuit->GetName() == "circuit") {
@@ -305,32 +305,32 @@ void MainFrame::DoFileOpen(const wxString& path)
     }
 
     if (!circuit) {
-        wxMessageBox("ÎÄ¼þÖÐÎ´ÕÒµ½µçÂ·ÐÅÏ¢", "´íÎó", wxOK | wxICON_ERROR);
+        wxMessageBox("ï¿½Ä¼ï¿½ï¿½ï¿½Î´ï¿½Òµï¿½ï¿½ï¿½Â·ï¿½ï¿½Ï¢", "ï¿½ï¿½ï¿½ï¿½", wxOK | wxICON_ERROR);
         return;
     }
 
-    // ½âÎöÔª¼þºÍÁ¬Ïß
+    // ï¿½ï¿½ï¿½ï¿½Ôªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
     wxXmlNode* child = circuit->GetChildren();
     while (child) {
-        // ½âÎöÔª¼þ£¨ÒÆ³ýÐý×ª½Ç¶ÈÏà¹Ø´úÂë£©
+        // ï¿½ï¿½ï¿½ï¿½Ôªï¿½ï¿½ï¿½ï¿½ï¿½Æ³ï¿½ï¿½ï¿½×ªï¿½Ç¶ï¿½ï¿½ï¿½Ø´ï¿½ï¿½ë£©
         if (child->GetName() == "element") {
             wxString name = child->GetAttribute("name");
             int x = wxAtoi(child->GetAttribute("x", "0"));
             int y = wxAtoi(child->GetAttribute("y", "0"));
-            // ÒÆ³ýÏÂÃæÕâÐÐ¹ØÓÚrotationµÄ¶ÁÈ¡
+            // ï¿½Æ³ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð¹ï¿½ï¿½ï¿½rotationï¿½Ä¶ï¿½È¡
             // int rotation = wxAtoi(child->GetAttribute("rotation", "0"));
 
             m_canvas->PlaceElement(name, wxPoint(x, y));
-            // Í¬Ê±ÒÆ³ýÉèÖÃÐý×ª½Ç¶ÈµÄÂß¼­£¨Èç¹ûÓÐµÄ»°£©
+            // Í¬Ê±ï¿½Æ³ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½×ªï¿½Ç¶Èµï¿½ï¿½ß¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ÐµÄ»ï¿½ï¿½ï¿½
         }
 
-        // ½âÎöÁ¬Ïß£¨ÔÚDoFileOpen·½·¨ÖÐ£©
+        // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ß£ï¿½ï¿½ï¿½DoFileOpenï¿½ï¿½ï¿½ï¿½ï¿½Ð£ï¿½
         else if (child->GetName() == "wire") {
             wxString fromStr = child->GetAttribute("from");
             wxString toStr = child->GetAttribute("to");
             wxString midPointsStr = child->GetAttribute("midpoints", "");
 
-            // ½âÎö×ø±êµã (x,y)
+            // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ (x,y)
             auto parsePoint = [](const wxString& str) -> wxPoint {
                 int x = 0, y = 0;
                 if (sscanf(str.ToUTF8().data(), "(%d,%d)", &x, &y) == 2) {
@@ -339,54 +339,61 @@ void MainFrame::DoFileOpen(const wxString& path)
                 return wxPoint(0, 0);
                 };
 
-            // ÖØ½¨pts¼¯ºÏ
+            // ï¿½Ø½ï¿½ptsï¿½ï¿½ï¿½ï¿½
             std::vector<ControlPoint> pts;
-            pts.push_back({ parsePoint(fromStr), CPType::Pin });  // Æðµã£¨PinÀàÐÍ£©
+            pts.push_back({ parsePoint(fromStr), CPType::Pin });  // ï¿½ï¿½ã£¨Pinï¿½ï¿½ï¿½Í£ï¿½
 
-            // ½âÎöÖÐ¼äµã
+            // ï¿½ï¿½ï¿½ï¿½ï¿½Ð¼ï¿½ï¿½
             if (!midPointsStr.IsEmpty()) {
                 wxArrayString midPoints = wxSplit(midPointsStr, ';');
                 for (const auto& ptStr : midPoints) {
                     if (ptStr.IsEmpty()) continue;
-                    pts.push_back({ parsePoint(ptStr), CPType::Bend });  // ÖÐ¼äµãÎªÕÛµã
+                    pts.push_back({ parsePoint(ptStr), CPType::Bend });  // ï¿½Ð¼ï¿½ï¿½Îªï¿½Ûµï¿½
                 }
             }
 
-            pts.push_back({ parsePoint(toStr), CPType::Free });  // ÖÕµã£¨FreeÀàÐÍ£©
+            pts.push_back({ parsePoint(toStr), CPType::Free });  // ï¿½Õµã£¨Freeï¿½ï¿½ï¿½Í£ï¿½
 
-            // ´´½¨Wire²¢Ìí¼Óµ½»­²¼
+            // ï¿½ï¿½ï¿½ï¿½Wireï¿½ï¿½ï¿½ï¿½ï¿½Óµï¿½ï¿½ï¿½ï¿½ï¿½
             Wire wire;
-            wire.pts = pts;  // Ö±½Ó¸³Öµ¸øWireµÄpts³ÉÔ±
-            wire.GenerateCells();  // Éú³ÉÍø¸ñµã£¨±£³ÖÏÔÊ¾Ò»ÖÂÐÔ£©
+            wire.pts = pts;  // Ö±ï¿½Ó¸ï¿½Öµï¿½ï¿½Wireï¿½ï¿½ptsï¿½ï¿½Ô±
+            wire.GenerateCells();  // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ã£¨ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê¾Ò»ï¿½ï¿½ï¿½Ô£ï¿½
             m_canvas->AddWire(wire);
         }
-        
+
         child = child->GetNext();
     }
 
-    // ¸üÐÂ×´Ì¬
+    // ï¿½ï¿½ï¿½ï¿½×´Ì¬
     m_currentFilePath = filePath;
     m_isModified = false;
     SetTitle(wxFileName(filePath).GetFullName());
     static_cast<MainMenuBar*>(GetMenuBar())->AddFileToHistory(filePath);
-    SetStatusText("ÒÑ´ò¿ª: " + filePath);
+    SetStatusText("ï¿½Ñ´ï¿½: " + filePath);
 }
 
-// ´¦Àí¹¤¾ßÑ¡ÔñÊÂ¼þ£¬¸üÐÂÊôÐÔÃæ°å
-void MainFrame::OnToolSelected(wxCommandEvent& evt)
-{
+// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ñ¡ï¿½ï¿½ï¿½Â¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+// MainFrame.cpp -> OnToolSelected() ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ Facing Í¬ï¿½ï¿½ï¿½ï¿½
+void MainFrame::OnToolSelected(wxCommandEvent& evt) {
     wxString toolName = evt.GetString();
+    std::map<wxString, wxVariant> currentProps;
 
-    if (m_propPanel) {
-        if (toolName.IsEmpty()) {
-            // Çå¿ÕÊôÐÔÃæ°å
-            m_propPanel->ShowElement("No element selected");
-        }
-        else {
-            // ÏÔÊ¾Ñ¡ÖÐ¹¤¾ßµÄÊôÐÔ
-            m_propPanel->ShowElement(toolName);
-        }
+    // 1. ï¿½ï¿½È¡Ñ¡ï¿½ï¿½Ôªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    int selectedElemIdx = m_canvas->GetSelectedIndex();
+    if (selectedElemIdx != -1 && selectedElemIdx < (int)m_canvas->GetElements().size()) {
+        const auto& selectedElem = m_canvas->GetElements()[selectedElemIdx];
+        // 2. ï¿½ï¿½ï¿½ï¿½Ôªï¿½ï¿½ï¿½ï¿½×ªï¿½Ç¶È·ï¿½ï¿½ï¿½ Facing Öµ
+        int rotation = selectedElem.GetRotation();
+        wxString currentFacing = "East";
+        if (rotation == 90) currentFacing = "South";
+        else if (rotation == 180) currentFacing = "West";
+        else if (rotation == 270) currentFacing = "North";
+        // 3. ï¿½ï¿½ï¿½Ýµï¿½Ç° Facing Öµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+        currentProps["Facing"] = currentFacing;
     }
+
+    // 4. ï¿½ï¿½Ê¾ï¿½ï¿½ï¿½Ô£ï¿½ï¿½ï¿½ï¿½ï¿½Ç° Facing Öµï¿½ï¿½
+    m_propPanel->ShowElement(toolName, currentProps);
 }
 
 
@@ -409,11 +416,11 @@ void MainFrame::OnToolSelected(wxCommandEvent& evt)
 
 
 
-// 1. ±£´æÎªBookShelf¹æ·¶µÄ.nodeÎÄ¼þ
+// 1. ï¿½ï¿½ï¿½ï¿½ÎªBookShelfï¿½æ·¶ï¿½ï¿½.nodeï¿½Ä¼ï¿½
 bool MainFrame::SaveAsNodeFile(const wxString& filePath)
 {
     wxFile file;
-    // ³¢ÊÔ´ò¿ªÎÄ¼þ£¬ÈôÊ§°Ü·µ»Øfalse
+    // ï¿½ï¿½ï¿½Ô´ï¿½ï¿½Ä¼ï¿½ï¿½ï¿½ï¿½ï¿½Ê§ï¿½Ü·ï¿½ï¿½ï¿½false
     if (!file.Exists(filePath)) {
         if (!file.Create(filePath))
             return false;
@@ -423,33 +430,33 @@ bool MainFrame::SaveAsNodeFile(const wxString& filePath)
 
     wxString content;
     const auto& elements = m_canvas->GetElements();
-    int numTotalNodes = elements.size();  // ×Üµ¥ÔªÊý£¨ËùÓÐ»­²¼Ôª¼þ£©
-    int numTerminals = 0;                 // ÖÕ¶Ëµ¥ÔªÊý£¨ÐèÍ³¼Æ´øI/OÒý½ÅµÄÔª¼þ£©
+    int numTotalNodes = elements.size();  // ï¿½Üµï¿½Ôªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð»ï¿½ï¿½ï¿½Ôªï¿½ï¿½ï¿½ï¿½
+    int numTerminals = 0;                 // ï¿½Õ¶Ëµï¿½Ôªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í³ï¿½Æ´ï¿½I/Oï¿½ï¿½ï¿½Åµï¿½Ôªï¿½ï¿½ï¿½ï¿½
 
-    // µÚÒ»²½£ºÍ³¼ÆÖÕ¶Ëµ¥ÔªÊý£¨´øÊäÈë/Êä³öÒý½ÅµÄÔª¼þÊÓÎªÖÕ¶Ë£©
+    // ï¿½ï¿½Ò»ï¿½ï¿½ï¿½ï¿½Í³ï¿½ï¿½ï¿½Õ¶Ëµï¿½Ôªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½/ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Åµï¿½Ôªï¿½ï¿½ï¿½ï¿½Îªï¿½Õ¶Ë£ï¿½
     for (const auto& elem : elements)
     {
         if (!elem.GetInputPins().empty() || !elem.GetOutputPins().empty())
             numTerminals++;
     }
 
-    // µÚ¶þ²½£ºÐ´Èë.nodeÎÄ¼þÍ·²¿£¨NumNodes + NumTerminals£©
+    // ï¿½Ú¶ï¿½ï¿½ï¿½ï¿½ï¿½Ð´ï¿½ï¿½.nodeï¿½Ä¼ï¿½Í·ï¿½ï¿½ï¿½ï¿½NumNodes + NumTerminalsï¿½ï¿½
     content += wxString::Format("NumNodes %d\n", numTotalNodes);
     content += wxString::Format("NumTerminals %d\n", numTerminals);
 
-    // µÚÈý²½£ºÐ´ÈëÃ¿¸öµ¥ÔªµÄÏêÏ¸ÐÅÏ¢£¨µ¥ÔªÃû + ¿í¶È + ¸ß¶È + ÖÕ¶Ë±ê¼Ç£©
+    // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð´ï¿½ï¿½Ã¿ï¿½ï¿½ï¿½ï¿½Ôªï¿½ï¿½ï¿½ï¿½Ï¸ï¿½ï¿½Ï¢ï¿½ï¿½ï¿½ï¿½Ôªï¿½ï¿½ + ï¿½ï¿½ï¿½ï¿½ + ï¿½ß¶ï¿½ + ï¿½Õ¶Ë±ï¿½Ç£ï¿½
     for (const auto& elem : elements)
     {
-        // »ñÈ¡µ¥Ôª»ù±¾ÐÅÏ¢£ºÃû³Æ¡¢Î»ÖÃ£¨ÓÃÓÚ¼ÆËã¿í¸ß£©
+        // ï¿½ï¿½È¡ï¿½ï¿½Ôªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï¢ï¿½ï¿½ï¿½ï¿½ï¿½Æ¡ï¿½Î»ï¿½Ã£ï¿½ï¿½ï¿½ï¿½Ú¼ï¿½ï¿½ï¿½ï¿½ï¿½ß£ï¿½
         wxString nodeName = elem.GetName();
-        wxRect bounds = elem.GetBounds();  // Í¨¹ýÔª¼þ±ß½ç¼ÆËã¿í¸ß
-        int width = bounds.GetWidth();     // µ¥Ôª¿í¶È£¨ÏñËØ£¬¿É°´¹¤ÒÕ»»ËãÎª¦Ìm£¬´Ë´¦±£ÁôÏñËØµ¥Î»£©
-        int height = bounds.GetHeight();   // µ¥Ôª¸ß¶È£¨ÊÊÅäsite¸ß¶È£¬ÎÄµµÄ¬ÈÏ12£¬´Ë´¦°´Êµ¼Ê±ß½çÈ¡Õû£©
+        wxRect bounds = elem.GetBounds();  // Í¨ï¿½ï¿½Ôªï¿½ï¿½ï¿½ß½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+        int width = bounds.GetWidth();     // ï¿½ï¿½Ôªï¿½ï¿½ï¿½È£ï¿½ï¿½ï¿½ï¿½Ø£ï¿½ï¿½É°ï¿½ï¿½ï¿½ï¿½Õ»ï¿½ï¿½ï¿½Îªï¿½ï¿½mï¿½ï¿½ï¿½Ë´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Øµï¿½Î»ï¿½ï¿½
+        int height = bounds.GetHeight();   // ï¿½ï¿½Ôªï¿½ß¶È£ï¿½ï¿½ï¿½ï¿½ï¿½siteï¿½ß¶È£ï¿½ï¿½Äµï¿½Ä¬ï¿½ï¿½12ï¿½ï¿½ï¿½Ë´ï¿½ï¿½ï¿½Êµï¿½Ê±ß½ï¿½È¡ï¿½ï¿½ï¿½ï¿½
 
-        // ÅÐ¶ÏÊÇ·ñÎªÖÕ¶Ëµ¥Ôª£¨´øI/OÒý½Å£©
+        // ï¿½Ð¶ï¿½ï¿½Ç·ï¿½Îªï¿½Õ¶Ëµï¿½Ôªï¿½ï¿½ï¿½ï¿½I/Oï¿½ï¿½ï¿½Å£ï¿½
         bool isTerminal = (!elem.GetInputPins().empty() || !elem.GetOutputPins().empty());
 
-        // Æ´½Óµ¥ÔªÐÐ£ºÖÕ¶Ëµ¥ÔªÐè¼Ó"terminal"±ê¼Ç£¬ÆÕÍ¨µ¥Ôª½öÊä³ö»ù´¡ÐÅÏ¢
+        // Æ´ï¿½Óµï¿½Ôªï¿½Ð£ï¿½ï¿½Õ¶Ëµï¿½Ôªï¿½ï¿½ï¿½"terminal"ï¿½ï¿½Ç£ï¿½ï¿½ï¿½Í¨ï¿½ï¿½Ôªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï¢
         if (isTerminal)
         {
             content += wxString::Format("%s %d %d terminal\n",
@@ -462,7 +469,7 @@ bool MainFrame::SaveAsNodeFile(const wxString& filePath)
         }
     }
 
-    // Ð´ÈëÎÄ¼þ²¢¹Ø±Õ
+    // Ð´ï¿½ï¿½ï¿½Ä¼ï¿½ï¿½ï¿½ï¿½Ø±ï¿½
     file.Write(content);
     file.Close();
     return true;
@@ -470,60 +477,60 @@ bool MainFrame::SaveAsNodeFile(const wxString& filePath)
 
 bool MainFrame::SaveAsNetFile(const wxString& filePath)
 {
-    // ³¢ÊÔ´´½¨²¢´ò¿ªÎÄ¼þ
+    // ï¿½ï¿½ï¿½Ô´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä¼ï¿½
     wxFile file;
     if (!file.Exists(filePath))
     {
         if (!file.Create(filePath))
         {
-            wxMessageBox("ÎÞ·¨´´½¨.netÎÄ¼þ£¡", "´íÎó", wxOK | wxICON_ERROR);
+            wxMessageBox("ï¿½Þ·ï¿½ï¿½ï¿½ï¿½ï¿½.netï¿½Ä¼ï¿½ï¿½ï¿½", "ï¿½ï¿½ï¿½ï¿½", wxOK | wxICON_ERROR);
             return false;
         }
     }
     if (!file.Open(filePath, wxFile::write))
     {
-        wxMessageBox("ÎÞ·¨´ò¿ª.netÎÄ¼þ½øÐÐÐ´Èë£¡", "´íÎó", wxOK | wxICON_ERROR);
+        wxMessageBox("ï¿½Þ·ï¿½ï¿½ï¿½.netï¿½Ä¼ï¿½ï¿½ï¿½ï¿½ï¿½Ð´ï¿½ë£¡", "ï¿½ï¿½ï¿½ï¿½", wxOK | wxICON_ERROR);
         return false;
     }
 
-    // ÊÕ¼¯»­²¼ÖÐµÄµ¼ÏßºÍÔª¼þÊý¾Ý
-    const auto& wires = m_canvas->GetWires();       // ¼ÙÉè»­²¼ÓÐGetWires()·½·¨·µ»Øµ¼ÏßÁÐ±í
-    const auto& elements = m_canvas->GetElements(); // ¼ÙÉè»­²¼ÓÐGetElements()·½·¨·µ»ØÔª¼þÁÐ±í
+    // ï¿½Õ¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ÐµÄµï¿½ï¿½ßºï¿½Ôªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    const auto& wires = m_canvas->GetWires();       // ï¿½ï¿½ï¿½è»­ï¿½ï¿½ï¿½ï¿½GetWires()ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Øµï¿½ï¿½ï¿½ï¿½Ð±ï¿½
+    const auto& elements = m_canvas->GetElements(); // ï¿½ï¿½ï¿½è»­ï¿½ï¿½ï¿½ï¿½GetElements()ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ôªï¿½ï¿½ï¿½Ð±ï¿½
     int numTotalNets = wires.size();
     int numTotalPins = 0;
 
-    // ½á¹¹Ìå£º´æ´¢Òý½Å¹Ø¼üÐÅÏ¢£¨ÓÃÓÚÆ¥Åä£©
+    // ï¿½á¹¹ï¿½å£ºï¿½æ´¢ï¿½ï¿½ï¿½Å¹Ø¼ï¿½ï¿½ï¿½Ï¢ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ¥ï¿½ä£©
     struct PinInfo {
-        wxString cellName;    // ËùÊôÔª¼þÃû³Æ
-        wxString pinType;     // Òý½ÅÀàÐÍ£¨I/O£©
-        wxPoint absPos;       // Òý½Å¾ø¶Ô×ø±ê£¨»­²¼×ø±êÏµ£©
-        wxPoint offset;       // Òý½ÅÏà¶ÔÔª¼þµÄÆ«ÒÆ×ø±ê
+        wxString cellName;    // ï¿½ï¿½ï¿½ï¿½Ôªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+        wxString pinType;     // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í£ï¿½I/Oï¿½ï¿½
+        wxPoint absPos;       // ï¿½ï¿½ï¿½Å¾ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ê£¨ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ïµï¿½ï¿½
+        wxPoint offset;       // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ôªï¿½ï¿½ï¿½ï¿½Æ«ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
     };
     std::vector<PinInfo> allPins;
 
-    // 1. Ô¤¼ÆËãËùÓÐÔª¼þµÄÒý½ÅÐÅÏ¢£¨¾ø¶Ô×ø±ê+ÀàÐÍ£©
+    // 1. Ô¤ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ôªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï¢ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½+ï¿½ï¿½ï¿½Í£ï¿½
     for (const auto& elem : elements)
     {
-        wxPoint elemPos = elem.GetPos();          // »ñÈ¡Ôª¼þÔÚ»­²¼µÄ¾ø¶ÔÎ»ÖÃ
+        wxPoint elemPos = elem.GetPos();          // ï¿½ï¿½È¡Ôªï¿½ï¿½ï¿½Ú»ï¿½ï¿½ï¿½ï¿½Ä¾ï¿½ï¿½ï¿½Î»ï¿½ï¿½
         wxString cellName = elem.GetName();
 
-        // ´¦ÀíÊäÈëÒý½Å
+        // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
         for (const auto& pin : elem.GetInputPins())
         {
-            // ¼ÆËãÒý½Å¾ø¶Ô×ø±ê = Ôª¼þÎ»ÖÃ + Òý½ÅÏà¶ÔÆ«ÒÆ
+            // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Å¾ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ = Ôªï¿½ï¿½Î»ï¿½ï¿½ + ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ«ï¿½ï¿½
             wxPoint pinAbsPos(
                 elemPos.x + pin.pos.x,
                 elemPos.y + pin.pos.y
             );
             allPins.push_back({
                 cellName,
-                "I",  // ÊäÈëÒý½Å±ê¼Ç
+                "I",  // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Å±ï¿½ï¿½
                 pinAbsPos,
-                wxPoint(pin.pos.x, pin.pos.y)  // Ïà¶ÔÆ«ÒÆ
+                wxPoint(pin.pos.x, pin.pos.y)  // ï¿½ï¿½ï¿½Æ«ï¿½ï¿½
                 });
         }
 
-        // ´¦ÀíÊä³öÒý½Å
+        // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
         for (const auto& pin : elem.GetOutputPins())
         {
             wxPoint pinAbsPos(
@@ -532,52 +539,52 @@ bool MainFrame::SaveAsNetFile(const wxString& filePath)
             );
             allPins.push_back({
                 cellName,
-                "O",  // Êä³öÒý½Å±ê¼Ç
+                "O",  // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Å±ï¿½ï¿½
                 pinAbsPos,
                 wxPoint(pin.pos.x, pin.pos.y)
                 });
         }
 
-        // ÌØÊâ´¦Àí"Pin (Output)"ÀàÔª¼þ£¨×ÔÉí¼´ÎªÊä³öÒý½Å£©
+        // ï¿½ï¿½ï¿½â´¦ï¿½ï¿½"Pin (Output)"ï¿½ï¿½Ôªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Îªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Å£ï¿½
         if (cellName == "Pin (Output)")
         {
             allPins.push_back({
                 cellName,
-                "O",  // Ã÷È·ÎªÊä³öÀàÐÍ
-                elemPos,  // ×ÔÉíÎ»ÖÃ¼´ÎªÒý½ÅÎ»ÖÃ
-                wxPoint(0, 0)  // Ïà¶Ô×ÔÉíÆ«ÒÆÎª(0,0)
+                "O",  // ï¿½ï¿½È·Îªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+                elemPos,  // ï¿½ï¿½ï¿½ï¿½Î»ï¿½Ã¼ï¿½Îªï¿½ï¿½ï¿½ï¿½Î»ï¿½ï¿½
+                wxPoint(0, 0)  // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ«ï¿½ï¿½Îª(0,0)
                 });
         }
     }
 
-    // 2. ±éÀúËùÓÐµ¼Ïß£¬Éú³ÉÍøÂçÐÅÏ¢
+    // 2. ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ðµï¿½ï¿½ß£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï¢
     wxString content;
     for (int netIdx = 0; netIdx < numTotalNets; ++netIdx)
     {
         const auto& wire = wires[netIdx];
-        if (wire.pts.size() < 2)  // Ìø¹ýÎÞÐ§µ¼Ïß£¨ÖÁÉÙÐèÒªÆðµãºÍÖÕµã£©
+        if (wire.pts.size() < 2)  // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð§ï¿½ï¿½ï¿½ß£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Òªï¿½ï¿½ï¿½ï¿½ï¿½Õµã£©
             continue;
 
-        // ½ö±£Áôµ¼ÏßµÄÆðµãºÍÖÕµã×÷ÎªÓÐÐ§Òý½Å£¨ºöÂÔÖÐ¼ä¿ØÖÆµã£©
+        // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ßµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Õµï¿½ï¿½ï¿½Îªï¿½ï¿½Ð§ï¿½ï¿½ï¿½Å£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð¼ï¿½ï¿½ï¿½Æµã£©
         std::vector<wxPoint> validPinPositions;
-        validPinPositions.push_back(wire.pts[0].pos);                // Æðµã
-        validPinPositions.push_back(wire.pts[wire.pts.size() - 1].pos);  // ÖÕµã
-        int netDegree = validPinPositions.size();  // ¹Ì¶¨Îª2£¨ÓÐÐ§µ¼Ïß£©
+        validPinPositions.push_back(wire.pts[0].pos);                // ï¿½ï¿½ï¿½
+        validPinPositions.push_back(wire.pts[wire.pts.size() - 1].pos);  // ï¿½Õµï¿½
+        int netDegree = validPinPositions.size();  // ï¿½Ì¶ï¿½Îª2ï¿½ï¿½ï¿½ï¿½Ð§ï¿½ï¿½ï¿½ß£ï¿½
         numTotalPins += netDegree;
 
-        // Ð´ÈëÍøÂçÍ·²¿ÐÅÏ¢£¨ÍøÂç¶ÈÊý+ÍøÂçÃû£©
+        // Ð´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í·ï¿½ï¿½ï¿½ï¿½Ï¢ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½+ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
         wxString netName = wxString::Format("n%d", netIdx);
         content += wxString::Format("NetDegree %d %s\n", netDegree, netName);
 
-        // 3. Æ¥ÅäÃ¿¸öÓÐÐ§Òý½Åµ½¶ÔÓ¦µÄÔª¼þ
-        const int COORD_TOLERANCE = 3;  // ×ø±êÎó²îÈÝÈÌ£¨3ÏñËØÄÚÊÓÎªÆ¥Åä£©
+        // 3. Æ¥ï¿½ï¿½Ã¿ï¿½ï¿½ï¿½ï¿½Ð§ï¿½ï¿½ï¿½Åµï¿½ï¿½ï¿½Ó¦ï¿½ï¿½Ôªï¿½ï¿½
+        const int COORD_TOLERANCE = 3;  // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ì£ï¿½3ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ÎªÆ¥ï¿½ä£©
         for (const auto& pinPos : validPinPositions)
         {
             wxString cellName = "unknown_cell";
             wxString pinType = "I";
             wxPoint offset(0, 0);
 
-            // ±éÀúÔ¤¼ÆËãµÄÒý½ÅÁÐ±í£¬²éÕÒ×ø±êÆ¥ÅäµÄÒý½Å
+            // ï¿½ï¿½ï¿½ï¿½Ô¤ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ¥ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
             for (const auto& pinInfo : allPins)
             {
                 int dx = abs(pinPos.x - pinInfo.absPos.x);
@@ -587,35 +594,35 @@ bool MainFrame::SaveAsNetFile(const wxString& filePath)
                     cellName = pinInfo.cellName;
                     pinType = pinInfo.pinType;
                     offset = pinInfo.offset;
-                    break;  // ÕÒµ½Æ¥ÅäµÄÒý½ÅºóÍË³öÑ­»·
+                    break;  // ï¿½Òµï¿½Æ¥ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Åºï¿½ï¿½Ë³ï¿½Ñ­ï¿½ï¿½
                 }
             }
 
-            // Ð´ÈëÒý½ÅÐÅÏ¢£¨¸ñÊ½£ºÔª¼þÃû ÀàÐÍ:XÆ«ÒÆ YÆ«ÒÆ£©
+            // Ð´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï¢ï¿½ï¿½ï¿½ï¿½Ê½ï¿½ï¿½Ôªï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½:XÆ«ï¿½ï¿½ YÆ«ï¿½Æ£ï¿½
             content += wxString::Format("%s %s:%d %d\n",
                 cellName, pinType, offset.x, offset.y);
         }
     }
 
-    // 4. Ð´ÈëÎÄ¼þÍ·²¿£¨×ÜÍøÂçÊýºÍ×ÜÒý½ÅÊý£©
+    // 4. Ð´ï¿½ï¿½ï¿½Ä¼ï¿½Í·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
     wxString header;
     header += wxString::Format("NumNets %d\n", numTotalNets);
     header += wxString::Format("NumPins %d\n", numTotalPins);
     content = header + content;
 
-    // Ð´ÈëÎÄ¼þ²¢¹Ø±Õ
+    // Ð´ï¿½ï¿½ï¿½Ä¼ï¿½ï¿½ï¿½ï¿½Ø±ï¿½
     file.Write(content);
     file.Close();
     return true;
 }
 
-// 3. £¨ÎÞÐèÐÞ¸Ä£©.nodeÎÄ¼þ±£´æ´¥·¢º¯Êý£¨±£³ÖÔ­Âß¼­£©
+// 3. ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Þ¸Ä£ï¿½.nodeï¿½Ä¼ï¿½ï¿½ï¿½ï¿½æ´¥ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ô­ï¿½ß¼ï¿½ï¿½ï¿½
 void MainFrame::DoFileSaveAsNode()
 {
     wxFileDialog saveDialog(this,
         "Save as BookShelf .node File",
         "",
-        "circuit.node",  // Ä¬ÈÏÎÄ¼þÃû
+        "circuit.node",  // Ä¬ï¿½ï¿½ï¿½Ä¼ï¿½ï¿½ï¿½
         "BookShelf Node Files (*.node)|*.node",
         wxFD_SAVE | wxFD_OVERWRITE_PROMPT);
 
@@ -634,13 +641,13 @@ void MainFrame::DoFileSaveAsNode()
     }
 }
 
-// 4. £¨ÎÞÐèÐÞ¸Ä£©.netÎÄ¼þ±£´æ´¥·¢º¯Êý£¨±£³ÖÔ­Âß¼­£©
+// 4. ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Þ¸Ä£ï¿½.netï¿½Ä¼ï¿½ï¿½ï¿½ï¿½æ´¥ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ô­ï¿½ß¼ï¿½ï¿½ï¿½
 void MainFrame::DoFileSaveAsNet()
 {
     wxFileDialog saveDialog(this,
         "Save as BookShelf .net File",
         "",
-        "circuit.net",  // Ä¬ÈÏÎÄ¼þÃû
+        "circuit.net",  // Ä¬ï¿½ï¿½ï¿½Ä¼ï¿½ï¿½ï¿½
         "BookShelf Net Files (*.net)|*.net",
         wxFD_SAVE | wxFD_OVERWRITE_PROMPT);
 
@@ -680,7 +687,7 @@ void MainFrame::DoFileSaveAsNet()
 
 
 
-// ¸¨Öú·½·¨£ºÌí¼ÓÔª¼þ¿â½Úµã
+// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ôªï¿½ï¿½ï¿½ï¿½Úµï¿½
 void MainFrame::AddLibraryNode(wxXmlNode* parent, const wxString& name, const wxString& desc) {
     wxXmlNode* lib = new wxXmlNode(wxXML_ELEMENT_NODE, wxT("lib"));
     lib->AddAttribute(wxT("name"), name);
@@ -688,38 +695,38 @@ void MainFrame::AddLibraryNode(wxXmlNode* parent, const wxString& name, const wx
     parent->AddChild(lib);
 }
 
-// ¸¨Öú·½·¨£ºÌí¼Óµ¼Ïß½Úµã
+// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Óµï¿½ï¿½ß½Úµï¿½
 void MainFrame::AddWireNode(wxXmlNode* parent, const wxString& from, const wxString& to) {
     wxXmlNode* wire = new wxXmlNode(wxXML_ELEMENT_NODE, wxT("wire"));
     wire->AddAttribute(wxT("from"), from);
     wire->AddAttribute(wxT("to"), to);
     parent->AddChild(wire);
 }
-// ÐèÅäÌ×ÊµÏÖ"Áí´æÎª"·½·¨£¨´¦ÀíÊ×´Î±£´æ£©
+// ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Êµï¿½ï¿½"ï¿½ï¿½ï¿½ï¿½Îª"ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½×´Î±ï¿½ï¿½æ£©
 void MainFrame::DoFileSaveAs() {
-    // µ¯³öÎÄ¼þÑ¡Ôñ¶Ô»°¿ò
+    // ï¿½ï¿½ï¿½ï¿½ï¿½Ä¼ï¿½Ñ¡ï¿½ï¿½Ô»ï¿½ï¿½ï¿½
     wxFileDialog saveDialog(
         this,
-        "Áí´æÎª",
+        "ï¿½ï¿½ï¿½ï¿½Îª",
         "",
-        "Untitled.circ",  // Ä¬ÈÏÎÄ¼þÃû
-        "µçÂ·ÎÄ¼þ (*.circ)|*.circ|ËùÓÐÎÄ¼þ (*.*)|*.*",
-        wxFD_SAVE | wxFD_OVERWRITE_PROMPT  // ÌáÊ¾¸²¸ÇÒÑÓÐÎÄ¼þ
+        "Untitled.circ",  // Ä¬ï¿½ï¿½ï¿½Ä¼ï¿½ï¿½ï¿½
+        "ï¿½ï¿½Â·ï¿½Ä¼ï¿½ (*.circ)|*.circ|ï¿½ï¿½ï¿½ï¿½ï¿½Ä¼ï¿½ (*.*)|*.*",
+        wxFD_SAVE | wxFD_OVERWRITE_PROMPT  // ï¿½ï¿½Ê¾ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä¼ï¿½
     );
 
-    // ÓÃ»§È¡ÏûÔò·µ»Ø
+    // ï¿½Ã»ï¿½È¡ï¿½ï¿½ï¿½ò·µ»ï¿½
     if (saveDialog.ShowModal() != wxID_OK) {
         return;
     }
 
-    // »ñÈ¡ÓÃ»§Ñ¡ÔñµÄÂ·¾¶
+    // ï¿½ï¿½È¡ï¿½Ã»ï¿½Ñ¡ï¿½ï¿½ï¿½Â·ï¿½ï¿½
     wxString newPath = saveDialog.GetPath();
     m_currentFilePath = newPath;
 
-    // Ö´ÐÐ±£´æ
+    // Ö´ï¿½Ð±ï¿½ï¿½ï¿½
     DoFileSave();
 
-    // £¨¿ÉÑ¡£©Ìí¼Óµ½×î½üÎÄ¼þÀúÊ·
+    // ï¿½ï¿½ï¿½ï¿½Ñ¡ï¿½ï¿½ï¿½ï¿½ï¿½Óµï¿½ï¿½ï¿½ï¿½ï¿½Ä¼ï¿½ï¿½ï¿½Ê·
     static_cast<MainMenuBar*>(GetMenuBar())->AddFileToHistory(newPath);
 }
 
@@ -735,7 +742,7 @@ void MainFrame::OnAbout(wxCommandEvent&)
 void MainFrame::DoEditUndo()
 {
     m_canvas->m_undoStack.Undo(m_canvas);
-    OnUndoStackChanged();   // Ë¢ÐÂ²Ëµ¥
+    OnUndoStackChanged();   // Ë¢ï¿½Â²Ëµï¿½
 }
 
 void MainFrame::DoEditCut() { wxMessageBox("Edit->Cut"); }
@@ -797,7 +804,7 @@ void MainFrame::DoWindowPreferences()
 void MainFrame::DoWindowSwitchToDoc(const wxString& title)
 {
     wxMessageBox("Switch to document: " + title);
-    // ÕæÕýÂß¼­£º°ÑÖ÷¿ò¼ÜÇÐ»»µ½¶ÔÓ¦×Ó´°¿Ú»òÊÓÍ¼
+    // ï¿½ï¿½ï¿½ï¿½ï¿½ß¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð»ï¿½ï¿½ï¿½ï¿½ï¿½Ó¦ï¿½Ó´ï¿½ï¿½Ú»ï¿½ï¿½ï¿½Í¼
 }
 
 void MainFrame::DoHelpTutorial()
@@ -825,17 +832,17 @@ void MainFrame::AddToolBarsToAuiManager() {
     wxToolBar* toolBar2 = m_toolBars->toolBar2;
     wxToolBar* toolBar3 = m_toolBars->toolBar3;
 
-    // ÉèÖÃ¹¤¾ßÀ¸´óÐ¡
+    // ï¿½ï¿½ï¿½Ã¹ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð¡
     toolBar1->SetSizeHints(-1, 28);
     toolBar2->SetSizeHints(-1, 28);
     toolBar3->SetSizeHints(-1, 28);
 
-    // È·±£¹¤¾ßÀ¸ÒÑÊµÏÖ
+    // È·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Êµï¿½ï¿½
     toolBar1->Realize();
     toolBar2->Realize();
     toolBar3->Realize();
 
-    // Ê¹ÓÃAUI¹ÜÀíÆ÷Ìí¼Ó¹¤¾ßÀ¸
+    // Ê¹ï¿½ï¿½AUIï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ó¹ï¿½ï¿½ï¿½ï¿½ï¿½
     m_auiMgr.AddPane(toolBar1, wxAuiPaneInfo()
         .Name("Toolbar1")
         .Caption("Tools")
@@ -855,7 +862,7 @@ void MainFrame::AddToolBarsToAuiManager() {
         .Caption("Navigation")
         .ToolbarPane()
         .Top()
-        .Row(1)  // µÚ¶þÐÐ
+        .Row(1)  // ï¿½Ú¶ï¿½ï¿½ï¿½
         .LeftDockable(false)
         .RightDockable(false)
         .BottomDockable(false)
@@ -870,7 +877,7 @@ void MainFrame::AddToolBarsToAuiManager() {
         .Caption("Actions")
         .ToolbarPane()
         .Top()
-        .Row(2)  // µÚÈýÐÐ
+        .Row(2)  // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
         .LeftDockable(false)
         .RightDockable(false)
         .BottomDockable(false)
@@ -879,8 +886,8 @@ void MainFrame::AddToolBarsToAuiManager() {
         .PaneBorder(false)
         .Resizable(false)
         .BestSize(10000, 28));
-    m_toolBars->ChoosePageOne_toolBar1(-1); // ³õÊ¼»¯¹¤¾ßÀ¸×´Ì¬
-    m_toolBars->ChoosePageOne_toolBar3(-1); // ³õÊ¼»¯¹¤¾ßÀ¸×´Ì¬
+    m_toolBars->ChoosePageOne_toolBar1(-1); // ï¿½ï¿½Ê¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½×´Ì¬
+    m_toolBars->ChoosePageOne_toolBar3(-1); // ï¿½ï¿½Ê¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½×´Ì¬
 }
 
 void MainFrame::OnUndoStackChanged()
@@ -888,7 +895,7 @@ void MainFrame::OnUndoStackChanged()
     wxMenuBar* bar = GetMenuBar();
     if (!bar) return;
 
-    wxMenu* editMenu = bar->GetMenu(1);      // Edit ²Ëµ¥
+    wxMenu* editMenu = bar->GetMenu(1);      // Edit ï¿½Ëµï¿½
     if (!editMenu) return;
 
     wxMenuItem* undoItem = editMenu->FindItem(wxID_UNDO);
@@ -905,19 +912,19 @@ void MainFrame::OnUndoStackChanged()
 }
 
 void MainFrame::OnClose(wxCloseEvent& event) {
-    // 1. ´¦ÀíÎÄ¼þÃû
+    // 1. ï¿½ï¿½ï¿½ï¿½ï¿½Ä¼ï¿½ï¿½ï¿½
     wxString fileName = m_currentFilePath.IsEmpty()
         ? wxString("Untitled")
         : wxFileName(m_currentFilePath).GetFullName();
 
-    // 2. Ê¹ÓÃ wxMessageDialog Ô­Éú¶Ô»°¿ò£¨½ö±£ÁôÈý¸ö°´Å¥£©
-    // È¥µôÍ¼±êÏà¹Ø²ÎÊý£¬»ò±£ÁôÄ¬ÈÏµÄ wxICON_QUESTION£¨¿ÉÑ¡£©
+    // 2. Ê¹ï¿½ï¿½ wxMessageDialog Ô­ï¿½ï¿½ï¿½Ô»ï¿½ï¿½ò£¨½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Å¥ï¿½ï¿½
+    // È¥ï¿½ï¿½Í¼ï¿½ï¿½ï¿½ï¿½Ø²ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä¬ï¿½Ïµï¿½ wxICON_QUESTIONï¿½ï¿½ï¿½ï¿½Ñ¡ï¿½ï¿½
     wxMessageDialog dialog(this,
         wxString::Format("What should happen to your unsaved changes to %s?", fileName),
         "Confirm Close",
-        wxYES_NO | wxCANCEL | wxYES_DEFAULT); // ½ö±£ÁôÈý¸ö°´Å¥µÄÅäÖÃ
+        wxYES_NO | wxCANCEL | wxYES_DEFAULT); // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Å¥ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 
-    // 3. ´¦Àí°´Å¥Âß¼­
+    // 3. ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Å¥ï¿½ß¼ï¿½
     int result = dialog.ShowModal();
     switch (result) {
     case wxID_YES:
@@ -927,13 +934,13 @@ void MainFrame::OnClose(wxCloseEvent& event) {
         else {
             DoFileSave();
         }
-        event.Skip(); // ÔÊÐí¹Ø±Õ´°¿Ú
+        event.Skip(); // ï¿½ï¿½ï¿½ï¿½ï¿½Ø±Õ´ï¿½ï¿½ï¿½
         break;
     case wxID_NO:
-        event.Skip(); // ÔÊÐí¹Ø±Õ´°¿Ú£¨²»±£´æ£©
+        event.Skip(); // ï¿½ï¿½ï¿½ï¿½ï¿½Ø±Õ´ï¿½ï¿½Ú£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½æ£©
         break;
     case wxID_CANCEL:
-        // ²»Ö´ÐÐ Skip()£¬×èÖ¹´°¿Ú¹Ø±Õ
+        // ï¿½ï¿½Ö´ï¿½ï¿½ Skip()ï¿½ï¿½ï¿½ï¿½Ö¹ï¿½ï¿½ï¿½Ú¹Ø±ï¿½
         break;
     }
 }

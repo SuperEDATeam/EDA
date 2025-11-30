@@ -1,9 +1,9 @@
-#pragma once
+ï»¿#pragma once
 #include <wx/wx.h>
 #include <vector>
 #include <wx/graphics.h>
 #include "CanvasElement.h"
-#include "Wire.h"          // ¡û ÐÂÔö£ºÁ¬ÏßÊý¾Ý
+#include "Wire.h"          // ï¿½ï¿½ ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 #include "UndoStack.h"
 #include "HandyToolKit.h"
 #include "ToolStateMachine.h"
@@ -18,50 +18,50 @@ class ToolStateMachine;
 
 struct HoverInfo {
     wxPoint pos;
-    wxPoint snappedPos; // ÓÅÏÈ¼¶£ºÒý½Å£¬µ¼Ïß¿ØÖÆµã
+    wxPoint snappedPos; // ï¿½ï¿½ï¿½È¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Å£ï¿½ï¿½ï¿½ï¿½ß¿ï¿½ï¿½Æµï¿½
 
     // -----------------
-    // 1. Òý½Å (Pin) ÐüÍ£ÐÅÏ¢
+    // 1. ï¿½ï¿½ï¿½ï¿½ (Pin) ï¿½ï¿½Í£ï¿½ï¿½Ï¢
     // -----------------
-    int pinIndex = -1;         // ÐüÍ£Òý½ÅµÄË÷Òý¡£-1 ±íÊ¾Ã»ÓÐÐüÍ£ÔÚÈÎºÎÒý½ÅÉÏ¡£
-	bool isInputPin = false;   // ÐüÍ£Òý½ÅÊÇ·ñÎªÊäÈëÒý½Å¡£
-    wxPoint pinWorldPos;       // ÐüÍ£Òý½ÅÔÚÊÀ½ç×ø±êÏµÖÐµÄÎ»ÖÃ¡£
+    int pinIndex = -1;         // ï¿½ï¿½Í£ï¿½ï¿½ï¿½Åµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½-1 ï¿½ï¿½Ê¾Ã»ï¿½ï¿½ï¿½ï¿½Í£ï¿½ï¿½ï¿½Îºï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ï¡ï¿½
+    bool isInputPin = false;   // ï¿½ï¿½Í£ï¿½ï¿½ï¿½ï¿½ï¿½Ç·ï¿½Îªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Å¡ï¿½
+    wxPoint pinWorldPos;       // ï¿½ï¿½Í£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ïµï¿½Ðµï¿½Î»ï¿½Ã¡ï¿½
 
     // -----------------
-    // 2. µ¼Ïß¿ØÖÆµã (Cell/Wire Control Point) ÐüÍ£ÐÅÏ¢
+    // 2. ï¿½ï¿½ï¿½ß¿ï¿½ï¿½Æµï¿½ (Cell/Wire Control Point) ï¿½ï¿½Í£ï¿½ï¿½Ï¢
     // -----------------
-    int cellIndex = -1;        // ÐüÍ£µ¼Ïß¿ØÖÆµãµÄË÷Òý¡£-1 ±íÊ¾Ã»ÓÐÐüÍ£ÔÚ¿ØÖÆµãÉÏ¡£
-    int wireIndex = -1;        // ¿ØÖÆµãËùÊôµ¼ÏßµÄË÷Òý¡£
-    wxPoint cellWorldPos;      // ¿ØÖÆµãÔÚÊÀ½ç×ø±êÏµÖÐµÄÎ»ÖÃ¡£
+    int cellIndex = -1;        // ï¿½ï¿½Í£ï¿½ï¿½ï¿½ß¿ï¿½ï¿½Æµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½-1 ï¿½ï¿½Ê¾Ã»ï¿½ï¿½ï¿½ï¿½Í£ï¿½Ú¿ï¿½ï¿½Æµï¿½ï¿½Ï¡ï¿½
+    int wireIndex = -1;        // ï¿½ï¿½ï¿½Æµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ßµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    wxPoint cellWorldPos;      // ï¿½ï¿½ï¿½Æµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ïµï¿½Ðµï¿½Î»ï¿½Ã¡ï¿½
 
     // -----------------
-    // 3. Ôª¼þ (Element) ÐüÍ£ÐÅÏ¢ (ÓÃÓÚ×´Ì¬À¸·´À¡)
+    // 3. Ôªï¿½ï¿½ (Element) ï¿½ï¿½Í£ï¿½ï¿½Ï¢ (ï¿½ï¿½ï¿½ï¿½×´Ì¬ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½)
     // -----------------
-    int elementIndex = -1;     // ÐüÍ£Ôª¼þµÄË÷Òý¡£-1 ±íÊ¾Ã»ÓÐÐüÍ£ÔÚÈÎºÎÔª¼þÉÏ¡£
-    wxString elementName;      // ÐüÍ£Ôª¼þµÄÃû³Æ¡£
+    int elementIndex = -1;     // ï¿½ï¿½Í£Ôªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½-1 ï¿½ï¿½Ê¾Ã»ï¿½ï¿½ï¿½ï¿½Í£ï¿½ï¿½ï¿½Îºï¿½Ôªï¿½ï¿½ï¿½Ï¡ï¿½
+    wxString elementName;      // ï¿½ï¿½Í£Ôªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ¡ï¿½
 
-    // ¸¨Öúº¯Êý£¬ÅÐ¶ÏÊÇ·ñÐüÍ£ÔÚÄ³¸ö¾ßÌå¶ÔÏóÉÏ
+    // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð¶ï¿½ï¿½Ç·ï¿½ï¿½ï¿½Í£ï¿½ï¿½Ä³ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
     bool IsOverPin() const { return pinIndex != -1; }
     bool IsOverCell() const { return cellIndex != -1; }
     bool IsOverElement() const { return elementIndex != -1; }
 
-    // ¹¹Ôìº¯Êý
-	HoverInfo() : pinIndex(-1), isInputPin(false), cellIndex(-1), wireIndex(-1), elementIndex(-1) {}
+    // ï¿½ï¿½ï¿½ìº¯ï¿½ï¿½
+    HoverInfo() : pinIndex(-1), isInputPin(false), cellIndex(-1), wireIndex(-1), elementIndex(-1) {}
 };
 
 class CanvasPanel : public wxPanel
 {
     std::vector<WireAnchor> m_undoAnchors;
-    wxPoint m_dragStartElemPos;        // ÍÏ¶¯Ç°Ôª¼þ×óÉÏ½Ç
-    size_t m_wireCountBeforeOperation = 0;  // ²Ù×÷Ç°µÄµ¼ÏßÊýÁ¿
+    wxPoint m_dragStartElemPos;        // ï¿½Ï¶ï¿½Ç°Ôªï¿½ï¿½ï¿½ï¿½ï¿½Ï½ï¿½
+    size_t m_wireCountBeforeOperation = 0;  // ï¿½ï¿½ï¿½ï¿½Ç°ï¿½Äµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 
-    // µ¥»÷/ÍÏ¶¯¼ì²â
+    // ï¿½ï¿½ï¿½ï¿½/ï¿½Ï¶ï¿½ï¿½ï¿½ï¿½
     std::chrono::steady_clock::time_point m_leftDownTime;
     wxPoint m_leftDownPos;
     bool m_maybeClick = false;
     int m_leftDownElementIndex = -1;
-    static const int CLICK_MAX_MS = 250;      // µ¥»÷×î´óÊ±³¤
-    static const int DRAG_THRESHOLD_PX = 6;   // ÍÏ¶¯ãÐÖµÏñËØ
+    static const int CLICK_MAX_MS = 250;      // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê±ï¿½ï¿½
+    static const int DRAG_THRESHOLD_PX = 6;   // ï¿½Ï¶ï¿½ï¿½ï¿½Öµï¿½ï¿½ï¿½ï¿½
 public:
     CanvasPanel(MainFrame* parent, size_t size_x, size_t size_y);
     void AddElement(const CanvasElement& elem);
@@ -69,27 +69,27 @@ public:
 
     UndoStack m_undoStack;
 
-	MainFrame* m_mainFrame;
+    MainFrame* m_mainFrame;
 
-    // Ëõ·ÅÏà¹Ø·½·¨
-    float GetScale() const { return m_scale; }  // »ñÈ¡µ±Ç°Ëõ·Å±ÈÀý
-    void SetScale(float scale);                 // ÉèÖÃËõ·Å±ÈÀý²¢Ë¢ÐÂ
+    // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ø·ï¿½ï¿½ï¿½
+    float GetScale() const { return m_scale; }  // ï¿½ï¿½È¡ï¿½ï¿½Ç°ï¿½ï¿½ï¿½Å±ï¿½ï¿½ï¿½
+    void SetScale(float scale);                 // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Å±ï¿½ï¿½ï¿½ï¿½ï¿½Ë¢ï¿½ï¿½
 
-    // ×ø±ê×ª»»£¨ÆÁÄ»×ø±ê <-> »­²¼×ø±ê£¬¿¼ÂÇËõ·Å£©
+    // ï¿½ï¿½ï¿½ï¿½×ªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä»ï¿½ï¿½ï¿½ï¿½ <-> ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ê£¬ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Å£ï¿½
     wxPoint ScreenToCanvas(const wxPoint& screenPos) const;
     wxPoint CanvasToScreen(const wxPoint& canvasPos) const;
 
-    wxPoint m_offset;          // »­²¼Æ«ÒÆÁ¿£¨Æ½ÒÆ×ø±ê£©
+    wxPoint m_offset;          // ï¿½ï¿½ï¿½ï¿½Æ«ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ½ï¿½ï¿½ï¿½ï¿½ï¿½ê£©
 
-      // ÐÂÔö£ºÅÐ¶ÏÊÇ·ñµã»÷ÔÚ¿Õ°×ÇøÓò£¨ÎÞÔªËØ£©
+    // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð¶ï¿½ï¿½Ç·ï¿½ï¿½ï¿½ï¿½Ú¿Õ°ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ôªï¿½Ø£ï¿½
     bool IsClickOnEmptyArea(const wxPoint& canvasPos);
 
-    // ÊÂ¼þ´¦Àíº¯Êý£¨½«ÖÐ¼ü¸ÄÎª×ó¼üÏà¹Ø£©
+    // ï¿½Â¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð¼ï¿½ï¿½ï¿½Îªï¿½ï¿½ï¿½ï¿½ï¿½Ø£ï¿½
     void OnLeftDown(wxMouseEvent& evt);
     void OnLeftUp(wxMouseEvent& evt);
     void OnMouseMove(wxMouseEvent& evt);
     void OnKeyDown(wxKeyEvent& evt);
-    void OnMouseWheel(wxMouseEvent& evt);  
+    void OnMouseWheel(wxMouseEvent& evt);
     void OnRightDown(wxMouseEvent& evt);
     void OnRightUp(wxMouseEvent& evt);
     void OnCursorTimer(wxTimerEvent& event);
@@ -109,18 +109,18 @@ public:
 
     void CollectUndoAnchor(size_t elemIdx, std::vector<WireAnchor>& out);
 
-    // ±©Â¶Á¬ÏßÈÝÆ÷£¬¹©Íâ²¿·ÂÕæ/µ¼³öÊ¹ÓÃ
+    // ï¿½ï¿½Â¶ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½â²¿ï¿½ï¿½ï¿½ï¿½/ï¿½ï¿½ï¿½ï¿½Ê¹ï¿½ï¿½
     const std::vector<Wire>& GetWires() const { return m_wires; }
 
 
     void DeleteSelectedElement();
 
 
-    // ÎÄ±¾ÔªËØÏà¹Ø
+    // ï¿½Ä±ï¿½Ôªï¿½ï¿½ï¿½ï¿½ï¿½
     std::vector<CanvasTextElement> m_textElements;
-	int inWhichTextBox(const wxPoint& canvasPos);
+    int inWhichTextBox(const wxPoint& canvasPos);
     void CreateTextElement(const wxPoint& position);
-	void SetFocusToTextElement(int index);
+    void SetFocusToTextElement(int index);
 
     wxTextCtrl* m_hiddenTextCtrl;
     int m_currentEditingTextIndex;
@@ -129,7 +129,7 @@ public:
     void AttachHiddenTextCtrlToElement(int textIndex);
     void DetachHiddenTextCtrl();
 
-    /* ---------- Ô­ÓÐÔª¼þÏà¹Ø ---------- */
+    /* ---------- Ô­ï¿½ï¿½Ôªï¿½ï¿½ï¿½ï¿½ï¿½ ---------- */
     std::vector<CanvasElement> m_elements;
     int  m_selectedIndex = -1;
     bool m_isDragging = false;
@@ -140,8 +140,8 @@ public:
     void ClearElementWires(size_t elemIndex);
 
 
-    std::vector<Wire> m_wires;   // ÒÑ¶¨ÐÍµÄÁ¬Ïß
-    Wire m_tempWire;             // ÕýÔÚÍÏ¶¯/Ô¤ÀÀµÄÁ¬Ïß
+    std::vector<Wire> m_wires;   // ï¿½Ñ¶ï¿½ï¿½Íµï¿½ï¿½ï¿½ï¿½ï¿½
+    Wire m_tempWire;             // ï¿½ï¿½ï¿½ï¿½ï¿½Ï¶ï¿½/Ô¤ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 
 
     float m_scale = 1.0f;
@@ -152,7 +152,7 @@ public:
     int  HitTest(const wxPoint& pt);
 
 
-    // Îü¸½£ºÍø¸ñ + Òý½Å
+    // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ + ï¿½ï¿½ï¿½ï¿½
     wxPoint Snap(const wxPoint& raw, bool* snapped);
 
 
@@ -160,46 +160,46 @@ public:
 
     int HitHoverCell(const wxPoint& raw, int* wireIdx, int* cellIdx, wxPoint* cellPos);
 
-	// ¹¤¾ß¹ÜÀíÆ÷ÐèÒªµÄ½Ó¿Ú
+    int GetSelectedIndex() const { return m_selectedIndex; }
 public:
     void ClearSelection();
     void SetSelectedIndex(int index);
     int HitTestPublic(const wxPoint& pt);
     bool IsClickOnEmptyAreaPublic(const wxPoint& canvasPos);
 
-    // ¿ì½Ý¹¤¾ßÀ¸
+    // ï¿½ï¿½Ý¹ï¿½ï¿½ï¿½ï¿½ï¿½
     HandyToolKit* m_HandyToolKit;
 
-    // ¹¤¾ß×´Ì¬»ú
-	ToolStateMachine* m_toolStateMachine;
+    // ï¿½ï¿½ï¿½ï¿½×´Ì¬ï¿½ï¿½
+    ToolStateMachine* m_toolStateMachine;
 
-	// ¹¤¾ß¹ÜÀíÆ÷
+    // ï¿½ï¿½ï¿½ß¹ï¿½ï¿½ï¿½ï¿½ï¿½
     CanvasEventHandler* m_CanvasEventHandler;
 
-    // ¸üÐÂ×´Ì¬À¸·½·¨
+    // ï¿½ï¿½ï¿½ï¿½×´Ì¬ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
     void SetStatus(wxString status);
 
-	// ¶ÔÍâµÄ¹¤¾ß×´Ì¬½Ó¿Ú
-	void SetCurrentTool(ToolType tool);
-	void SetCurrentComponent(const wxString& componentName);
+    // ï¿½ï¿½ï¿½ï¿½Ä¹ï¿½ï¿½ï¿½×´Ì¬ï¿½Ó¿ï¿½
+    void SetCurrentTool(ToolType tool);
+    void SetCurrentComponent(const wxString& componentName);
 
-    // ÐüÍ£ÐÅÏ¢
-	HoverInfo m_hoverInfo;
+    // ï¿½ï¿½Í£ï¿½ï¿½Ï¢
+    HoverInfo m_hoverInfo;
 
-    // ÐüÍ£ÐÅÏ¢¼ì²â
+    // ï¿½ï¿½Í£ï¿½ï¿½Ï¢ï¿½ï¿½ï¿½
     void UpdateHoverInfo(const wxPoint& canvasPos);
 private:
-    // Ìí¼Ó½¹µã×´Ì¬
+    // ï¿½ï¿½ï¿½Ó½ï¿½ï¿½ï¿½×´Ì¬
     bool m_hasFocus;
 
-    // Ìí¼Ó½¹µãÊÂ¼þ´¦Àí
+    // ï¿½ï¿½ï¿½Ó½ï¿½ï¿½ï¿½ï¿½Â¼ï¿½ï¿½ï¿½ï¿½ï¿½
     void OnFocus(wxFocusEvent& event);
     void OnKillFocus(wxFocusEvent& event);
     void EnsureFocus();
 
 
 public:
-    // Òþ²ØµÄÎÄ±¾¿Ø¼þÓÃÓÚÊäÈë·¨Ö§³Ö
+    // ï¿½ï¿½ï¿½Øµï¿½ï¿½Ä±ï¿½ï¿½Ø¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ë·¨Ö§ï¿½ï¿½
     bool m_isUsingHiddenCtrl;
 
     void StartTextEditing(int index);
@@ -212,8 +212,8 @@ public:
     wxRect m_selectRect;
 
 private:
-    wxScrollBar* m_hScroll;    // Ë®Æ½¹ö¶¯Ìõ
-    wxScrollBar* m_vScroll;    // ´¹Ö±¹ö¶¯Ìõ
+    wxScrollBar* m_hScroll;    // Ë®Æ½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    wxScrollBar* m_vScroll;    // ï¿½ï¿½Ö±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 
 public:
     void LayoutScrollbars();
@@ -222,13 +222,13 @@ public:
     std::pair<float, float> ValidScaleRange();
     void SetoffSet(wxPoint offset);
 
-    // Âß¼­×ø±ê ¡ú Éè±¸×ø±ê
+    // ï¿½ß¼ï¿½ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½è±¸ï¿½ï¿½ï¿½ï¿½
     wxPoint LogicToDevice(const wxPoint& logicPoint) const;
-    // Éè±¸×ø±ê ¡ú Âß¼­×ø±ê  
+    // ï¿½è±¸ï¿½ï¿½ï¿½ï¿½ ï¿½ï¿½ ï¿½ß¼ï¿½ï¿½ï¿½ï¿½ï¿½  
     wxPoint DeviceToLogic(const wxPoint& devicePoint) const;
 
 private:
-	CanvasElement m_previewElement = CanvasElement("AND GATE", wxPoint(0,0)); // Ô¤ÀÀÔª¼þÖ¸Õë
+    CanvasElement m_previewElement = CanvasElement("AND GATE", wxPoint(0, 0)); // Ô¤ï¿½ï¿½Ôªï¿½ï¿½Ö¸ï¿½ï¿½
 public:
     void SetPreviewElement(const wxString& name, wxPoint pos);
 
@@ -240,5 +240,5 @@ public:
 
 
 
-wxDECLARE_EVENT_TABLE();
+    wxDECLARE_EVENT_TABLE();
 };

@@ -21,7 +21,7 @@ class PropertyPanel : public wxPanel
 {
 public:
     PropertyPanel(wxWindow* parent);
-    void ShowElement(const wxString& name);   // 显示元素属性
+    void ShowElement(const wxString& name, const std::map<wxString, wxVariant>& currentProps = {});    // 显示元素属性
 
 private:
     wxStaticText* m_title;                    // 标题
@@ -32,5 +32,5 @@ private:
 
     // 私有方法
     void InitToolPropertyMap();               // 初始化属性映射表
-    void UpdateProperties(const wxString& toolName); // 更新属性显示
+    void UpdateProperties(const wxString& toolName, const std::map<wxString, wxVariant>& currentProps = {});  // 更新属性显示
 };

@@ -1,4 +1,4 @@
-#include "UndoStack.h"
+ï»¿#include "UndoStack.h"
 #include "CanvasPanel.h"
 #include "UndoNotifier.h"
 
@@ -27,7 +27,7 @@ void UndoStack::Push(std::unique_ptr<Command> cmd)
     m_stack.emplace_back(std::move(cmd));
     if (m_stack.size() > m_limit)
         m_stack.erase(m_stack.begin());
-    // ·¢³öÍ¨Öª
+    // ï¿½ï¿½ï¿½ï¿½Í¨Öª
     UndoNotifier::Notify(GetUndoName(), CanUndo());
 }
 
@@ -48,17 +48,17 @@ void CmdMoveElement::undo(CanvasPanel* canvas)
 {
     if (m_index >= canvas->m_elements.size()) return;
 
-    /* 1. »Ö¸´Ôª¼þÎ»ÖÃ */
+    /* 1. ï¿½Ö¸ï¿½Ôªï¿½ï¿½Î»ï¿½ï¿½ */
     canvas->m_elements[m_index].SetPos(m_oldPos);
 
-    /* 2. »Ö¸´µ¼Ïß¶Ëµã */
+    /* 2. ï¿½Ö¸ï¿½ï¿½ï¿½ï¿½ß¶Ëµï¿½ */
     for (const auto& a : m_anchors) {
         if (a.wireIdx >= canvas->m_wires.size()) continue;
         auto& wire = canvas->m_wires[a.wireIdx];
         if (a.ptIdx < wire.pts.size())
             wire.pts[a.ptIdx].pos = a.oldPos;
 
-        // ÖØÐÂ²¼Ïß & Ð¡¸ñ
+        // ï¿½ï¿½ï¿½Â²ï¿½ï¿½ï¿½ & Ð¡ï¿½ï¿½
         wire.pts = Wire::Route(wire.pts.front(), wire.pts.back());
         wire.GenerateCells();
     }
@@ -75,10 +75,10 @@ void CmdAddWire::undo(CanvasPanel* canvas)
 }
 
 void CmdAddBranchWire::undo(CanvasPanel* canvas) {
-    // É¾³ý·ÖÖ§¹ØÏµ - ³·Ïú²Ù×÷
+    // É¾ï¿½ï¿½ï¿½ï¿½Ö§ï¿½ï¿½Ïµ - ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
     if (canvas && m_parentWire < canvas->GetWires().size() &&
         m_branchWire < canvas->GetWires().size()) {
 
-        // µ÷ÓÃ CanvasPanel µÄ·½·¨À´ÒÆ³ý·ÖÖ§Á¬½Ó
+        // ï¿½ï¿½ï¿½ï¿½ CanvasPanel ï¿½Ä·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ³ï¿½ï¿½ï¿½Ö§ï¿½ï¿½ï¿½ï¿½
     }
 }

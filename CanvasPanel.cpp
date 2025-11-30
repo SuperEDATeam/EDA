@@ -20,7 +20,7 @@ EVT_RIGHT_UP(CanvasPanel::OnRightUp)
 EVT_MOTION(CanvasPanel::OnMouseMove)
 EVT_KEY_DOWN(CanvasPanel::OnKeyDown)
 EVT_MOUSEWHEEL(CanvasPanel::OnMouseWheel)
-EVT_SET_FOCUS(CanvasPanel::OnFocus)   
+EVT_SET_FOCUS(CanvasPanel::OnFocus)
 EVT_KILL_FOCUS(CanvasPanel::OnKillFocus)
 EVT_SCROLL(CanvasPanel::OnScroll)
 wxEND_EVENT_TABLE()
@@ -29,7 +29,7 @@ CanvasPanel::CanvasPanel(MainFrame* parent, size_t size_x, size_t size_y)
     : wxPanel(parent, wxID_ANY, wxDefaultPosition, wxDefaultSize,
         wxFULL_REPAINT_ON_RESIZE | wxBORDER_NONE),
     m_mainFrame(parent),
-    m_size{wxPoint(size_x,size_y)},
+    m_size{ wxPoint(size_x,size_y) },
     m_offset(0, 0), m_scale(1.0f),
     m_selectedIndex(-1), m_isDragging(false), m_hoverInfo{}, m_hasFocus(false),
     m_hiddenTextCtrl(nullptr),
@@ -37,20 +37,20 @@ CanvasPanel::CanvasPanel(MainFrame* parent, size_t size_x, size_t size_y)
     SetupHiddenTextCtrl();
 
     //滚动条
-	m_vScroll = new wxScrollBar(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxSB_VERTICAL);
-	m_hScroll = new wxScrollBar(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxSB_HORIZONTAL);
+    m_vScroll = new wxScrollBar(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxSB_VERTICAL);
+    m_hScroll = new wxScrollBar(this, wxID_ANY, wxDefaultPosition, wxDefaultSize, wxSB_HORIZONTAL);
     LayoutScrollbars();
 
     // 工具状态机
     m_toolStateMachine = new ToolStateMachine(this);
 
-	// 工具管理器
-	m_CanvasEventHandler = new CanvasEventHandler(this, m_toolStateMachine);
+    // 工具管理器
+    m_CanvasEventHandler = new CanvasEventHandler(this, m_toolStateMachine);
 
     // 快捷工具栏
     m_HandyToolKit = new HandyToolKit(this, m_CanvasEventHandler);
 
-	m_CanvasEventHandler->SetCurrentTool(ToolType::SELECT_TOOL);
+    m_CanvasEventHandler->SetCurrentTool(ToolType::SELECT_TOOL);
 
     SetBackgroundStyle(wxBG_STYLE_PAINT);
     SetBackgroundColour(*wxWHITE);
@@ -120,7 +120,7 @@ void CanvasPanel::OnMouseMove(wxMouseEvent& evt) {
             return; // 工具管理器已处理事件
         }
     }
-    
+
     evt.Skip();
 }
 
@@ -185,7 +185,10 @@ void CanvasPanel::OnLeftUp(wxMouseEvent& evt)
     {
         const wxPoint& newPos = m_elements[draggedIndex].GetPos();
         if (newPos != startPos) {
-            m_undoStack.Push(std::make_unique<CmdMoveElement>(draggedIndex, startPos, anchors));
+            // 新增：获取元件移动前的旋转角度（oldRotation）
+            int oldRotation = m_elements[draggedIndex].GetRotation();
+            // 现在传4个参数，匹配 CmdMoveElement 的构造函数
+            m_undoStack.Push(std::make_unique<CmdMoveElement>(draggedIndex, startPos, oldRotation, anchors));
             MainFrame* mf = wxDynamicCast(GetParent(), MainFrame);
             if (mf) mf->OnUndoStackChanged();
         }
@@ -206,9 +209,9 @@ void CanvasPanel::OnLeftUp(wxMouseEvent& evt)
         }
     }
 
-            // 重置拖动状态
-            m_isDragging = false;
-            evt.Skip();
+    // 重置拖动状态
+    m_isDragging = false;
+    evt.Skip();
 }
 
 void CanvasPanel::OnKeyDown(wxKeyEvent& evt) {
@@ -223,7 +226,7 @@ void CanvasPanel::OnKeyDown(wxKeyEvent& evt) {
 
 void CanvasPanel::OnMouseWheel(wxMouseEvent& evt) {
     // 交给工具管理器处理
-    if (m_CanvasEventHandler){
+    if (m_CanvasEventHandler) {
         m_CanvasEventHandler->OnCanvasMouseWheel(evt);
         if (m_CanvasEventHandler->IsEventHandled()) {
             return; // 工具管理器已处理事件
@@ -245,13 +248,13 @@ bool CanvasPanel::IsClickOnEmptyArea(const wxPoint& canvasPos)
     //return true; // 空白区域
     if (m_hoverInfo.IsOverCell() || m_hoverInfo.IsOverElement() || m_hoverInfo.IsOverPin()) return false;
     else return true;
-}  
+}
 
 // 新增：设置缩放比例（限制范围0.1~5.0，避免过度缩放）
 void CanvasPanel::SetScale(float scale)
 {
-	float min_scale, max_scale;
-	std::tie(min_scale, max_scale) = ValidScaleRange();
+    float min_scale, max_scale;
+    std::tie(min_scale, max_scale) = ValidScaleRange();
     if (scale < min_scale) scale = min_scale;
     if (scale > max_scale) scale = max_scale;
     m_scale = scale;
@@ -323,7 +326,7 @@ void CanvasPanel::OnPaint(wxPaintEvent&) {
         //const wxColour gridColor(50, 60, 80);
         gc->SetPen(wxPen(gridColor, 1.0 / m_scale)); // 笔宽在逻辑坐标下调整
 
-        wxSize sz = wxSize(m_size.x+1, m_size.y+1);
+        wxSize sz = wxSize(m_size.x + 1, m_size.y + 1);
         int maxX = static_cast<int>(sz.x);
         int maxY = static_cast<int>(sz.y);
 
@@ -343,7 +346,7 @@ void CanvasPanel::OnPaint(wxPaintEvent&) {
         for (size_t i = 0; i < m_elements.size(); ++i) {
             m_elements[i].Draw(*gcdc); // 确保元素内部使用gc绘制
         }
-       
+
 
         // 3. 绘制导线（矢量线段）
         gc->SetPen(wxPen(*wxBLACK, 1.5 / m_scale)); // 导线宽度自适应
@@ -371,9 +374,9 @@ void CanvasPanel::OnPaint(wxPaintEvent&) {
         // 绘制选中边框
         for (size_t i = 0; i < m_CanvasEventHandler->m_compntIdx.size(); i++) {
             wxRect b = m_elements[m_CanvasEventHandler->m_compntIdx[i]].GetBounds();
-            gc->SetPen(wxPen(wxColor(44, 145, 224), 2.0 ));
+            gc->SetPen(wxPen(wxColor(44, 145, 224), 2.0));
             gc->SetBrush(*wxTRANSPARENT_BRUSH);
-            gc->DrawRectangle(b.x-2, b.y-3, b.width+5, b.height+5);
+            gc->DrawRectangle(b.x - 2, b.y - 3, b.width + 5, b.height + 5);
 
             gc->SetPen(wxPen(wxColor(44, 145, 224, 32), 2.0));
             gc->SetBrush(*wxTRANSPARENT_BRUSH);
@@ -405,9 +408,9 @@ void CanvasPanel::OnPaint(wxPaintEvent&) {
         // 绘制选择边框
         if (m_toolStateMachine->GetSelectState() == SelectToolState::RECTANGLE_SELECT) {
             wxRect selRect = m_selectRect;
-			gc->SetPen(wxPen(wxColor(44, 145, 224), 2 / m_scale));
-			gc->SetBrush(wxColor(44, 145, 224, 32));
-			gc->DrawRectangle(selRect.x, selRect.y, selRect.width, selRect.height);
+            gc->SetPen(wxPen(wxColor(44, 145, 224), 2 / m_scale));
+            gc->SetBrush(wxColor(44, 145, 224, 32));
+            gc->DrawRectangle(selRect.x, selRect.y, selRect.width, selRect.height);
         }
 
 
@@ -435,7 +438,7 @@ void CanvasPanel::OnPaint(wxPaintEvent&) {
         // 绘制预览元素
         if (m_toolStateMachine->GetComponentState() == ComponentToolState::COMPONENT_PREVIEW) {
             m_previewElement.Draw(dc);
-		}
+        }
 
         // 2. 绘制元素（元素坐标已在CanvasElement内部维护，缩放由DC自动处理）
         for (size_t i = 0; i < m_elements.size(); ++i) {
@@ -476,12 +479,14 @@ void CanvasPanel::OnPaint(wxPaintEvent&) {
 }
 
 //================= 放置元件 =================
-void CanvasPanel::PlaceElement(const wxString& name, const wxPoint& pos){
+void CanvasPanel::PlaceElement(const wxString& name, const wxPoint& pos) {
     extern std::vector<CanvasElement> g_elements;
     auto it = std::find_if(g_elements.begin(), g_elements.end(),
         [&](const CanvasElement& e) { return e.GetName() == name; });
     if (it == g_elements.end()) return;
     CanvasElement clone = *it;
+    clone.SetRotation(0); // 默认East朝向
+
 
     // 修复：检查引脚是否存在
     wxPoint standardpos = pos;
@@ -579,7 +584,7 @@ int CanvasPanel::HitHoverCell(const wxPoint& raw, int* wireIdx, int* cellIdx, wx
 
     // 首先将点击位置对齐到最近的网格点
     wxPoint alignedRaw((raw.x + GRID_SIZE / 2) / GRID_SIZE * GRID_SIZE, (raw.y + GRID_SIZE / 2) / GRID_SIZE * GRID_SIZE);
-   
+
     for (size_t w = 0; w < m_wires.size(); ++w) {
         const auto& wire = m_wires[w];
         for (size_t c = 0; c < wire.cells.size(); ++c) {
@@ -709,146 +714,146 @@ bool CanvasPanel::IsClickOnEmptyAreaPublic(const wxPoint& canvasPos) {
     return IsClickOnEmptyArea(canvasPos);
 }
 
-    void CanvasPanel::OnRightDown(wxMouseEvent& evt) {
-        // 右键按下时也触发左键抬起事件
-        wxPoint rawScreenPos = evt.GetPosition();
-        wxPoint rawCanvasPos = ScreenToCanvas(rawScreenPos);
-        // 交给工具管理器处理
+void CanvasPanel::OnRightDown(wxMouseEvent& evt) {
+    // 右键按下时也触发左键抬起事件
+    wxPoint rawScreenPos = evt.GetPosition();
+    wxPoint rawCanvasPos = ScreenToCanvas(rawScreenPos);
+    // 交给工具管理器处理
 
-        if (m_CanvasEventHandler) {
-            m_CanvasEventHandler->OnCanvasRightDown(evt);
-            if (m_CanvasEventHandler->IsEventHandled()) {
-                return; // 工具管理器已处理事件
+    if (m_CanvasEventHandler) {
+        m_CanvasEventHandler->OnCanvasRightDown(evt);
+        if (m_CanvasEventHandler->IsEventHandled()) {
+            return; // 工具管理器已处理事件
+        }
+    }
+    evt.Skip();
+}
+
+void CanvasPanel::OnRightUp(wxMouseEvent& evt) {
+    // 右键按下时也触发左键抬起事件
+    wxPoint rawScreenPos = evt.GetPosition();
+    wxPoint rawCanvasPos = ScreenToCanvas(rawScreenPos);
+    // 交给工具管理器处理
+    if (m_CanvasEventHandler) {
+        m_CanvasEventHandler->OnCanvasRightUp(evt);
+        if (m_CanvasEventHandler->IsEventHandled()) {
+            return; // 工具管理器已处理事件
+        }
+    }
+
+    evt.Skip();
+}
+
+void CanvasPanel::SetStatus(wxString status) {
+    wxString hover = "";
+    if (m_hoverInfo.IsOverPin()) {
+        hover = (wxString::Format("悬停于: %sPin[%d]",
+            m_hoverInfo.isInputPin ? "Input" : "Output", m_hoverInfo.pinIndex));
+    }
+    else if (m_hoverInfo.IsOverCell()) {
+        hover = (wxString::Format("悬停于: Wire[%d] Cell[%d]",
+            m_hoverInfo.wireIndex, m_hoverInfo.cellIndex));
+    }
+    else if (m_hoverInfo.IsOverElement()) {
+        hover = (wxString::Format("悬停于: Component[%s]",
+            m_hoverInfo.elementName));
+    }
+    else {
+        hover = wxString::Format("悬停于: 无悬停对象");
+    }
+
+    wxString cursor = wxString::Format("指针位置: (%d, %d)", m_hoverInfo.pos.x, m_hoverInfo.pos.y);
+
+    wxString zoom = wxString::Format("缩放：%d%%", int(m_scale * 100));
+
+    m_mainFrame->SetStatusText(status, 0);
+    m_mainFrame->SetStatusText(cursor, 1);
+    m_mainFrame->SetStatusText(hover, 2);
+    m_mainFrame->SetStatusText(zoom, 3);
+}
+
+void CanvasPanel::SetCurrentTool(ToolType tool) {
+    m_toolStateMachine->SetCurrentTool(tool);
+}
+
+void CanvasPanel::SetCurrentComponent(const wxString& componentName) {
+    if (m_toolStateMachine->GetCurrentTool() != ToolType::COMPONENT_TOOL) {
+        m_toolStateMachine->SetCurrentTool(ToolType::COMPONENT_TOOL);
+        m_toolStateMachine->SetComponentState(ComponentToolState::COMPONENT_PREVIEW);
+    }
+    m_CanvasEventHandler->SetCurrentComponent(componentName);
+}
+
+void CanvasPanel::UpdateHoverInfo(const wxPoint& canvasPos) {
+    m_hoverInfo.pos = canvasPos;
+
+    bool snapped = false;
+    m_hoverInfo.snappedPos = Snap(canvasPos, &snapped);
+
+    // 悬停引脚信息检测
+    bool isInput = false;
+    wxPoint pinWorldPos;
+    int pinIdx = HitHoverPin(canvasPos, &isInput, &pinWorldPos);
+
+    // 导线控制点信息检测
+    int cellWire = -1;
+    int cellIdx = -1;
+    wxPoint cellWorldPos;
+    int hitCellIdx = HitHoverCell(canvasPos, &cellWire, &cellIdx, &cellWorldPos);
+
+    // 悬停元件信息检测
+    int elementIndex = HitTestPublic(canvasPos);
+
+    // 更新信息
+    m_hoverInfo.pinIndex = pinIdx;
+    m_hoverInfo.isInputPin = isInput;
+    m_hoverInfo.pinWorldPos = pinWorldPos;
+
+    m_hoverInfo.cellIndex = cellIdx;
+    m_hoverInfo.wireIndex = cellWire;
+    m_hoverInfo.cellWorldPos = cellWorldPos;
+
+    m_hoverInfo.elementIndex = elementIndex;
+    if (elementIndex != -1) m_hoverInfo.elementName = m_elements[elementIndex].GetName();
+    else m_hoverInfo.elementName = "";
+
+    Refresh(); // 触发重绘以显示悬停效果
+}
+
+void CanvasPanel::CollectUndoAnchor(size_t elemIdx, std::vector<WireAnchor>& out) {
+    out.clear();
+    if (elemIdx >= m_elements.size()) return;
+
+    const auto& elem = m_elements[elemIdx];
+    auto collect = [&](const auto& pins, bool isInput) {
+        for (size_t pinIdx = 0; pinIdx < pins.size(); ++pinIdx) {
+            const auto& pin = pins[pinIdx];
+            wxPoint pinWorld = elem.GetPos() + wxPoint(pin.pos.x, pin.pos.y);
+            for (size_t w = 0; w < m_wires.size(); ++w) {
+                const auto& wire = m_wires[w];
+                if (!wire.pts.empty() && wire.pts.front().pos == pinWorld)
+                    out.emplace_back(WireAnchor{ w, 0, isInput, pinIdx });
+                if (wire.pts.size() > 1 && wire.pts.back().pos == pinWorld)
+                    out.emplace_back(WireAnchor{ w, wire.pts.size() - 1, isInput, pinIdx });
             }
         }
-        evt.Skip();
-	}
+        };
 
-    void CanvasPanel::OnRightUp(wxMouseEvent& evt) {
-        // 右键按下时也触发左键抬起事件
-        wxPoint rawScreenPos = evt.GetPosition();
-        wxPoint rawCanvasPos = ScreenToCanvas(rawScreenPos);
-        // 交给工具管理器处理
-        if (m_CanvasEventHandler) {
-            m_CanvasEventHandler->OnCanvasRightUp(evt);
-            if (m_CanvasEventHandler->IsEventHandled()) {
-                return; // 工具管理器已处理事件
-            }
-        }
-
-        evt.Skip();
-    }
-
-    void CanvasPanel::SetStatus(wxString status) {
-		wxString hover = "";
-        if (m_hoverInfo.IsOverPin()) {
-            hover = (wxString::Format("悬停于: %sPin[%d]",
-                m_hoverInfo.isInputPin ? "Input" : "Output", m_hoverInfo.pinIndex));
-        }
-        else if (m_hoverInfo.IsOverCell()) {
-            hover = (wxString::Format("悬停于: Wire[%d] Cell[%d]",
-                m_hoverInfo.wireIndex, m_hoverInfo.cellIndex));
-        }
-        else if (m_hoverInfo.IsOverElement()) {
-            hover =(wxString::Format("悬停于: Component[%s]",
-                m_hoverInfo.elementName));
-        }
-        else {
-            hover = wxString::Format("悬停于: 无悬停对象");
-        }
-
-        wxString cursor = wxString::Format("指针位置: (%d, %d)", m_hoverInfo.pos.x, m_hoverInfo.pos.y);
-
-        wxString zoom = wxString::Format("缩放：%d%%", int(m_scale*100));
-
-        m_mainFrame->SetStatusText(status, 0);
-        m_mainFrame->SetStatusText(cursor, 1);
-        m_mainFrame->SetStatusText(hover, 2);
-        m_mainFrame->SetStatusText(zoom, 3);
-    }
-
-    void CanvasPanel::SetCurrentTool(ToolType tool) {
-		m_toolStateMachine->SetCurrentTool(tool);
-    }
-
-    void CanvasPanel::SetCurrentComponent(const wxString& componentName) {
-        if (m_toolStateMachine->GetCurrentTool() != ToolType::COMPONENT_TOOL) {
-            m_toolStateMachine->SetCurrentTool(ToolType::COMPONENT_TOOL);
-			m_toolStateMachine->SetComponentState(ComponentToolState::COMPONENT_PREVIEW);
-		}
-		m_CanvasEventHandler->SetCurrentComponent(componentName);
-    }
-
-    void CanvasPanel::UpdateHoverInfo(const wxPoint& canvasPos) {
-        m_hoverInfo.pos = canvasPos;
-
-        bool snapped = false;
-        m_hoverInfo.snappedPos = Snap(canvasPos, &snapped);
-
-        // 悬停引脚信息检测
-        bool isInput = false;
-        wxPoint pinWorldPos;
-		int pinIdx = HitHoverPin(canvasPos, &isInput, &pinWorldPos);
-
-		// 导线控制点信息检测
-        int cellWire = -1;
-        int cellIdx = -1;
-		wxPoint cellWorldPos;
-		int hitCellIdx = HitHoverCell(canvasPos, &cellWire, &cellIdx, &cellWorldPos);
-
-		// 悬停元件信息检测
-        int elementIndex = HitTestPublic(canvasPos);
-
-        // 更新信息
-        m_hoverInfo.pinIndex = pinIdx;
-		m_hoverInfo.isInputPin = isInput;
-		m_hoverInfo.pinWorldPos = pinWorldPos;
-
-        m_hoverInfo.cellIndex = cellIdx;
-        m_hoverInfo.wireIndex = cellWire;
-		m_hoverInfo.cellWorldPos = cellWorldPos;
-
-        m_hoverInfo.elementIndex = elementIndex;
-        if (elementIndex != -1) m_hoverInfo.elementName = m_elements[elementIndex].GetName();
-        else m_hoverInfo.elementName = "";
-        
-		Refresh(); // 触发重绘以显示悬停效果
-    }
-
-    void CanvasPanel::CollectUndoAnchor(size_t elemIdx, std::vector<WireAnchor>& out) {
-        out.clear();
-        if (elemIdx >= m_elements.size()) return;
-
-        const auto& elem = m_elements[elemIdx];
-        auto collect = [&](const auto& pins, bool isInput) {
-            for (size_t pinIdx = 0; pinIdx < pins.size(); ++pinIdx) {
-                const auto& pin = pins[pinIdx];
-                wxPoint pinWorld = elem.GetPos() + wxPoint(pin.pos.x, pin.pos.y);
-                for (size_t w = 0; w < m_wires.size(); ++w) {
-                    const auto& wire = m_wires[w];
-                    if (!wire.pts.empty() && wire.pts.front().pos == pinWorld)
-                        out.emplace_back(WireAnchor{ w, 0, isInput, pinIdx });
-                    if (wire.pts.size() > 1 && wire.pts.back().pos == pinWorld)
-                        out.emplace_back(WireAnchor{ w, wire.pts.size() - 1, isInput, pinIdx });
-                }
-            }
-            };
-
-        collect(elem.GetInputPins(), true);
-        collect(elem.GetOutputPins(), false);
-    }
+    collect(elem.GetInputPins(), true);
+    collect(elem.GetOutputPins(), false);
+}
 
 void CanvasPanel::OnCursorTimer(wxTimerEvent& event) {
     // 转发到toolmanager
-	//MainFrame* mainFrame = wxDynamicCast(GetParent(), MainFrame);
+    //MainFrame* mainFrame = wxDynamicCast(GetParent(), MainFrame);
  //   if (mainFrame && mainFrame->GetToolManager()) {
  //       mainFrame->GetToolManager()->OnCursorTimer(event);
-	//}
-	event.Skip();
+    //}
+    event.Skip();
 }
 
 void CanvasPanel::SetFocusToTextElement(int index) {
-	SetFocus();
+    SetFocus();
 }
 
 void CanvasPanel::OnFocus(wxFocusEvent& event) {
@@ -962,15 +967,15 @@ void CanvasPanel::LayoutScrollbars()
 
 
     // 水平滚动条：底部，宽度要减去垂直滚动条的宽度
-    m_hScroll->SetSize(clientSize.x- width, width);
-    m_hScroll->SetPosition(wxPoint(0, clientSize.y-width));
-    m_hScroll->SetThumbSize((clientSize.x - width -1)/m_scale);
+    m_hScroll->SetSize(clientSize.x - width, width);
+    m_hScroll->SetPosition(wxPoint(0, clientSize.y - width));
+    m_hScroll->SetThumbSize((clientSize.x - width - 1) / m_scale);
     m_hScroll->SetRange(m_size.x);
     m_hScroll->SetThumbPosition(-m_offset.x / m_scale);
 
     // 垂直滚动条：右侧，高度要减去水平滚动条的高度   
     m_vScroll->SetSize(width, clientSize.y);
-    m_vScroll->SetPosition(wxPoint(clientSize.x- width, 0));
+    m_vScroll->SetPosition(wxPoint(clientSize.x - width, 0));
     m_vScroll->SetThumbSize((clientSize.y - width - 1) / m_scale);
     m_vScroll->SetRange(m_size.y);
     m_vScroll->SetThumbPosition(-m_offset.y / m_scale);
@@ -979,13 +984,13 @@ void CanvasPanel::LayoutScrollbars()
 }
 
 void CanvasPanel::SetoffSet(wxPoint offset) {
-	wxPoint min_offset, max_offset;
-	std::tie(min_offset, max_offset) = ValidSetOffRange();
-	if (offset.x < min_offset.x) offset.x = min_offset.x;
-	if (offset.x > max_offset.x) offset.x = max_offset.x;
-	if (offset.y < min_offset.y) offset.y = min_offset.y;
-	if (offset.y > max_offset.y) offset.y = max_offset.y;
-	m_offset = offset;
+    wxPoint min_offset, max_offset;
+    std::tie(min_offset, max_offset) = ValidSetOffRange();
+    if (offset.x < min_offset.x) offset.x = min_offset.x;
+    if (offset.x > max_offset.x) offset.x = max_offset.x;
+    if (offset.y < min_offset.y) offset.y = min_offset.y;
+    if (offset.y > max_offset.y) offset.y = max_offset.y;
+    m_offset = offset;
 }
 
 wxPoint CanvasPanel::LogicToDevice(const wxPoint& logicPoint) const
@@ -1006,24 +1011,24 @@ wxPoint CanvasPanel::DeviceToLogic(const wxPoint& devicePoint) const
 }
 
 std::pair<wxPoint, wxPoint> CanvasPanel::ValidSetOffRange() {
-	// (0, 0)的逻辑坐标对应的设备坐标为 m_offset，因此m_offset的最大值为(0,0)
+    // (0, 0)的逻辑坐标对应的设备坐标为 m_offset，因此m_offset的最大值为(0,0)
     wxPoint maxOffset(0, 0);
-	// 计算逻辑坐标 (m_size.x, m_size.y) 对应的设备坐标的最大值为 (GetClientSize().x- m_hScroll->GetSize().y - 1, GetClientSize().y- m_hScroll->GetSize().y - 1)，此时的 m_offset 即为最小值
+    // 计算逻辑坐标 (m_size.x, m_size.y) 对应的设备坐标的最大值为 (GetClientSize().x- m_hScroll->GetSize().y - 1, GetClientSize().y- m_hScroll->GetSize().y - 1)，此时的 m_offset 即为最小值
     wxPoint minOffset(
         GetClientSize().x - static_cast<int>(m_size.x * m_scale) - m_hScroll->GetSize().y - 1,
         GetClientSize().y - static_cast<int>(m_size.y * m_scale) - m_hScroll->GetSize().y - 1
-	);
+    );
 
-	return std::make_pair(minOffset, maxOffset);
+    return std::make_pair(minOffset, maxOffset);
 }
 
 std::pair<float, float> CanvasPanel::ValidScaleRange() {
-	// 对于最右侧最下侧的逻辑坐标 (m_size.x, m_size.y) 对应的设备坐标恰好为 (GetClientSize().x- m_hScroll->GetSize().y - 1, GetClientSize().y- m_hScroll->GetSize().y - 1) 时，计算出最小缩放比例
+    // 对于最右侧最下侧的逻辑坐标 (m_size.x, m_size.y) 对应的设备坐标恰好为 (GetClientSize().x- m_hScroll->GetSize().y - 1, GetClientSize().y- m_hScroll->GetSize().y - 1) 时，计算出最小缩放比例
     float minScaleX = static_cast<float>((GetClientSize().x - m_hScroll->GetSize().y - 1) - m_offset.x) / static_cast<float>(m_size.x);
     float minScaleY = static_cast<float>((GetClientSize().y - m_hScroll->GetSize().y - 1) - m_offset.y) / static_cast<float>(m_size.y);
     float minScale = std::max(minScaleX, minScaleY);
-	float maxScale = 5.0f; // 最大缩放比例
-	return std::make_pair(minScale, maxScale);
+    float maxScale = 5.0f; // 最大缩放比例
+    return std::make_pair(minScale, maxScale);
 }
 
 void CanvasPanel::SetPreviewElement(const wxString& name, wxPoint pos) {
@@ -1048,6 +1053,6 @@ void CanvasPanel::SetPreviewElement(const wxString& name, wxPoint pos) {
         standardpos = pos - wxPoint(standardPin.pos.x + grid, standardPin.pos.y - grid);
     }
     clone.SetPos(standardpos);
-	m_previewElement = clone;
+    m_previewElement = clone;
     Refresh();
 }

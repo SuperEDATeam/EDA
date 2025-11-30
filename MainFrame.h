@@ -1,16 +1,16 @@
-#pragma once
+ï»¿#pragma once
 #include <wx/wx.h>
 #include <wx/aui/aui.h>
 #include "PropertyPanel.h"
 #include "CanvasPanel.h"
 #include "3rd/json/json.h"
-#include <wx/file.h>  // °üº¬wxFileÀàµÄ¶¨Òå
+#include <wx/file.h>  // ï¿½ï¿½ï¿½ï¿½wxFileï¿½ï¿½Ä¶ï¿½ï¿½ï¿½
 #include <wx/xml/xml.h>
 #include <wx/mstream.h>
 #include "ToolBars.h"
 
-class ToolBars;   // Ç°ÏòÉùÃ÷
-class CanvasPanel; // Ç°ÏòÉùÃ÷
+class ToolBars;   // Ç°ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+class CanvasPanel; // Ç°ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 class HandyToolKit;
 
 class MainFrame : public wxFrame
@@ -19,13 +19,13 @@ class MainFrame : public wxFrame
 
 
 private:
-    // ÔÚÕâÀï¶¨Òå m_currentFilePath
-    wxString m_currentFilePath;  // ¼ÇÂ¼µ±Ç°ÎÄ¼þµÄ±£´æÂ·¾¶£¨Îª¿Õ±íÊ¾Î´±£´æ£©
-    bool m_isModified;           // ±ê¼ÇÎÄ¼þÊÇ·ñ±»ÐÞ¸Ä£¨ÅäºÏ±£´æÂß¼­£©
+    // ï¿½ï¿½ï¿½ï¿½ï¿½ï¶¨ï¿½ï¿½ m_currentFilePath
+    wxString m_currentFilePath;  // ï¿½ï¿½Â¼ï¿½ï¿½Ç°ï¿½Ä¼ï¿½ï¿½Ä±ï¿½ï¿½ï¿½Â·ï¿½ï¿½ï¿½ï¿½Îªï¿½Õ±ï¿½Ê¾Î´ï¿½ï¿½ï¿½æ£©
+    bool m_isModified;           // ï¿½ï¿½ï¿½ï¿½Ä¼ï¿½ï¿½Ç·ï¿½ï¿½Þ¸Ä£ï¿½ï¿½ï¿½Ï±ï¿½ï¿½ï¿½ï¿½ß¼ï¿½ï¿½ï¿½
 
-    // ÆäËûË½ÓÐ³ÉÔ±±äÁ¿...
+    // ï¿½ï¿½ï¿½ï¿½Ë½ï¿½Ð³ï¿½Ô±ï¿½ï¿½ï¿½ï¿½...
 private:
-    // Ë½ÓÐ¸¨Öú·½·¨ÉùÃ÷...
+    // Ë½ï¿½Ð¸ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½...
     bool SaveToFile(const wxString& filePath);
     wxString GenerateFileContent();
 private:
@@ -33,10 +33,10 @@ private:
     void AddWireNode(wxXmlNode* parent, const wxString& from, const wxString& to);
     bool SaveAsNodeFile(const wxString& filePath);
     bool SaveAsNetFile(const wxString& filePath);
-    // ÐÂÔö£º¹Ø±ÕÊÂ¼þ´¦Àíº¯ÊýÉùÃ÷
+    // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ø±ï¿½ï¿½Â¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
     void OnClose(wxCloseEvent& event);
     // ...
-    void OnToolSelected(wxCommandEvent& evt);  // ´¦Àí¹¤¾ßÑ¡ÔñÊÂ¼þ
+    void OnToolSelected(wxCommandEvent& evt);  // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ñ¡ï¿½ï¿½ï¿½Â¼ï¿½
 
 public:
     MainFrame();
@@ -44,17 +44,17 @@ public:
 
     void OnUndoStackChanged();
 
-    /* File ²Ëµ¥ÒµÎñ½Ó¿Ú */
+    /* File ï¿½Ëµï¿½Òµï¿½ï¿½Ó¿ï¿½ */
     void DoFileNew();
     void DoFileOpen(const wxString& path = {});
     void DoFileSave();
     void DoFileSaveAs();
-    void DoFileSaveAsNode();  // ±£´æÎª.nodeÎÄ¼þ
-    void DoFileSaveAsNet();   // ±£´æÎª.netÎÄ¼þ
+    void DoFileSaveAsNode();  // ï¿½ï¿½ï¿½ï¿½Îª.nodeï¿½Ä¼ï¿½
+    void DoFileSaveAsNet();   // ï¿½ï¿½ï¿½ï¿½Îª.netï¿½Ä¼ï¿½
     void OnQuit(wxCommandEvent&) { Close(true); }
     void OnAbout(wxCommandEvent&);
 
-    /* Edit ²Ëµ¥ÒµÎñ½Ó¿Ú */
+    /* Edit ï¿½Ëµï¿½Òµï¿½ï¿½Ó¿ï¿½ */
     void DoEditUndo();
     void DoEditCut();
     void DoEditCopy();
@@ -69,7 +69,7 @@ public:
     void DoEditAddVertex();
     void DoEditRemoveVertex();
 
-    /* Project ²Ëµ¥ÒµÎñ½Ó¿Ú */
+    /* Project ï¿½Ëµï¿½Òµï¿½ï¿½Ó¿ï¿½ */
     void DoProjectAddCircuit();
     void DoProjectLoadLibrary();
     void DoProjectUnloadLibraries();
@@ -86,7 +86,7 @@ public:
     void DoProjectGetStats();
     void DoProjectOptions();
 
-    /* Simulate ²Ëµ¥ÒµÎñ½Ó¿Ú */
+    /* Simulate ï¿½Ëµï¿½Òµï¿½ï¿½Ó¿ï¿½ */
     void DoSimSetEnabled(bool on);
     void DoSimReset();
     void DoSimStep();
@@ -97,18 +97,18 @@ public:
     void DoSimSetTickFreq(int hz);
     void DoSimLogging();
 
-    /* Window ²Ëµ¥ÒµÎñ½Ó¿Ú */
+    /* Window ï¿½Ëµï¿½Òµï¿½ï¿½Ó¿ï¿½ */
     void DoWindowCombinationalAnalysis();
     void DoWindowPreferences();
     void DoWindowSwitchToDoc(const wxString& title);
 
-    /* Help ²Ëµ¥ÒµÎñ½Ó¿Ú */
+    /* Help ï¿½Ëµï¿½Òµï¿½ï¿½Ó¿ï¿½ */
     void DoHelpTutorial();
     void DoHelpUserGuide();
     void DoHelpLibraryRef();
     void DoHelpAbout();
 
-    // ¹¤¾ßÀ¸ÑùÊ½
+    // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê½
     ToolBars* m_toolBars;
     void AddToolBarsToAuiManager();
 
@@ -117,7 +117,7 @@ private:
     PropertyPanel* m_propPanel = nullptr;
     CanvasPanel* m_canvas;
 
-    void UpdateCursor();        // ¸ù¾Ý m_pendingTool ÉèÖÃÊ®×Ö/³£¹æ¹â±ê
+    void UpdateCursor();        // ï¿½ï¿½ï¿½ï¿½ m_pendingTool ï¿½ï¿½ï¿½ï¿½Ê®ï¿½ï¿½/ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 
     void OnToolboxElement(wxCommandEvent& evt);
     wxDECLARE_EVENT_TABLE();
