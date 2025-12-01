@@ -91,6 +91,9 @@ private:
     std::vector<int> m_selElemIdx;
     std::vector<int> m_selWireIdx;
 
+    // 擦除框管理
+    wxRect m_eraserRect;
+
     // 预览元素
     CanvasElement m_previewElement;
     Wire m_previewWire;
@@ -141,6 +144,11 @@ public:
 
     // 预览元素管理
     void SetPreviewElement(const wxString& name, wxPoint pos);
+
+    // 擦除框管理
+    void SetEraserRect(const wxRect& rect) { m_eraserRect = rect; Refresh(); };
+    const wxRect GetEraserRect() const { return m_eraserRect; };
+    void ClearEraserRect() { m_eraserRect = wxRect(); Refresh(); };
 
     // 选中元素管理
     void UpdateSelection(std::vector<int> m_textIdx, std::vector<int> m_elemIdx, std::vector<int> m_wireIdx);

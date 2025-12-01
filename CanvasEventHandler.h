@@ -100,6 +100,21 @@ private:
     void FinishWireDrawing();
     void CancelWireDrawing();
 
+
+    // ==================== 擦除工具画布事件处理 ====================
+private:
+    std::vector<int> m_compntDelIdx;
+    std::vector<int> m_wireDelIdx;
+    std::vector<int> m_textDelIdx;
+
+    wxPoint m_erasingStartPos;
+
+    void HandleEraserTool();
+    void UpdateRectangleEraser();
+    void FinishRectangleEraser();
+
+
+
 public:
     // 各工具的核心处理逻辑
    

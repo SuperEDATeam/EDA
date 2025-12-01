@@ -44,7 +44,15 @@ void CanvasEventHandler::SetCurrentTool(ToolType tool) {
         case ToolType::DRAG_TOOL: {
             m_canvas->SetCursor(wxCursor(wxCURSOR_HAND));
             break;
-            }
+        }
+        case ToolType::ERASER_TOOL: {
+            wxImage image("res\\icons\\eraser.png", wxBITMAP_TYPE_PNG);
+            image.GetOptionInt(wxIMAGE_OPTION_CUR_HOTSPOT_X);
+            image.GetOptionInt(wxIMAGE_OPTION_CUR_HOTSPOT_Y);
+            wxCursor cursor(image);
+            m_canvas->SetCursor(cursor);
+            break;
+        }
         default: {
             m_canvas->SetCursor(wxCursor(wxCURSOR_ARROW));
             break;
@@ -89,6 +97,13 @@ void CanvasEventHandler::OnCanvasLeftDown(wxMouseEvent& evt) {
     ToolType currentTool = m_toolStateMachine->GetCurrentTool();
     
     // 按优先级高低处理
+    // 擦除工具
+    if (currentTool == ToolType::ERASER_TOOL) {
+        HandleEraserTool();
+        m_eventHandled = true;
+        return;
+    }
+    
     // 选择工具
     if (currentTool == ToolType::SELECT_TOOL){
         HandleSelectTool(evt);
@@ -335,6 +350,17 @@ void CanvasEventHandler::OnCanvasLeftUp(wxMouseEvent& evt) {
     else if (m_toolStateMachine->GetWireState() == WireToolState::WIRE_DRAWING && currentTool == ToolType::WIRE_TOOL) {
         m_eventHandled = true;
     }
+    
+    // 单点擦除
+    else if (m_toolStateMachine->GetEraserState() == EraserToolState::CLICK_ERASER && currentTool == ToolType::ERASER_TOOL) {
+        m_toolStateMachine->SetEraserState(EraserToolState::IDLE);
+        m_eventHandled = true;
+    }
+    else if (m_toolStateMachine->GetEraserState() == EraserToolState::RECTANGLE_ERASER) {
+        FinishRectangleEraser();
+        m_eventHandled = true;
+    }
+    
     else {
         // 其他工具不处理
 	}
@@ -661,6 +687,12 @@ void CanvasEventHandler::OnCanvasMouseMove(wxMouseEvent& evt) {
         m_canvas->SetStatus(wxString::Format("放置%s: (%d, %d)", m_currentComponent, snappedPos.x, snappedPos.y));
         m_eventHandled = true;
 	}
+
+    // 框选擦除
+    else if (m_toolStateMachine->GetEraserState() == EraserToolState::RECTANGLE_ERASER) {
+        UpdateRectangleEraser();
+        m_eventHandled = true;
+    }
 	// 其他情况下打印当前工具状态
     else {
         wxString toolInfo;
@@ -1015,4 +1047,90 @@ void CanvasEventHandler::DeleteSelected() {
     m_textElemIdx.clear();
     m_canvas->UpdateSelection(m_compntIdx, m_textElemIdx, m_wireIdx);
     m_canvas->UndoStackPush(std::make_unique<CmdDeleteSelected>(elementNames, elementPos, wires, txtBoxPos, txtBoxText));
+}
+
+
+void CanvasEventHandler::HandleEraserTool() {
+    std::vector<wxString> elementNames;
+    std::vector<wxPoint> elementPos;
+    std::vector<Wire> wires;
+    std::vector<wxPoint> txtBoxPos;
+    std::vector<wxString> txtBoxText;
+
+    m_canvas->SetStatus("擦除工具: 点击擦除元素，拖动框选批量擦除");
+
+    if (m_hoverInfo.IsEmptyArea()) {
+        m_toolStateMachine->SetEraserState(EraserToolState::RECTANGLE_ERASER);
+        m_erasingStartPos = m_hoverInfo.pos;
+        m_compntDelIdx.clear();
+        m_wireDelIdx.clear();
+        m_textDelIdx.clear();
+    }
+    else {
+        m_toolStateMachine->SetEraserState(EraserToolState::CLICK_ERASER);
+        if (m_hoverInfo.elementIndex != -1) {
+            elementNames.push_back(m_canvas->GetElements()[m_hoverInfo.elementIndex].GetName());
+            elementPos.push_back(m_canvas->GetElements()[m_hoverInfo.elementIndex].GetPos() + wxPoint(140, 40));
+            m_canvas->DeleteElement(m_hoverInfo.elementIndex);
+        }
+        if (m_hoverInfo.wireIndex != -1) {
+            wires.push_back(m_canvas->GetWires()[m_hoverInfo.wireIndex]);
+            m_canvas->DeleteWire(m_hoverInfo.wireIndex);
+        }
+        if (m_hoverInfo.textIndex != -1) {
+            txtBoxPos.push_back(m_canvas->GetTextElements()[m_hoverInfo.textIndex].GetPosition());
+            txtBoxText.push_back(m_canvas->GetTextElements()[m_hoverInfo.textIndex].GetText());
+            m_canvas->DeleteTextElement(m_hoverInfo.textIndex);
+        }
+        m_canvas->UndoStackPush(std::make_unique<CmdDeleteSelected>(elementNames, elementPos, wires, txtBoxPos, txtBoxText));
+    }
+}
+
+void CanvasEventHandler::UpdateRectangleEraser() {
+    wxRect eraserRect(
+        wxPoint(std::min(m_erasingStartPos.x, m_hoverInfo.pos.x),
+            std::min(m_erasingStartPos.y, m_hoverInfo.pos.y)),
+        wxSize(std::abs(m_hoverInfo.pos.x - m_erasingStartPos.x),
+            std::abs(m_hoverInfo.pos.y - m_erasingStartPos.y))
+    );
+    m_canvas->SetEraserRect(eraserRect);
+}
+
+void CanvasEventHandler::FinishRectangleEraser() {
+    std::vector<wxString> elementNames;
+    std::vector<wxPoint> elementPos;
+    std::vector<Wire> wires;
+    std::vector<wxPoint> txtBoxPos;
+    std::vector<wxString> txtBoxText;
+
+    auto searchEraserElements = [&](std::vector<int>& indexList, const auto& elements) {
+        for (size_t i = 0; i < elements.size(); ++i) {
+            const auto& elem = elements[i];
+            wxRect elemRect = elem.GetBounds();
+            if (m_canvas->GetEraserRect().Contains(elemRect)) {
+                indexList.push_back(i);
+            }
+        }
+    };
+    searchEraserElements(m_compntDelIdx, m_canvas->GetElements());
+    searchEraserElements(m_wireDelIdx, m_canvas->GetWires());
+    searchEraserElements(m_textDelIdx, m_canvas->GetTextElements());
+
+    for (auto& idx : m_compntDelIdx) {
+        elementNames.push_back(m_canvas->GetElements()[idx].GetName());
+        elementPos.push_back(m_canvas->GetElements()[idx].GetPos() + wxPoint(140, 40));
+        m_canvas->DeleteElement(idx);
+    }
+    for (auto& idx : m_wireDelIdx) {
+        wires.push_back(m_canvas->GetWires()[idx]);
+        m_canvas->DeleteWire(idx);
+    }
+    for (auto& idx : m_textDelIdx) {
+        txtBoxPos.push_back(m_canvas->GetTextElements()[idx].GetPosition());
+        txtBoxText.push_back(m_canvas->GetTextElements()[idx].GetText());
+        m_canvas->DeleteTextElement(idx);
+    }
+    m_canvas->UndoStackPush(std::make_unique<CmdDeleteSelected>(elementNames, elementPos, wires, txtBoxPos, txtBoxText));
+    m_canvas->ClearEraserRect();
+    m_toolStateMachine->SetEraserState(EraserToolState::IDLE);
 }

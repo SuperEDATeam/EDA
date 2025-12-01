@@ -24,7 +24,7 @@ HandyToolKit::HandyToolKit(CanvasPanel* parent, CanvasEventHandler* ce)
     SetExtraStyle(GetExtraStyle() | wxWS_EX_TRANSIENT);
 
     // 设置合适的大小
-    SetSize(wxSize(96, 24));
+    SetSize(wxSize(5*24, 24));
 }
 
 void HandyToolKit::CreateTools()
@@ -42,11 +42,13 @@ void HandyToolKit::CreateTools()
     text.Rescale(text, wxSize(24, 24));
     wxBitmap wire("res\\icons\\wiring.png", wxBITMAP_TYPE_PNG);
     wire.Rescale(wire, wxSize(24, 24));
+    wxBitmap eraser("res\\icons\\eraser.png", wxBITMAP_TYPE_PNG);
+    eraser.Rescale(eraser, wxSize(24, 24));
     m_tools.push_back({ "Choose", choose, wxRect(24, 0, 24, 24), [this](void) {m_CanvasEventHandler->SetCurrentTool(ToolType::SELECT_TOOL); } });
     m_tools.push_back({ "Drag", drag, wxRect(0, 0, 24, 24), [this](void) {m_CanvasEventHandler->SetCurrentTool(ToolType::DRAG_TOOL); } });
-    m_tools.push_back({ "Text", text, wxRect(48, 0, 24, 24), [this](void) {m_CanvasEventHandler->SetCurrentTool(ToolType::TEXT_TOOL); } });
-    m_tools.push_back({ "Wire", wire, wxRect(72, 0, 24, 24), [this](void) {m_CanvasEventHandler->SetCurrentTool(ToolType::WIRE_TOOL); } });
-
+    m_tools.push_back({ "Eraser", eraser, wxRect(48, 0, 24, 24), [this](void) {m_CanvasEventHandler->SetCurrentTool(ToolType::ERASER_TOOL); } });
+    m_tools.push_back({ "Text", text, wxRect(72, 0, 24, 24), [this](void) {m_CanvasEventHandler->SetCurrentTool(ToolType::TEXT_TOOL); } });
+    m_tools.push_back({ "Wire", wire, wxRect(96, 0, 24, 24), [this](void) {m_CanvasEventHandler->SetCurrentTool(ToolType::WIRE_TOOL); } });
 }
 
 void HandyToolKit::OnPaint(wxPaintEvent& event)

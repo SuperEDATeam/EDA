@@ -335,7 +335,12 @@ void CanvasPanel::OnPaint(wxPaintEvent&) {
             gc->DrawRectangle(selRect.x, selRect.y, selRect.width, selRect.height);
         }
 
-
+        if (m_toolStateMachine->GetEraserState() == EraserToolState::RECTANGLE_ERASER) {
+            wxRect eraRect = m_eraserRect;
+            gc->SetPen(wxPen(wxColor(128, 128, 128), 2 / m_scale));
+            gc->SetBrush(wxColor(128, 128, 128, 32));
+            gc->DrawRectangle(eraRect.x, eraRect.y, eraRect.width, eraRect.height);
+        }
         delete gcdc; // 释放资源
     }
     else {

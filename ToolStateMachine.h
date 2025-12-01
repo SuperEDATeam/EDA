@@ -13,7 +13,8 @@ enum class ToolType {
     TEXT_TOOL,        // 文本工具  
     COMPONENT_TOOL,   // 元件放置工具
     WIRE_TOOL,        // 导线绘制工具
-    DRAWING_TOOL      // 绘图工具
+    DRAWING_TOOL,      // 绘图工具
+    ERASER_TOOL       // 擦除工具
 };
 
 // 拖拽工具状态
@@ -56,6 +57,13 @@ enum class DrawingToolState {
     DRAWING_RECTANGLE,      // 绘制矩形
     DRAWING_LINE,           // 绘制直线
     DRAWING_CIRCLE         // 绘制圆形
+};
+
+// 擦除工具状态
+enum class EraserToolState {
+    IDLE,
+    CLICK_ERASER,           // 点击擦除
+    RECTANGLE_ERASER,       // 矩形框擦除
 };
 
 // 状态历史记录（用于撤回）
@@ -103,6 +111,10 @@ public:
     void SetDrawingState(DrawingToolState state);
     DrawingToolState GetDrawingState() const { return m_drawingState; }
 
+    // 擦除工具状态管理
+    void SetEraserState(EraserToolState state);
+    EraserToolState GetEraserState() const { return m_eraserState; }
+
     // 便捷状态查询方法
     bool IsIdle() const;
     bool IsCurrentToolIdle() const;
@@ -144,6 +156,7 @@ private:
     ComponentToolState m_componentState;
     WireToolState m_wireState;
     DrawingToolState m_drawingState;
+    EraserToolState m_eraserState;
 
     // 状态历史（用于撤回）
     std::vector<ToolStateHistory> m_stateHistory;

@@ -118,6 +118,13 @@ void ToolStateMachine::SetDrawingState(DrawingToolState state) {
             static_cast<int>(state)));
     }
 }
+void ToolStateMachine::SetEraserState(EraserToolState state) {
+    if (m_eraserState != state) {
+        m_eraserState = state;
+        SendStateChangeEvent(wxString::Format("Eraser state changed to %d",
+            static_cast<int>(state)));
+    }
+}
 
 bool ToolStateMachine::IsIdle() const {
     return m_dragState == DragToolState::IDLE &&
@@ -262,4 +269,5 @@ void ToolStateMachine::ResetAllToolStatesToIdle() {
     m_componentState = ComponentToolState::IDLE;
     m_wireState = WireToolState::IDLE;
     m_drawingState = DrawingToolState::IDLE;
+    m_eraserState = EraserToolState::IDLE;
 }
