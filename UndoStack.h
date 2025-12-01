@@ -3,6 +3,8 @@
 #include <vector>
 #include <memory>
 
+#include "Wire.h"
+
 class CanvasPanel;
 
 struct WireAnchor {
@@ -83,6 +85,26 @@ public:
     wxString GetName() const override { return "Move Selected"; }
 };
 
+// 删除选中的元素
+class CmdDeleteSelected : public Command
+{
+    std::vector<wxString> elementNames;
+    std::vector<wxPoint> elementPos;
+    std::vector<Wire> wires;
+    std::vector<wxPoint> txtBoxPos;
+    std::vector<wxString> txtBoxText;
+
+public:
+    CmdDeleteSelected(std::vector<wxString> elementNames, std::vector<wxPoint> elementPos, std::vector<Wire> wires, std::vector<wxPoint> txtBoxPos, std::vector<wxString> txtBoxText) {
+        this->elementNames = elementNames;
+        this->elementPos = elementPos;
+        this->wires = wires;
+        this->txtBoxPos = txtBoxPos;
+        this->txtBoxText = txtBoxText;
+    }
+    void undo(CanvasPanel* canvas) override;
+    wxString GetName() const override { return "Delete Selected"; }
+};
 
     /* 撤销栈 */
 class UndoStack

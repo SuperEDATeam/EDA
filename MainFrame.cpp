@@ -36,7 +36,7 @@ MainFrame::MainFrame()
     /* �˵� & ״̬�� */
     SetMenuBar(new MainMenuBar(this));
     CreateStatusBar(1);
-    int widths[] = { 400, 200, 400, 100 };
+    int widths[] = { 800, 200, 400, 100 };
     int style[] = { wxSB_NORMAL, wxSB_NORMAL, wxSB_FLAT, wxSB_FLAT };
     GetStatusBar()->SetFieldsCount(4, widths);
     GetStatusBar()->SetStatusStyles(4, style);
@@ -748,7 +748,9 @@ void MainFrame::DoEditUndo()
 void MainFrame::DoEditCut() { wxMessageBox("Edit->Cut"); }
 void MainFrame::DoEditCopy() { wxMessageBox("Edit->Copy"); }
 void MainFrame::DoEditPaste() { wxMessageBox("Edit->Paste"); }
-void MainFrame::DoEditDelete() { wxMessageBox("Edit->Delete"); }
+void MainFrame::DoEditDelete() { 
+    m_canvas->GetCanvasEventHandler()->DeleteSelected();
+}
 void MainFrame::DoEditDuplicate() { wxMessageBox("Edit->Duplicate"); }
 void MainFrame::DoEditSelectAll() { wxMessageBox("Edit->SelectAll"); }
 void MainFrame::DoEditRaiseSel() { wxMessageBox("Edit->Raise Selection"); }

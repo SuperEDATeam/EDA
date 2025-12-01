@@ -108,13 +108,15 @@ public:
     // 元件管理
     const std::vector<CanvasElement>& GetElements() const { return m_elements; }
     void AddElement(const wxString& name, const wxPoint& pos);
+    void AddElementWithoutRecord(const wxString& name, const wxPoint& pos);
     void DeleteElement(int index) { m_elements.erase(m_elements.begin() + index);  m_selElemIdx.erase(std::remove(m_selElemIdx.begin(), m_selElemIdx.end(), index), m_selElemIdx.end()); Refresh(); };
     void ElementSetPos(int index, const wxPoint& pos);
     void ElementStatusChange(int index);
 
     // 导线管理
     const std::vector<Wire>& GetWires() const { return m_wires; }
-    void AddWire(const Wire& wire);
+    void AddWire(const Wire& wire); 
+    void AddWireWithoutRecord(const Wire& wire);
     void DeleteWire(int index) { m_wires.erase(m_wires.begin() + index); m_selWireIdx.erase(std::remove(m_selWireIdx.begin(), m_selWireIdx.end(), index), m_selWireIdx.end()); Refresh(); };
     void WireSetWholeOffSet(int index, const wxPoint& offset);
     void WirePtsSetPos(int wireIndex, int controlPointIndex, const wxPoint& pos);
@@ -125,7 +127,8 @@ public:
 
     // 文本管理
     const std::vector<CanvasTextElement>& GetTextElements() const { return m_textElements; }
-    void CreateTextElement(const wxPoint& position);
+    void CreateTextElement(const wxPoint& position, wxString text);
+    void CreateTextElementWithoutRecord(const wxPoint& position, wxString text);
     void DeleteTextElement(int index) { m_textElements.erase(m_textElements.begin() + index); m_selTxtIdx.erase(std::remove(m_selTxtIdx.begin(), m_selTxtIdx.end(), index), m_selTxtIdx.end()); Refresh(); };
     void TextSetPos(int index, const wxPoint& pos) { m_textElements[index].SetPosition(pos); Refresh(); };
     void StartTextEditing(int index);

@@ -74,6 +74,10 @@ private:
     // 单击选中相关操作
     void FinishClickSelect(wxMouseEvent& evt);
 
+public:
+    // 删除选中
+    void DeleteSelected();
+
     // ==================== 元件工具画布事件处理 ====================
 private:
     wxString m_currentComponent;

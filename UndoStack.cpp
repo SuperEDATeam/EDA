@@ -100,3 +100,15 @@ void CmdMoveSelected::undo(CanvasPanel* canvas) {
 
 
 }
+
+void CmdDeleteSelected::undo(CanvasPanel* canvas) {
+    for (int i = 0; i < elementNames.size(); i++) {
+        canvas->AddElementWithoutRecord(elementNames[i], elementPos[i]);
+    }
+    for (int i = 0; i < wires.size(); i++) {
+        canvas->AddWireWithoutRecord(wires[i]);
+    }
+    for (int i = 0; i < txtBoxPos.size(); i++) {
+        canvas->CreateTextElementWithoutRecord(txtBoxPos[i], txtBoxText[i]);
+    }
+}

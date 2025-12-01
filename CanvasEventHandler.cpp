@@ -261,6 +261,8 @@ void CanvasEventHandler::PlaceWirePoint() {
 void CanvasEventHandler::FinishWireDrawing() {
     if (m_toolStateMachine->GetWireState() != WireToolState::WIRE_DRAWING) return;
     m_tempWire.pts.resize(lengthOfTempWire);
+    if (lengthOfTempWire < 1) return;
+
     if (m_tempWire.pts[lengthOfTempWire - 2].pos == m_tempWire.pts[lengthOfTempWire - 1].pos) {
         m_tempWire.pts.pop_back();
     }
@@ -387,6 +389,10 @@ void CanvasEventHandler::OnCanvasKeyDown(wxKeyEvent& evt) {
 
     }
     case ToolType::SELECT_TOOL: {
+        if (evt.GetKeyCode() == WXK_DELETE) {
+            DeleteSelected();
+            m_eventHandled = true;
+        }
 
 
     }
@@ -489,7 +495,7 @@ void CanvasEventHandler::HandleSelectTool(wxMouseEvent& evt) {
             }
             else return true;
         }
-        else return false;
+        return false;
     };
  
     preIn = AddIfNew(elemIdx, m_compntIdx) || preIn;
@@ -530,7 +536,7 @@ void CanvasEventHandler::HandleTextTool() {
     // 检查是否点击了现有文本元素
     if (m_hoverInfo.IsOverText()) StartTextEditing(m_hoverInfo.textIndex);
     else {
-        m_canvas->CreateTextElement(m_hoverInfo.pos);
+        m_canvas->CreateTextElement(m_hoverInfo.pos, "");
         m_canvas->SetStatus(wxString::Format("放置文本框：(%d, %d)", m_hoverInfo.pos.x, m_hoverInfo.pos.y));
     }
 }
@@ -958,7 +964,7 @@ void CanvasEventHandler::FinishClickSelect(wxMouseEvent& evt) {
         m_textElemIdx.clear();
         m_wireIdx.clear();
         m_canvas->Refresh();
-        if (!preIn) {
+        //if (!preIn) {
             auto AddOrRemove = [](std::vector<int>& vec, int idx) {
                 if (idx != -1) {
                     auto it = std::find(vec.begin(), vec.end(), idx);
@@ -971,7 +977,42 @@ void CanvasEventHandler::FinishClickSelect(wxMouseEvent& evt) {
             AddOrRemove(m_wireIdx, m_hoverInfo.wireIndex);
             AddOrRemove(m_textElemIdx, m_hoverInfo.textIndex);
             m_canvas->UpdateSelection(m_compntIdx, m_textElemIdx, m_wireIdx);
-        }
+        //}
     }
     m_toolStateMachine->SetSelectState(SelectToolState::IDLE);
+}
+
+void CanvasEventHandler::DeleteSelected() {
+
+    std::vector<wxString> elementNames;
+    std::vector<wxPoint> elementPos;
+    std::vector<Wire> wires;
+    std::vector<wxPoint> txtBoxPos;
+    std::vector<wxString> txtBoxText;
+
+    std::sort(m_compntIdx.rbegin(), m_compntIdx.rend());
+    std::sort(m_wireIdx.rbegin(), m_wireIdx.rend());
+    std::sort(m_textElemIdx.rbegin(), m_textElemIdx.rend());
+    m_canvas->UpdateSelection(m_compntIdx, m_textElemIdx, m_wireIdx);
+
+    for(auto& idx : m_compntIdx) {
+        elementNames.push_back(m_canvas->GetElements()[idx].GetName());
+        elementPos.push_back(m_canvas->GetElements()[idx].GetPos() + wxPoint(140, 40));
+        m_canvas->DeleteElement(idx);
+    }
+    for (auto& idx : m_wireIdx) {
+        wires.push_back(m_canvas->GetWires()[idx]);
+        m_canvas->DeleteWire(idx);
+        
+    }
+    for (auto& idx : m_textElemIdx) {
+        txtBoxPos.push_back(m_canvas->GetTextElements()[idx].GetPosition());
+        txtBoxText.push_back(m_canvas->GetTextElements()[idx].GetText());
+        m_canvas->DeleteTextElement(idx);
+    }
+    m_compntIdx.clear();
+    m_wireIdx.clear();
+    m_textElemIdx.clear();
+    m_canvas->UpdateSelection(m_compntIdx, m_textElemIdx, m_wireIdx);
+    m_canvas->UndoStackPush(std::make_unique<CmdDeleteSelected>(elementNames, elementPos, wires, txtBoxPos, txtBoxText));
 }

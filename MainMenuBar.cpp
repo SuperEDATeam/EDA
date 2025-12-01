@@ -180,8 +180,7 @@ wxMenu* MainMenuBar::CreateEditMenu()
     m->Append(wxID_PASTE, "&Paste\tCtrl+V");
     m->AppendSeparator();
 
-    //m->Append(wxID_DELETE, "&Delete\tDel");
-    m->Append(wxID_DELETE, "&Delete");
+    m->Append(wxID_DELETE, "&Delete\tDel");
     m->Append(wxID_DUPLICATE, "D&uplicate\tCtrl+D");
     m->Append(wxID_SELECTALL, "Select &All\tCtrl+A");
     m->AppendSeparator();

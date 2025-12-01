@@ -188,6 +188,34 @@ void CanvasPanel::AddElement(const wxString& name, const wxPoint& pos){
     UndoStackPush(std::make_unique<CmdAddElement>(clone.GetName(), m_elements.size() - 1));
 }
 
+void CanvasPanel::AddElementWithoutRecord(const wxString& name, const wxPoint& pos) {
+    extern std::vector<CanvasElement> g_elements;
+    auto it = std::find_if(g_elements.begin(), g_elements.end(),
+        [&](const CanvasElement& e) { return e.GetName() == name; });
+    if (it == g_elements.end()) return;
+    CanvasElement clone = *it;
+
+    wxPoint standardpos = pos;
+    const auto& outputPins = clone.GetOutputPins();
+    const auto& inputPins = clone.GetInputPins();
+
+    if (!outputPins.empty()) {
+        // 优先使用输出引脚
+        Pin standardPin = outputPins[0];
+        standardpos = pos - wxPoint(standardPin.pos.x + m_grid, standardPin.pos.y - m_grid);
+    }
+    else if (!inputPins.empty()) {
+        // 如果没有输出引脚，使用输入引脚
+        Pin standardPin = inputPins[0];
+        standardpos = pos - wxPoint(standardPin.pos.x + m_grid, standardPin.pos.y - m_grid);
+    }
+    // 如果都没有引脚，直接使用原位置
+    clone.SetPos(standardpos);
+
+    m_elements.push_back(clone);
+    Refresh();
+}
+
 void CanvasPanel::OnPaint(wxPaintEvent&) {
     LayoutScrollbars();
     wxAutoBufferedPaintDC dc(this);
@@ -264,37 +292,39 @@ void CanvasPanel::OnPaint(wxPaintEvent&) {
         }
 
         // 绘制选中边框
-        for (size_t i = 0; i < m_selElemIdx.size(); i++) {
-            wxRect b = m_elements[m_selElemIdx[i]].GetBounds();
-            gc->SetPen(wxPen(wxColor(44, 145, 224), 2.0 ));
-            gc->SetBrush(*wxTRANSPARENT_BRUSH);
-            gc->DrawRectangle(b.x - 2, b.y - 3, b.width + 5, b.height + 5);
+        if (m_toolStateMachine->GetCurrentTool() == ToolType::SELECT_TOOL) {
+            for (size_t i = 0; i < m_selElemIdx.size(); i++) {
+                wxRect b = m_elements[m_selElemIdx[i]].GetBounds();
+                gc->SetPen(wxPen(wxColor(44, 145, 224), 2.0));
+                gc->SetBrush(*wxTRANSPARENT_BRUSH);
+                gc->DrawRectangle(b.x - 2, b.y - 3, b.width + 5, b.height + 5);
 
-            gc->SetPen(wxPen(wxColor(44, 145, 224, 32), 2.0));
-            gc->SetBrush(*wxTRANSPARENT_BRUSH);
-            gc->DrawRectangle(b.x - 4, b.y - 5, b.width + 9, b.height + 9);
+                gc->SetPen(wxPen(wxColor(44, 145, 224, 32), 2.0));
+                gc->SetBrush(*wxTRANSPARENT_BRUSH);
+                gc->DrawRectangle(b.x - 4, b.y - 5, b.width + 9, b.height + 9);
 
-            gc->SetPen(wxPen(wxColor(44, 145, 224, 32), 4.0));
-            gc->SetBrush(*wxTRANSPARENT_BRUSH);
-            gc->DrawRectangle(b.x - 6, b.y - 7, b.width + 13, b.height + 13);
-        }
-        for (size_t i = 0; i < m_selTxtIdx.size(); i++) {
-            wxRect b = m_textElements[m_selTxtIdx[i]].GetBounds();
-            gc->SetPen(wxPen(wxColor(44, 145, 224), 2.0));
-            gc->SetBrush(*wxTRANSPARENT_BRUSH);
-            gc->DrawRectangle(b.x - 3, b.y - 3, b.width + 5, b.height + 5);
+                gc->SetPen(wxPen(wxColor(44, 145, 224, 32), 4.0));
+                gc->SetBrush(*wxTRANSPARENT_BRUSH);
+                gc->DrawRectangle(b.x - 6, b.y - 7, b.width + 13, b.height + 13);
+            }
+            for (size_t i = 0; i < m_selTxtIdx.size(); i++) {
+                wxRect b = m_textElements[m_selTxtIdx[i]].GetBounds();
+                gc->SetPen(wxPen(wxColor(44, 145, 224), 2.0));
+                gc->SetBrush(*wxTRANSPARENT_BRUSH);
+                gc->DrawRectangle(b.x - 3, b.y - 3, b.width + 5, b.height + 5);
 
-            gc->SetPen(wxPen(wxColor(44, 145, 224, 32), 2.0));
-            gc->SetBrush(*wxTRANSPARENT_BRUSH);
-            gc->DrawRectangle(b.x - 5, b.y - 5, b.width + 9, b.height + 9);
+                gc->SetPen(wxPen(wxColor(44, 145, 224, 32), 2.0));
+                gc->SetBrush(*wxTRANSPARENT_BRUSH);
+                gc->DrawRectangle(b.x - 5, b.y - 5, b.width + 9, b.height + 9);
 
-            gc->SetPen(wxPen(wxColor(44, 145, 224, 32), 4.0));
-            gc->SetBrush(*wxTRANSPARENT_BRUSH);
-            gc->DrawRectangle(b.x - 7, b.y - 7, b.width + 13, b.height + 13);
-        }
-        for (size_t i = 0; i < m_selWireIdx.size(); i++) {
-            m_wires[m_selWireIdx[i]].DrawColor(*gcdc);
+                gc->SetPen(wxPen(wxColor(44, 145, 224, 32), 4.0));
+                gc->SetBrush(*wxTRANSPARENT_BRUSH);
+                gc->DrawRectangle(b.x - 7, b.y - 7, b.width + 13, b.height + 13);
+            }
+            for (size_t i = 0; i < m_selWireIdx.size(); i++) {
+                m_wires[m_selWireIdx[i]].DrawColor(*gcdc);
 
+            }
         }
 
         // 绘制选择边框
@@ -585,12 +615,19 @@ void CanvasPanel::DetachHiddenTextCtrl() {
     Refresh();
 }
 
-void CanvasPanel::CreateTextElement(const wxPoint& position) {
-    m_textElements.push_back(std::move(CanvasTextElement(this, "", position)));
+void CanvasPanel::CreateTextElement(const wxPoint& position, wxString text) {
+    m_textElements.push_back(std::move(CanvasTextElement(this, text, position)));
     AttachHiddenTextCtrlToElement(static_cast<int>(m_textElements.size() - 1));
 
     Refresh();
     UndoStackPush(std::make_unique<CmdAddText>( m_textElements.size() - 1));
+}
+
+void CanvasPanel::CreateTextElementWithoutRecord(const wxPoint& position, wxString text) {
+    m_textElements.push_back(std::move(CanvasTextElement(this, text, position)));
+    //AttachHiddenTextCtrlToElement(static_cast<int>(m_textElements.size() - 1));
+
+    Refresh();
 }
 
 void CanvasPanel::StartTextEditing(int index) {
@@ -769,6 +806,12 @@ void CanvasPanel::AddWire(const Wire& wire) {
     m_wires.back().GenerateCells(); 
     Refresh(); 
     UndoStackPush(std::make_unique<CmdAddWire>(m_wires.size() - 1));
+};
+
+void CanvasPanel::AddWireWithoutRecord(const Wire& wire) {
+    m_wires.push_back(wire);
+    m_wires.back().GenerateCells();
+    Refresh();
 };
 
 void CanvasPanel::ElementSetPos(int index, const wxPoint& pos) {
