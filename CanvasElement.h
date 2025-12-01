@@ -125,6 +125,10 @@ public:
     void SetOutputState(int state);  // 0:X, 1:0, 2:1
     int GetOutputState() const { return m_outputState; }
 
+    void SetRotation(int rotation) { m_rotation = rotation % 360; }
+    int GetRotation() const { return m_rotation; }
+    void SetAnchorPoint(const wxPoint& anchor) { m_anchorPoint = anchor; }
+
 private:
     wxString m_name;
     wxPoint m_pos;
@@ -143,4 +147,6 @@ private:
     bool m_state = false; // 默认状态为0/false
     wxString m_id;        // 元件ID
     int m_outputState = 0; // Pin_Output状态：0=X, 1=0, 2=1
+    wxPoint m_anchorPoint; // 旋转锚点
+    int m_rotation = 0;     // 旋转角度（默认0°=East）
 };

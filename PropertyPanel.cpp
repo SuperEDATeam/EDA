@@ -1,43 +1,43 @@
-#include "PropertyPanel.h"
+ï»¿#include "PropertyPanel.h"
 
 PropertyPanel::PropertyPanel(wxWindow* parent)
     : wxPanel(parent, wxID_ANY)
 {
-    // ´´½¨´¹Ö±²¼¾Ö
+    // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ö±ï¿½ï¿½ï¿½ï¿½
     wxBoxSizer* sizer = new wxBoxSizer(wxVERTICAL);
 
-    // ´´½¨±êÌâ
+    // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
     m_title = new wxStaticText(this, wxID_ANY, "No element selected");
     sizer->Add(m_title, 0, wxALL, 5);
 
-    // ´´½¨ÊôÐÔ±í¸ñ£¨ÐÂÔö£©
+    // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ô±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
     m_propGrid = new wxPropertyGrid(this, wxID_ANY, wxDefaultPosition, wxDefaultSize,
         wxPG_BOLD_MODIFIED | wxPG_SPLITTER_AUTO_CENTER);
     m_propGrid->SetCaptionBackgroundColour(wxColour(230, 230, 230));
 
-    // ÉèÖÃ×ÖÌå
+    // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
     wxFont font(wxFontInfo(11).FaceName("Segoe UI"));
     m_propGrid->SetFont(font);
 
     sizer->Add(m_propGrid, 1, wxEXPAND | wxALL, 5);
     SetSizer(sizer);
 
-    // ³õÊ¼»¯ÊôÐÔÓ³Éä±í
+    // ï¿½ï¿½Ê¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ó³ï¿½ï¿½ï¿½
     InitToolPropertyMap();
 }
 
-void PropertyPanel::ShowElement(const wxString& name)
+void PropertyPanel::ShowElement(const wxString& name, const std::map<wxString, wxVariant>& currentProps)
 {
     m_title->SetLabel("Tool: " + name);
-    UpdateProperties(name);  // ¸üÐÂÊôÐÔÏÔÊ¾
+    UpdateProperties(name, currentProps); // ï¿½ï¿½ï¿½ï¿½ currentProps ï¿½Çºï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Î´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
 }
 
-// ´Ó ToolboxPanel Ç¨ÒÆ¹ýÀ´µÄ InitToolPropertyMap ÊµÏÖ
+// ï¿½ï¿½ ToolboxPanel Ç¨ï¿½Æ¹ï¿½ï¿½ï¿½ï¿½ï¿½ InitToolPropertyMap Êµï¿½ï¿½
 void PropertyPanel::InitToolPropertyMap()
 {
-    // -------------------------- 1. Pin (Input) ÊôÐÔ --------------------------
+    // -------------------------- 1. Pin (Input) ï¿½ï¿½ï¿½ï¿½ --------------------------
     std::vector<ToolProperty> pinInputProps;
-    pinInputProps.push_back(ToolProperty("Facing", "string", "East"));
+    pinInputProps.push_back(ToolProperty("Facing", "facing", "East"));
     pinInputProps.push_back(ToolProperty("Output?", "bool", false));
     pinInputProps.push_back(ToolProperty("Data Bits", "int", 1L));
     pinInputProps.push_back(ToolProperty("Three-state?", "bool", true));
@@ -47,9 +47,9 @@ void PropertyPanel::InitToolPropertyMap()
     pinInputProps.push_back(ToolProperty("Label Font", "string", "SansSerif Plain 12"));
     m_toolPropMap["Pin (Input)"] = pinInputProps;
 
-    // -------------------------- 2. OR Gate ÊôÐÔ --------------------------
+    // -------------------------- 2. OR Gate ï¿½ï¿½ï¿½ï¿½ --------------------------
     std::vector<ToolProperty> orGateProps;
-    orGateProps.push_back(ToolProperty("Facing", "string", "East"));
+    orGateProps.push_back(ToolProperty("Facing", "facing", "East"));
     orGateProps.push_back(ToolProperty("Data Bits", "int", 1L));
     orGateProps.push_back(ToolProperty("Gate Size", "string", "Medium"));
     orGateProps.push_back(ToolProperty("Number Of Inputs", "int", 5L));
@@ -63,9 +63,9 @@ void PropertyPanel::InitToolPropertyMap()
     orGateProps.push_back(ToolProperty("Negate 5 (Bottom)", "bool", false));
     m_toolPropMap["OR Gate"] = orGateProps;
 
-    // -------------------------- 3. Demultiplexer ÊôÐÔ --------------------------
+    // -------------------------- 3. Demultiplexer ï¿½ï¿½ï¿½ï¿½ --------------------------
     std::vector<ToolProperty> demuxProps;
-    demuxProps.push_back(ToolProperty("Facing", "string", "East"));
+    demuxProps.push_back(ToolProperty("Facing", "facing", "East"));
     demuxProps.push_back(ToolProperty("Select Location", "string", "Bottom/Left"));
     demuxProps.push_back(ToolProperty("Select Bits", "int", 1L));
     demuxProps.push_back(ToolProperty("Data Bits", "int", 1L));
@@ -74,22 +74,22 @@ void PropertyPanel::InitToolPropertyMap()
     demuxProps.push_back(ToolProperty("Include Enable?", "bool", true));
     m_toolPropMap["Demultiplexer"] = demuxProps;
 
-    // -------------------------- 4. Comparator ÊôÐÔ --------------------------
+    // -------------------------- 4. Comparator ï¿½ï¿½ï¿½ï¿½ --------------------------
     std::vector<ToolProperty> comparatorProps;
     comparatorProps.push_back(ToolProperty("Data Bits", "int", 8L));
     comparatorProps.push_back(ToolProperty("Numeric Type", "string", "2's Complement"));
     m_toolPropMap["Comparator"] = comparatorProps;
 
-    // -------------------------- 5. S-R Flip-Flop ÊôÐÔ --------------------------
+    // -------------------------- 5. S-R Flip-Flop ï¿½ï¿½ï¿½ï¿½ --------------------------
     std::vector<ToolProperty> srFlipFlopProps;
-    srFlipFlopProps.push_back(ToolProperty("Trigger", "string", "Rising Edge"));
+    srFlipFlopProps.push_back(ToolProperty("Trigger", "facing", "Rising Edge"));
     srFlipFlopProps.push_back(ToolProperty("Label", "string", ""));
     srFlipFlopProps.push_back(ToolProperty("Label Font", "string", "SansSerif Plain 12"));
     m_toolPropMap["SR Flip-Flop"] = srFlipFlopProps;
 
-    // -------------------------- 6. LED ÊôÐÔ --------------------------
+    // -------------------------- 6. LED ï¿½ï¿½ï¿½ï¿½ --------------------------
     std::vector<ToolProperty> ledProps;
-    ledProps.push_back(ToolProperty("Facing", "string", "West"));
+    ledProps.push_back(ToolProperty("Facing", "facing", "West"));
     ledProps.push_back(ToolProperty("On Color", "color", "#F00000"));
     ledProps.push_back(ToolProperty("Off Color", "color", "#404040"));
     ledProps.push_back(ToolProperty("Active On High?", "bool", true));
@@ -99,28 +99,28 @@ void PropertyPanel::InitToolPropertyMap()
     ledProps.push_back(ToolProperty("Label Color", "color", "#000000"));
     m_toolPropMap["LED"] = ledProps;
 
-    // -------------------------- ÆäËû¹¤¾ßÊôÐÔ --------------------------
+    // -------------------------- ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ --------------------------
     m_toolPropMap["Wire"] = std::vector<ToolProperty>();
 
     std::vector<ToolProperty> buttonProps;
-    buttonProps.push_back(ToolProperty("Facing", "string", "North"));
+    buttonProps.push_back(ToolProperty("Facing", "facing", "North"));
     buttonProps.push_back(ToolProperty("Trigger", "string", "Edge"));
     buttonProps.push_back(ToolProperty("Label", "string", ""));
     buttonProps.push_back(ToolProperty("Label Location", "string", "South"));
     m_toolPropMap["Button"] = buttonProps;
 }
 
-// ´Ó ToolboxPanel Ç¨ÒÆ¹ýÀ´µÄ UpdateProperties ÊµÏÖ
-void PropertyPanel::UpdateProperties(const wxString& toolName)
+// ï¿½ï¿½ ToolboxPanel Ç¨ï¿½Æ¹ï¿½ï¿½ï¿½ï¿½ï¿½ UpdateProperties Êµï¿½ï¿½
+void PropertyPanel::UpdateProperties(const wxString& toolName, const std::map<wxString, wxVariant>& currentProps)
 {
-    // 1. Çå¿ÕÔ­ÓÐÊôÐÔ
+    // 1. ï¿½ï¿½ï¿½Ô­ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
     m_propGrid->Clear();
 
-    // 2. Ìí¼Ó·ÖÀà±êÌâ
+    // 2. ï¿½ï¿½ï¿½Ó·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
     wxPropertyCategory* category = new wxPropertyCategory(wxString::Format("Tool: %s", toolName));
     m_propGrid->Append(category);
 
-    // 3. ´ÓÓ³Éä±íÖÐ»ñÈ¡µ±Ç°¹¤¾ßµÄÊôÐÔÁÐ±í
+    // 3. ï¿½ï¿½Ó³ï¿½ï¿½ï¿½ï¿½Ð»ï¿½È¡ï¿½ï¿½Ç°ï¿½ï¿½ï¿½ßµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð±ï¿½
     auto it = m_toolPropMap.find(toolName);
     if (it == m_toolPropMap.end()) {
         wxStringProperty* noProps = new wxStringProperty("Info", "Info", "No configurable properties");
@@ -128,10 +128,29 @@ void PropertyPanel::UpdateProperties(const wxString& toolName)
         return;
     }
 
-    // 4. Ìí¼ÓÊôÐÔ£¨Ö»Ö§³Ö»ù±¾ÀàÐÍ£©
+    // 4. ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ô£ï¿½Ö»Ö§ï¿½Ö»ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í£ï¿½
     std::vector<ToolProperty> props = it->second;
     for (auto& prop : props) {
-        if (prop.propType == "bool") {
+        if (prop.propType == "facing") {
+            // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ñ¡ï¿½î£¨East/South/West/Northï¿½ï¿½
+            wxArrayString options;
+            options.Add("East");
+            options.Add("South");
+            options.Add("West");
+            options.Add("North");
+            auto facingProp = new wxEnumProperty(prop.propName, prop.propName, options);
+
+            // ï¿½ï¿½ currentProps ï¿½ï¿½È¡ï¿½ï¿½Ç°Öµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ð£ï¿½ï¿½ï¿½Ã»ï¿½Ð¾ï¿½ï¿½ï¿½Ä¬ï¿½ï¿½Öµ
+            auto currIt = currentProps.find(prop.propName);
+            if (currIt != currentProps.end()) {
+                facingProp->SetValue(currIt->second);
+            }
+            else {
+                facingProp->SetValue(prop.defaultValue);
+            }
+            m_propGrid->Append(facingProp);
+        }
+        else if (prop.propType == "bool") {
             wxBoolProperty* boolProp = new wxBoolProperty(prop.propName, prop.propName);
             boolProp->SetValue(prop.defaultValue.GetBool());
             m_propGrid->Append(boolProp);
@@ -146,6 +165,6 @@ void PropertyPanel::UpdateProperties(const wxString& toolName)
             strProp->SetValue(prop.defaultValue.GetString());
             m_propGrid->Append(strProp);
         }
-        // ÑÕÉ«ÀàÐÍÔÝÊ±ºöÂÔ
+        // ï¿½ï¿½É«ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ê±ï¿½ï¿½ï¿½ï¿½
     }
 }

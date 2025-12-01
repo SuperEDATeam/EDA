@@ -1,4 +1,4 @@
-#include "UndoStack.h"
+ï»¿#include "UndoStack.h"
 #include "CanvasPanel.h"
 #include "UndoNotifier.h"
 
@@ -26,7 +26,7 @@ void UndoStack::Push(std::unique_ptr<Command> cmd)
     m_stack.emplace_back(std::move(cmd));
     if (m_stack.size() > m_limit)
         m_stack.erase(m_stack.begin());
-    // ·¢³öÍ¨Öª
+    // ï¿½ï¿½ï¿½ï¿½Í¨Öª
     UndoNotifier::Notify(GetUndoName(), CanUndo());
 }
 
@@ -71,7 +71,7 @@ void CmdMoveSelected::undo(CanvasPanel* canvas) {
             auto it = std::find(m_wireIdx.begin(), m_wireIdx.end(), aw.wireIdx);
             const Wire& wire = canvas->GetWires()[aw.wireIdx];
 
-            // ¼ÆËãÐÂÒý½ÅÊÀ½ç×ø±ê
+            // è®¡ç®—æ–°å¼•è„šä¸–ç•Œåæ ‡
             const auto& elem = canvas->GetElements()[m_compntIdx[i]];
             const auto& pins = aw.isInput ? elem.GetInputPins() : elem.GetOutputPins();
             if (aw.pinIdx >= pins.size()) continue;
@@ -79,7 +79,7 @@ void CmdMoveSelected::undo(CanvasPanel* canvas) {
             wxPoint newPinPos = elem.GetPos() + pinOffset;
 
             Wire tmp_wire = wire;
-            // ¸üÐÂµ¼Ïß¶Ëµã
+            // æ›´æ–°å¯¼çº¿ç«¯ç‚¹
             if (aw.ptIdx == 0) {
                 tmp_wire.pts.front().pos = newPinPos;
                 tmp_wire.pts[1].pos.y = newPinPos.y;

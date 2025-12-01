@@ -1,4 +1,4 @@
-#pragma once
+ï»¿#pragma once
 #include <wx/wx.h>
 #include <vector>
 #include <memory>
@@ -6,15 +6,15 @@
 class CanvasPanel;
 
 struct WireAnchor {
-    size_t wireIdx;   // ÄÄÌõÏß
-    size_t ptIdx;     // ¸ÃÏßµÚ¼¸¸ö¿ØÖÆµã£¨0 »ò ×îºó£©
-    bool   isInput;   // Ôª¼ş²àÊÇÊäÈë»¹ÊÇÊä³öÒı½Å
-    size_t pinIdx;    // Ôª¼ş²àÒı½ÅË÷Òı
-    wxPoint oldPos;   // Ô­À´µÄÎ»ÖÃ£¨ÓÃÓÚ³·Ïú£©
+    size_t wireIdx;   // ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    size_t ptIdx;     // ï¿½ï¿½ï¿½ßµÚ¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æµã£¨0 ï¿½ï¿½ ï¿½ï¿½ï¿½
+    bool   isInput;   // Ôªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ë»¹ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    size_t pinIdx;    // Ôªï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½
+    wxPoint oldPos;   // Ô­ï¿½ï¿½ï¿½ï¿½Î»ï¿½Ã£ï¿½ï¿½ï¿½ï¿½Ú³ï¿½ï¿½ï¿½ï¿½ï¿½
 };
 
 
-/* ³éÏóÃüÁî */
+/* ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ */
 class Command
 {
 public:
@@ -23,7 +23,7 @@ public:
     virtual wxString GetName() const = 0;
 };
 
-/* ¾ßÌåÃüÁî£º·ÅÖÃÔª¼ş */
+/* ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½î£ºï¿½ï¿½ï¿½ï¿½Ôªï¿½ï¿½ */
 class CmdAddElement : public Command
 {
     wxString m_name;
@@ -36,10 +36,10 @@ public:
     wxString GetName() const override;
 };
 
-/* ¾ßÌåÃüÁî£ºÌí¼Óµ¼Ïß */
+/* å…·ä½“å‘½ä»¤ï¼šæ·»åŠ å¯¼çº¿ */
 class CmdAddWire : public Command
 {
-    size_t m_wireIdx;   // ÔÚ m_wires ÖĞµÄÏÂ±ê
+    size_t m_wireIdx;   // ï¿½ï¿½ m_wires ï¿½Ğµï¿½ï¿½Â±ï¿½
 public:
     CmdAddWire(size_t idx) : m_wireIdx(idx) {}
     void undo(CanvasPanel* canvas) override;
@@ -48,10 +48,10 @@ public:
 
 
 
-/* ¾ßÌåÃüÁî£ºÌí¼ÓÎÄ±¾¿ò */
+/* å…·ä½“å‘½ä»¤ï¼šæ·»åŠ æ–‡æœ¬æ¡† */
 class CmdAddText : public Command
 {
-    size_t m_textIdx;   // ÔÚ m_wires ÖĞµÄÏÂ±ê
+    size_t m_textIdx;   // åœ¨ m_wires ä¸­çš„ä¸‹æ ‡
 public:
     CmdAddText(size_t idx) : m_textIdx(idx) {}
     void undo(CanvasPanel* canvas) override;
@@ -84,7 +84,7 @@ public:
 };
 
 
-    /* ³·ÏúÕ» */
+    /* æ’¤é”€æ ˆ */
 class UndoStack
     {
         std::vector<std::unique_ptr<Command>> m_stack;

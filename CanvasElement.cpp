@@ -25,6 +25,10 @@ std::vector<wxPoint> CanvasElement::CalculateBezier(const Point& p0, const Point
 CanvasElement::CanvasElement(const wxString& name, const wxPoint& pos)
     : m_name(name), m_pos(pos)
 {
+    // 判断锚点是否为空（用wxPoint的默认值判断）
+    if (m_anchorPoint == wxDefaultPosition) {
+        m_anchorPoint = pos; // 没设置的话，用元件初始位置当锚点
+    }
 }
 
 void CanvasElement::Draw(wxDC& dc) const

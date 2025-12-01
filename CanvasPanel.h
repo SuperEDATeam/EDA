@@ -1,4 +1,4 @@
-#pragma once
+ï»¿#pragma once
 #include <wx/wx.h>
 #include <vector>
 #include <chrono>
@@ -16,26 +16,26 @@ class MainFrame;
 
 struct HoverInfo {
     wxPoint pos;
-    wxPoint snappedPos; // ÓÅÏÈ¼¶£ºÒı½Å£¬µ¼Ïß¿ØÖÆµã
+    wxPoint snappedPos; // ï¿½ï¿½ï¿½È¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Å£ï¿½ï¿½ï¿½ï¿½ß¿ï¿½ï¿½Æµï¿½
 
-    // 1. Òı½Å (Pin) ĞüÍ£ĞÅÏ¢
-    int pinIndex = -1;         // ĞüÍ£Òı½ÅµÄË÷Òı¡£-1 ±íÊ¾Ã»ÓĞĞüÍ£ÔÚÈÎºÎÒı½ÅÉÏ¡£
-	bool isInputPin = false;   // ĞüÍ£Òı½ÅÊÇ·ñÎªÊäÈëÒı½Å¡£
-    wxPoint pinWorldPos;       // ĞüÍ£Òı½ÅÔÚÊÀ½ç×ø±êÏµÖĞµÄÎ»ÖÃ¡£
+    // 1. å¼•è„š (Pin) æ‚¬åœä¿¡æ¯
+    int pinIndex = -1;         // æ‚¬åœå¼•è„šçš„ç´¢å¼•ã€‚-1 è¡¨ç¤ºæ²¡æœ‰æ‚¬åœåœ¨ä»»ä½•å¼•è„šä¸Šã€‚
+	bool isInputPin = false;   // æ‚¬åœå¼•è„šæ˜¯å¦ä¸ºè¾“å…¥å¼•è„šã€‚
+    wxPoint pinWorldPos;       // æ‚¬åœå¼•è„šåœ¨ä¸–ç•Œåæ ‡ç³»ä¸­çš„ä½ç½®ã€‚
 
-    // 2. µ¼Ïß¿ØÖÆµã (Cell/Wire Control Point) ĞüÍ£ĞÅÏ¢
-    int cellIndex = -1;        // ĞüÍ£µ¼Ïß¿ØÖÆµãµÄË÷Òı¡£-1 ±íÊ¾Ã»ÓĞĞüÍ£ÔÚ¿ØÖÆµãÉÏ¡£
-    int wireIndex = -1;        // ¿ØÖÆµãËùÊôµ¼ÏßµÄË÷Òı¡£
-    wxPoint cellWorldPos;      // ¿ØÖÆµãÔÚÊÀ½ç×ø±êÏµÖĞµÄÎ»ÖÃ¡£
+    // 2. å¯¼çº¿æ§åˆ¶ç‚¹ (Cell/Wire Control Point) æ‚¬åœä¿¡æ¯
+    int cellIndex = -1;        // æ‚¬åœå¯¼çº¿æ§åˆ¶ç‚¹çš„ç´¢å¼•ã€‚-1 è¡¨ç¤ºæ²¡æœ‰æ‚¬åœåœ¨æ§åˆ¶ç‚¹ä¸Šã€‚
+    int wireIndex = -1;        // æ§åˆ¶ç‚¹æ‰€å±å¯¼çº¿çš„ç´¢å¼•ã€‚
+    wxPoint cellWorldPos;      // æ§åˆ¶ç‚¹åœ¨ä¸–ç•Œåæ ‡ç³»ä¸­çš„ä½ç½®ã€‚
 
-    // 3. Ôª¼ş (Element) ĞüÍ£ĞÅÏ¢ (ÓÃÓÚ×´Ì¬À¸·´À¡)
-    int elementIndex = -1;     // ĞüÍ£Ôª¼şµÄË÷Òı¡£-1 ±íÊ¾Ã»ÓĞĞüÍ£ÔÚÈÎºÎÔª¼şÉÏ¡£
-    wxString elementName;      // ĞüÍ£Ôª¼şµÄÃû³Æ¡£
+    // 3. å…ƒä»¶ (Element) æ‚¬åœä¿¡æ¯ (ç”¨äºçŠ¶æ€æ åé¦ˆ)
+    int elementIndex = -1;     // æ‚¬åœå…ƒä»¶çš„ç´¢å¼•ã€‚-1 è¡¨ç¤ºæ²¡æœ‰æ‚¬åœåœ¨ä»»ä½•å…ƒä»¶ä¸Šã€‚
+    wxString elementName;      // æ‚¬åœå…ƒä»¶çš„åç§°ã€‚
 
-	// 4. ÎÄ±¾¿ò (Text Element) ĞüÍ£ĞÅÏ¢
-	int textIndex = -1; // ĞüÍ£ÎÄ±¾¿òµÄË÷Òı¡£-1 ±íÊ¾Ã»ÓĞĞüÍ£ÔÚÈÎºÎÎÄ±¾¿òÉÏ¡£
+	// 4. æ–‡æœ¬æ¡† (Text Element) æ‚¬åœä¿¡æ¯
+	int textIndex = -1; // æ‚¬åœæ–‡æœ¬æ¡†çš„ç´¢å¼•ã€‚-1 è¡¨ç¤ºæ²¡æœ‰æ‚¬åœåœ¨ä»»ä½•æ–‡æœ¬æ¡†ä¸Šã€‚
 
-    // ¸¨Öúº¯Êı£¬ÅĞ¶ÏÊÇ·ñĞüÍ£ÔÚÄ³¸ö¾ßÌå¶ÔÏóÉÏ
+    // è¾…åŠ©å‡½æ•°ï¼Œåˆ¤æ–­æ˜¯å¦æ‚¬åœåœ¨æŸä¸ªå…·ä½“å¯¹è±¡ä¸Š
     bool IsOverPin() const { return pinIndex != -1; }
     bool IsOverCell() const { return cellIndex != -1; }
     bool IsOverElement() const { return elementIndex != -1; }
@@ -44,7 +44,7 @@ struct HoverInfo {
         return pinIndex == -1 && cellIndex == -1 && elementIndex == -1 && textIndex == -1;
 	}
 
-    // ¹¹Ôìº¯Êı
+    // æ„é€ å‡½æ•°
 	HoverInfo() : pinIndex(-1), isInputPin(false), cellIndex(-1), wireIndex(-1), elementIndex(-1), textIndex(-1){}
 };
 
@@ -53,11 +53,11 @@ class CanvasPanel : public wxPanel
 public:
     CanvasPanel(MainFrame* parent, size_t size_x, size_t size_y);
 
-    // ==================== »­²¼¼°»­²¼×Ó´°¿ÚµÄÊÂ¼ş´¦Àí ====================
+    // ==================== ç”»å¸ƒåŠç”»å¸ƒå­çª—å£çš„äº‹ä»¶å¤„ç† ====================
 private:
     bool m_hasFocus;
 
-    // Êó±êÊÂ¼ş
+    // é¼ æ ‡äº‹ä»¶
     void OnLeftDown(wxMouseEvent& evt);
     void OnLeftUp(wxMouseEvent& evt);
     void OnLeftDoubleClick(wxMouseEvent& evt);
@@ -66,36 +66,36 @@ private:
     void OnRightUp(wxMouseEvent& evt);
     void OnMouseWheel(wxMouseEvent& evt);
 
-    // ¼üÅÌÊÂ¼ş
+    // é”®ç›˜äº‹ä»¶
     void OnKeyDown(wxKeyEvent& evt);
 
-    // ½¹µãÊÂ¼ş
+    // ç„¦ç‚¹äº‹ä»¶
     void OnFocus(wxFocusEvent& event);
     void OnKillFocus(wxFocusEvent& event);
     void EnsureFocus();
 
-    // »æÖÆºÍ¹ö¶¯ÊÂ¼ş
+    // ç»˜åˆ¶å’Œæ»šåŠ¨äº‹ä»¶
     void OnPaint(wxPaintEvent& evt);
     void OnScroll(wxScrollEvent& event);
 
-    // ==================== »­²¼ÖĞÔªËØ¹ÜÀí ====================
+    // ==================== ç”»å¸ƒä¸­å…ƒç´ ç®¡ç† ====================
 private:
-    // Ôª¼şºÍÁ¬ÏßÊı¾İ
+    // å…ƒä»¶å’Œè¿çº¿æ•°æ®
     std::vector<CanvasElement> m_elements;
     std::vector<CanvasTextElement> m_textElements;
     std::vector<Wire> m_wires;
 
-    // Ñ¡ÖĞË÷Òı
-    wxRect m_selectRect; // Ñ¡ÖĞ¾ØĞÎ¿ò
+    // é€‰ä¸­ç´¢å¼•
+    wxRect m_selectRect; // é€‰ä¸­çŸ©å½¢æ¡†
     std::vector<int> m_selTxtIdx;
     std::vector<int> m_selElemIdx;
     std::vector<int> m_selWireIdx;
 
-    // Ô¤ÀÀÔªËØ
+    // é¢„è§ˆå…ƒç´ 
     CanvasElement m_previewElement;
     Wire m_previewWire;
 
-    // ÎÄ±¾±à¼­
+    // æ–‡æœ¬ç¼–è¾‘
     wxTextCtrl* m_hiddenTextCtrl;
     wxTextCtrl* m_sharedTextCtrl;
     int m_currentEditingTextIndex;
@@ -105,14 +105,14 @@ public:
     void ClearAll();
     void DeleteSelected();
 
-    // Ôª¼ş¹ÜÀí
+    // å…ƒä»¶ç®¡ç†
     const std::vector<CanvasElement>& GetElements() const { return m_elements; }
     void AddElement(const wxString& name, const wxPoint& pos);
     void DeleteElement(int index) { m_elements.erase(m_elements.begin() + index);  m_selElemIdx.erase(std::remove(m_selElemIdx.begin(), m_selElemIdx.end(), index), m_selElemIdx.end()); Refresh(); };
     void ElementSetPos(int index, const wxPoint& pos);
     void ElementStatusChange(int index);
 
-    // µ¼Ïß¹ÜÀí
+    // å¯¼çº¿ç®¡ç†
     const std::vector<Wire>& GetWires() const { return m_wires; }
     void AddWire(const Wire& wire);
     void DeleteWire(int index) { m_wires.erase(m_wires.begin() + index); m_selWireIdx.erase(std::remove(m_selWireIdx.begin(), m_selWireIdx.end(), index), m_selWireIdx.end()); Refresh(); };
@@ -123,7 +123,7 @@ public:
     void UpdatePreviewWire(Wire& wire) { m_previewWire = wire; Refresh(); };
     void ClearPreviewWire() { m_previewWire = Wire(); Refresh(); };
 
-    // ÎÄ±¾¹ÜÀí
+    // æ–‡æœ¬ç®¡ç†
     const std::vector<CanvasTextElement>& GetTextElements() const { return m_textElements; }
     void CreateTextElement(const wxPoint& position);
     void DeleteTextElement(int index) { m_textElements.erase(m_textElements.begin() + index); m_selTxtIdx.erase(std::remove(m_selTxtIdx.begin(), m_selTxtIdx.end(), index), m_selTxtIdx.end()); Refresh(); };
@@ -136,48 +136,48 @@ public:
     void OnHiddenTextCtrlEnter(wxCommandEvent& evt) { FinishTextEditing(); };
     void OnHiddenTextCtrlKillFocus(wxFocusEvent& evt) { FinishTextEditing(); evt.Skip(); };
 
-    // Ô¤ÀÀÔªËØ¹ÜÀí
+    // é¢„è§ˆå…ƒç´ ç®¡ç†
     void SetPreviewElement(const wxString& name, wxPoint pos);
 
-    // Ñ¡ÖĞÔªËØ¹ÜÀí
+    // é€‰ä¸­å…ƒç´ ç®¡ç†
     void UpdateSelection(std::vector<int> m_textIdx, std::vector<int> m_elemIdx, std::vector<int> m_wireIdx);
     void ClearSelection() { m_selTxtIdx.clear(); m_selElemIdx.clear(); m_selWireIdx.clear(); Refresh(); };
 
-    // Ñ¡Ôñ¾ØĞÎ¿ò¿ò¹ÜÀí
+    // é€‰æ‹©çŸ©å½¢æ¡†æ¡†ç®¡ç†
     const wxRect GetSelectionRect() const { return m_selectRect; };
     void SetSelectionRect(const wxRect& rect) { m_selectRect = rect; Refresh(); };
     void ClearSelectionRect() { m_selectRect = wxRect(); Refresh(); };
-    // ==================== »­²¼±¾ÉíµÄ´óĞ¡Î»ÖÃ¶¨ÒåºÍ×ø±ê×ª»» ====================
+    // ==================== ç”»å¸ƒæœ¬èº«çš„å¤§å°ä½ç½®å®šä¹‰å’Œåæ ‡è½¬æ¢ ====================
 
 private:
-    // »­²¼×´Ì¬
+    // ç”»å¸ƒçŠ¶æ€
     wxSize m_size;
     int m_grid;
     wxPoint m_offset;
     float m_scale = 1.0f;
 
 public:
-    // »­²¼µÄËõ·Å
+    // ç”»å¸ƒçš„ç¼©æ”¾
     float GetScale() const { return m_scale; }
     void SetScale(float scale);
     std::pair<float, float> ValidScaleRange();
 
-    // Æ«ÒÆºÍ¹ö¶¯
+    // åç§»å’Œæ»šåŠ¨
     const wxPoint GetoffSet() const { return m_offset; };
     void SetoffSet(wxPoint offset);
     std::pair<wxPoint, wxPoint> ValidSetOffRange();
 
-    // Íø¸ñ´óĞ¡
+    // ç½‘æ ¼å¤§å°
     int GetGrid() const { return m_grid; };
     void SetGrid(int grid) { m_grid = grid; };
 
-    // ×ø±ê×ª»»
+    // åæ ‡è½¬æ¢
     wxPoint ScreenToCanvas(const wxPoint& screenPos) const;
     wxPoint CanvasToScreen(const wxPoint& canvasPos) const;
     wxPoint LogicToDevice(const wxPoint& logicPoint) const;
     wxPoint DeviceToLogic(const wxPoint& devicePoint) const;
 
-    // ==================== »­²¼¼üÊó¹¤¾ß×´Ì¬¹ÜÀí ====================
+    // ==================== ç”»å¸ƒé”®é¼ å·¥å…·çŠ¶æ€ç®¡ç† ====================
 private:
     HoverInfo m_hoverInfo;
 
@@ -189,46 +189,46 @@ private:
     wxPoint Snap(const wxPoint& canvasPos) { return wxPoint((canvasPos.x + m_grid / 2) / m_grid * m_grid, (canvasPos.y + m_grid / 2) / m_grid * m_grid); };
 
 public:
-    // ¹¤¾ß¹ÜÀí
+    // å·¥å…·ç®¡ç†
     void SetCurrentTool(ToolType tool);
     void SetCurrentComponent(const wxString& componentName);
 
-    // ==================== »­²¼µÄ×ÓÏµÍ³ ====================
+    // ==================== ç”»å¸ƒçš„å­ç³»ç»Ÿ ====================
 private:
-    // ³·ÏúÕ»
+    // æ’¤é”€æ ˆ
     UndoStack m_undoStack;
 
-    // ¹¤¾ßÏµÍ³
+    // å·¥å…·ç³»ç»Ÿ
     ToolStateMachine* m_toolStateMachine;
     CanvasEventHandler* m_CanvasEventHandler;
     HandyToolKit* m_HandyToolKit;
 
-    // ¹ö¶¯Ìõ
+    // æ»šåŠ¨æ¡
     wxScrollBar* m_hScroll;
     wxScrollBar* m_vScroll;
 
     void LayoutScrollbars();
 
 public:
-    // ¹¤¾ßÏà¹Ø»ñÈ¡·½·¨
+    // å·¥å…·ç›¸å…³è·å–æ–¹æ³•
     ToolStateMachine* GetToolStateMachine() const { return m_toolStateMachine; }
     CanvasEventHandler* GetCanvasEventHandler() const { return m_CanvasEventHandler; }
 
-    // ³·ÏúÕ»Ïà¹Ø
+    // æ’¤é”€æ ˆç›¸å…³
     void UndoStackPush(std::unique_ptr<Command> command);
     void UndoStackUndo() { m_undoStack.Undo(this); };
     const wxString UndoStackGetUndoName() const { return m_undoStack.GetUndoName(); };
     bool UndoStackCanUndo() const { return m_undoStack.CanUndo(); };
     
 
-    // ==================== ¸¸´°¿Ú ====================
+    // ==================== çˆ¶çª—å£ ====================
 private:
     MainFrame* m_mainFrame;
 
 public:
-    // ×´Ì¬À¸¸üĞÂ
+    // çŠ¶æ€æ æ›´æ–°
     void SetStatus(wxString status);
     
-    // ==================== ÊÂ¼ş±í ====================
+    // ==================== äº‹ä»¶è¡¨ ====================
     wxDECLARE_EVENT_TABLE();
 };
