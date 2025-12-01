@@ -36,25 +36,6 @@ public:
     wxString GetName() const override;
 };
 
-/* 具体命令：移动元件 */
-class CmdMoveElement : public Command
-{
-public:
-    CmdMoveElement(size_t idx,
-        const wxPoint& oldPos,
-        const std::vector<WireAnchor>& anchors)
-        : m_index(idx), m_oldPos(oldPos), m_anchors(anchors) {
-    }
-
-    void undo(CanvasPanel* canvas) override;
-    wxString GetName() const override { return "Move Selection"; }
-
-private:
-    size_t m_index;
-    wxPoint m_oldPos;   // 移动前的坐标
-    std::vector<WireAnchor> m_anchors;
-};
-
 /* 具体命令：添加导线 */
 class CmdAddWire : public Command
 {
@@ -65,35 +46,53 @@ public:
     wxString GetName() const override { return "Add Wire"; }
 };
 
-class CmdAddBranchWire : public Command {
-private:
-    size_t m_parentWire;
-    size_t m_parentCell;
-    size_t m_branchWire;
-
-public:
-    CmdAddBranchWire(size_t parentWire, size_t parentCell, size_t branchWire)
-        : m_parentWire(parentWire), m_parentCell(parentCell), m_branchWire(branchWire) {
-    }
-
-    void undo(CanvasPanel* canvas) override;
-
-    wxString GetName() const override {
-        return "Add Branch Wire";
-    }
-};
 
 
-/* 撤销栈 */
-class UndoStack
+/* 具体命令：添加文本框 */
+class CmdAddText : public Command
 {
-    std::vector<std::unique_ptr<Command>> m_stack;
-    size_t m_limit = 100;
+    size_t m_textIdx;   // 在 m_wires 中的下标
 public:
-    void Push(std::unique_ptr<Command> cmd);
-    bool CanUndo() const { return !m_stack.empty(); }
-    void Undo(CanvasPanel* canvas);
-    wxString GetUndoName() const;
-    void Clear() { m_stack.clear(); }
+    CmdAddText(size_t idx) : m_textIdx(idx) {}
+    void undo(CanvasPanel* canvas) override;
+    wxString GetName() const override { return "Add TextBox"; }
 };
 
+class CmdMoveSelected : public Command
+{
+    std::vector<int> m_textElemIdx;
+    std::vector<int> m_compntIdx;
+    std::vector<int> m_wireIdx;
+
+    std::vector<wxPoint> m_textElemPos;
+    std::vector<wxPoint> m_compntPos;
+    std::vector<std::vector<wxPoint>> m_wirePos;
+
+    std::vector<std::vector<WireAnchor>> m_movingWires;
+public:
+    CmdMoveSelected(std::vector<int> textElemIdx, std::vector<int> compntIdx, std::vector<int> wireIdx, std::vector<wxPoint> textElemPos, std::vector<wxPoint> compntPos, std::vector<std::vector<wxPoint>> wirePos, std::vector<std::vector<WireAnchor>> movingWires) {
+        m_textElemIdx = textElemIdx;
+        m_compntIdx = compntIdx;
+        m_wireIdx = wireIdx;
+        m_textElemPos = textElemPos;
+        m_compntPos = compntPos;
+        m_wirePos = wirePos;
+        m_movingWires = movingWires;
+    }
+    void undo(CanvasPanel* canvas) override;
+    wxString GetName() const override { return "Move Selected"; }
+};
+
+
+    /* 撤销栈 */
+class UndoStack
+    {
+        std::vector<std::unique_ptr<Command>> m_stack;
+        size_t m_limit = 100;
+    public:
+        void Push(std::unique_ptr<Command> cmd);
+        bool CanUndo() const { return !m_stack.empty(); }
+        void Undo(CanvasPanel* canvas);
+        wxString GetUndoName() const;
+        void Clear() { m_stack.clear(); }
+    };

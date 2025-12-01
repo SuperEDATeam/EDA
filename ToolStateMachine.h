@@ -20,10 +20,6 @@ enum class ToolType {
 enum class DragToolState {
     IDLE,
     CANVAS_DRAGGING,        // 画布拖动
-    COMPONENT_DRAGGING,     // 元件拖动
-    WIRE_WHOLE_DRAGGING,    // 整体导线拖动
-    WIRE_SEGMENT_DRAGGING,  // 导线段拖动
-    TEXT_DRAGGING          // 文本拖动
 };
 
 // 选中工具状态

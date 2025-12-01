@@ -96,6 +96,7 @@ using Shape = std::variant<Line, PolyShape, Circle, Text, Path, ArcShape, Bezier
 class CanvasElement
 {
 public:
+    CanvasElement() = default;
     CanvasElement(const wxString& name, const wxPoint& pos);
     void Draw(wxDC& dc) const;
     void AddShape(const Shape& shape) { m_shapes.push_back(shape); }

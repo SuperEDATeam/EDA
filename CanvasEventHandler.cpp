@@ -1,40 +1,28 @@
+Ôªø#include <wx/msgdlg.h>
+
 #include "CanvasEventHandler.h"
-#include "MainFrame.h"
-#include "Wire.h"
-#include "UndoStack.h"
-#include "CanvasPanel.h"
 #include "CanvasTextElement.h"
 #include "HandyToolKit.h"
+#include "ToolBars.h"
 
 CanvasEventHandler::CanvasEventHandler(CanvasPanel* canvas, ToolStateMachine* toolstate)
     : m_canvas(canvas), m_toolStateMachine(toolstate), m_isTemporaryAction(false), m_eventHandled(false),
     m_editingWireIndex(-1), m_editingPointIndex(-1), m_draggingElementIndex(-1), m_editingTextIndex(-1){
-    BindHiddenTextCtrlEvents();
-}
-
-void CanvasEventHandler::CleanTempTool() {
-    m_isTemporaryAction = false;
-}
-
-void CanvasEventHandler::SetCurrentTool4Bar(ToolType tool) {
-    CleanTempTool();
-    SetCurrentTool(tool);
 }
 
 void CanvasEventHandler::SetCurrentTool(ToolType tool) {
 	TextToolState textState = m_toolStateMachine->GetTextState();
     if (textState != TextToolState::IDLE) {
-        FinishTextEditing();
+        m_canvas->FinishTextEditing();
     }
     m_compntIdx.clear();
     m_textElemIdx.clear();
     m_wireIdx.clear();
-    m_canvas->Refresh();
-
+    m_canvas->ClearSelection();
 
     m_toolStateMachine->SetCurrentTool(tool);
 
-    // …Ë÷√  µ±µƒπ‚±Í
+    // ËÆæÁΩÆÈÄÇÂΩìÁöÑÂÖâÊ†á
     if (m_canvas) {
         switch (tool) {
         case ToolType::COMPONENT_TOOL: {
@@ -64,122 +52,92 @@ void CanvasEventHandler::SetCurrentTool(ToolType tool) {
         }
     }
 
-    // ◊¥Ã¨¿∏∑¥¿°
+    // Áä∂ÊÄÅÊ†èÂèçÈ¶à
     if (true) {
         wxString toolName;
         switch (tool) {
         case ToolType::SELECT_TOOL:
-            toolName = "—°÷–π§æﬂ";
+            toolName = "ÈÄâ‰∏≠Â∑•ÂÖ∑";
             break;
         case ToolType::TEXT_TOOL:
-            toolName = "Œƒ±æπ§æﬂ";
+            toolName = "ÊñáÊú¨Â∑•ÂÖ∑";
             break;
         case ToolType::COMPONENT_TOOL:
-            toolName = "‘™º˛π§æﬂ";
+            toolName = "ÂÖÉ‰ª∂Â∑•ÂÖ∑";
             break;
         case ToolType::WIRE_TOOL:
-            toolName = "µºœﬂπ§æﬂ";
+            toolName = "ÂØºÁ∫øÂ∑•ÂÖ∑";
             break;
         case ToolType::DRAG_TOOL:
-            toolName = "Õœ∂Øπ§æﬂ";
+            toolName = "ÊãñÂä®Â∑•ÂÖ∑";
             break;
         case ToolType::DRAWING_TOOL:
-            toolName = "ªÊÕºπ§æﬂ";
+            toolName = "ÁªòÂõæÂ∑•ÂÖ∑";
 			break;
         }
-        m_canvas->SetStatus(wxString::Format("µ±«∞π§æﬂ: %s", toolName));
+        m_canvas->SetStatus(wxString::Format("ÂΩìÂâçÂ∑•ÂÖ∑: %s", toolName));
     }
 }
 
 void CanvasEventHandler::OnCanvasLeftDown(wxMouseEvent& evt) {
-    m_canvas->m_HandyToolKit->Hide();
-    wxPoint canvasPos = m_canvas->ScreenToCanvas(evt.GetPosition());
-    m_eventHandled = false;
+    // Ê∏ÖÈô§ÊñáÊú¨ÁºñËæëÁÑ¶ÁÇπ
+    if (m_editingTextIndex != -1) {
+        m_canvas->FinishTextEditing();
+    }
+
+
+
+
+    wxPoint canvasPos = m_hoverInfo.pos;
     ToolType currentTool = m_toolStateMachine->GetCurrentTool();
     
     if (currentTool == ToolType::SELECT_TOOL){
-        // —°‘Òπ§æﬂœ¬µ„ª˜ø’∞◊«¯”Ú£∫«Â≥˝—°‘Ò
-        //m_toolStateMachine->SetCurrentTool(ToolType::SELECT_TOOL);
         HandleSelectTool(evt);
-		return;
+        m_eventHandled = true;
+        return;
     }
-
 
     if (currentTool == ToolType::COMPONENT_TOOL){
-        HandleComponentTool(canvasPos);
+        HandleComponentTool();
         m_eventHandled = true;
+        return;
     }
 
-
-
-
-    // «Â≥˝Œƒ±æ±‡º≠Ωπµ„
-    if (m_editingTextIndex != -1) {
-        FinishTextEditing();
-    }
-
-    // 1. ◊Ó∏ﬂ”≈œ»º∂£∫ºÏ≤È «∑Òµ„ª˜¡Àµºœﬂøÿ÷∆µ„
-    int cellWire, cellIdx;
-    wxPoint cellPos;
-    int newCell = m_canvas->HitHoverCell(canvasPos, &cellWire, &cellIdx, &cellPos);
-    if (newCell != -1) {
-        m_previousTool = currentTool;
-        m_isTemporaryAction = true;
-        SetCurrentTool(ToolType::WIRE_TOOL);
-        bool _snapped = false;
-        wxPoint _snappedPos = m_canvas->Snap(canvasPos, &_snapped);
-        //StartBranchFromWire(cellWire, cellIdx, _snappedPos);
-        StartWireDrawing(_snappedPos, CPType::Branch);
+    if (currentTool == ToolType::WIRE_TOOL && m_toolStateMachine->GetWireState() == WireToolState::WIRE_DRAWING) {
+        PlaceWirePoint();
         m_eventHandled = true;
         return;
     }
 
 
 
-        //2. ºÏ≤È «∑Òµ„ª˜¡À“˝Ω≈£®ø™ ºªÊ÷∆µºœﬂ£©
-    bool snapped = false;
-    wxPoint snappedPos = m_canvas->Snap(canvasPos, &snapped);
-    if (snapped) {
+    // Ê£ÄÊü•ÊòØÂê¶ÁÇπÂáª‰∫ÜÂØºÁ∫øÊéßÂà∂ÁÇπ
+    if (m_hoverInfo.IsOverCell()) {
         m_previousTool = currentTool;
         m_isTemporaryAction = true;
         SetCurrentTool(ToolType::WIRE_TOOL);
-        CPType startType = CPType::Free;
-        if (snapped) startType = CPType::Pin;
-        StartWireDrawing(snappedPos, startType);
+        StartWireDrawingDown(m_hoverInfo.snappedPos, CPType::Branch);
         m_eventHandled = true;
         return;
     }
 
-    //// 3. ºÏ≤È «∑Òµ„ª˜¡À‘™º˛
-    //int elementIndex = m_canvas->HitTestPublic(canvasPos);
-    //if (elementIndex != -1) {
-    //    // ‘⁄—°‘Òπ§æﬂœ¬µ„ª˜‘™º˛£∫—°‘Òµ´≤ªÕœ∂Ø
-    //    if (currentTool == ToolType::SELECT_TOOL) {
-    //        m_canvas->SetSelectedIndex(elementIndex);
-    //        m_eventHandled = true;
-    //        return;
-    //    }
-    //    //else {
-    //    //    m_previousTool = currentTool;
-    //    //    m_isTemporaryAction = true;
-    //    //    SetCurrentTool(ToolType::DRAG_TOOL);
-    //    //    StartElementDragging(elementIndex, canvasPos);
-    //    //    m_eventHandled = true;
-    //    //    return;
-    //    //}
-    //    else if (currentTool == ToolType::DRAG_TOOL){
-    //        m_previousTool = currentTool;
-    //        m_isTemporaryAction = true;
-    //        SetCurrentTool(ToolType::DRAG_TOOL);
-    //        StartElementDragging(elementIndex, canvasPos);
-    //        m_eventHandled = true;
-    //        return;
-    //    }
-    //}
 
-    // 4. ºÏ≤È «∑Ò‘⁄µ„ª˜¡Àœ÷”–Œƒ±æ‘™Àÿ
+
+    // Ê£ÄÊü•ÊòØÂê¶ÁÇπÂáª‰∫ÜÂºïËÑöÔºàÂºÄÂßãÁªòÂà∂ÂØºÁ∫øÔºâ
+    if (m_hoverInfo.IsOverPin() || m_hoverInfo.IsOverCell()){
+        m_isTemporaryAction = true;
+        SetCurrentTool(ToolType::WIRE_TOOL);
+        CPType type = CPType::Free;
+        if (m_hoverInfo.IsOverPin()) type = CPType::Pin;
+        else if (m_hoverInfo.IsOverCell()) type = CPType::Branch;
+        StartWireDrawingDown(m_hoverInfo.snappedPos, CPType::Pin);
+        m_eventHandled = true;
+        return;
+    }
+
+    // Ê£ÄÊü•ÊòØÂê¶Âú®ÁÇπÂáª‰∫ÜÁé∞ÊúâÊñáÊú¨ÂÖÉÁ¥†
     bool clickedExisting = false;
-    int textIndex = m_canvas->inWhichTextBox(canvasPos);
+    int textIndex = m_hoverInfo.textIndex;
     if (textIndex != -1) {
         m_previousTool = currentTool;
         m_isTemporaryAction = true;
@@ -189,7 +147,7 @@ void CanvasEventHandler::OnCanvasLeftDown(wxMouseEvent& evt) {
         return;
     }
 
-	// 5. ‘⁄¡Ÿ ±Œƒ±æƒ£ Ωœ¬£¨µ„ª˜ø’∞◊«¯”ÚÕÀªÿ…œ∏ˆπ§æﬂ
+	// Âú®‰∏¥Êó∂ÊñáÊú¨Ê®°Âºè‰∏ãÔºåÁÇπÂáªÁ©∫ÁôΩÂå∫ÂüüÈÄÄÂõû‰∏ä‰∏™Â∑•ÂÖ∑
     if (m_isTemporaryAction && currentTool == ToolType::TEXT_TOOL) {
         SetCurrentTool(m_previousTool);
         currentTool = m_previousTool;
@@ -198,181 +156,143 @@ void CanvasEventHandler::OnCanvasLeftDown(wxMouseEvent& evt) {
 	}
 
 
-    // 4. ∞¥π§æﬂ¿‡–Õ¥¶¿Ì∆‰À˚«Èøˆ
+    // ÊåâÂ∑•ÂÖ∑Á±ªÂûãÂ§ÑÁêÜÂÖ∂‰ªñÊÉÖÂÜµ
     switch (currentTool) {
     case ToolType::TEXT_TOOL: {
-        HandleTextTool(canvasPos);
+        HandleTextTool();
         m_eventHandled = true;
         break;
     }
     case ToolType::WIRE_TOOL: {
-        bool snapped = false;
-        wxPoint snappedPos = m_canvas->Snap(canvasPos, &snapped);
         CPType startType = CPType::Free;
-        if (snapped) startType = CPType::Pin;
-        if (snapped) startType = CPType::Branch;       
-        StartWireDrawing(snappedPos, startType);
+        if (m_hoverInfo.IsOverPin()) startType = CPType::Pin;
+        else if (m_hoverInfo.IsOverCell()) startType = CPType::Branch;
+        StartWireDrawingDown(m_hoverInfo.snappedPos, startType);
         m_eventHandled = true;
         break;
     }
     case ToolType::DRAG_TOOL: {
-        HandleDragTool(m_canvas->CanvasToScreen(canvasPos));
-        wxLogDebug("Õœ◊ßπ§æﬂ≥£”√");
+        if (m_hoverInfo.IsEmptyArea()) {
+            StartPanning(canvasPos);
+            m_eventHandled = true;
+        }
+        else if (m_hoverInfo.IsOverElement()) {
+            m_canvas->ElementStatusChange(m_hoverInfo.elementIndex);
+            m_eventHandled = true;
+        }
         break;
     }
     }
 }
 
-void CanvasEventHandler::HandleWireTool(const wxPoint& canvasPos) {
-    // ◊®√≈µƒµºœﬂπ§æﬂ£∫ø…“‘¥”»Œ“‚µ„ø™ ºªÊ÷∆µºœﬂ
-    bool snapped = false;
-    wxPoint snappedPos = m_canvas->Snap(canvasPos, &snapped);
-	ToolType currentTool = m_toolStateMachine->GetCurrentTool();
 
-    //if (!m_isDrawingWire) {
-    if (m_toolStateMachine->GetWireState() != WireToolState::WIRE_DRAWING) {
-        // ø™ ºªÊ÷∆µºœﬂ£®ø…“‘¥”»Œ“‚µ„ø™ º£¨≤ª“ª∂® «“˝Ω≈£©
-        CPType startType = CPType::Free;
-        if (snapped) startType = CPType::Pin;
-        if (snapped) startType = CPType::Branch;
-        StartWireDrawing(snappedPos, startType);
-    }
-    else {
-        // ÕÍ≥…µºœﬂªÊ÷∆
-        FinishWireDrawing(snappedPos);
-		SetCurrentTool(ToolType::WIRE_TOOL);
-
-        // µºœﬂπ§æﬂƒ£ Ωœ¬£¨ªÊ÷∆ÕÍ≥…∫Ûø…“‘¡¢º¥ø™ º–¬µƒµºœﬂ
-        // ’‚Ã·π©¡À¡¨–¯ªÊ÷∆µƒÃÂ—È
-        if (currentTool == ToolType::WIRE_TOOL) {
-            // ø…“‘—°‘Ò «∑Ò◊‘∂Øø™ º–¬µƒµºœﬂ
-            // »Áπ˚œ£Õ˚¡¨–¯ªÊ÷∆£¨»°œ˚œ¬√Ê’‚––µƒ◊¢ Õ
-            // StartWireDrawing(snappedPos, snapped);
-        }
-    }
-}
-
-void CanvasEventHandler::HandleDragTool(const wxPoint& canvasPos) {
-    // ◊®√≈µƒ∆Ω“∆π§æﬂ
-    if (m_canvas->IsClickOnEmptyAreaPublic(canvasPos)) {
-        StartPanning(canvasPos);
-        m_eventHandled = true;
-    }
-    
-}
-
-void CanvasEventHandler::StartWireDrawing(const wxPoint& startPos, CPType startType) {
-    // »Áπ˚“—æ≠‘⁄Ω¯––∆‰À˚≤Ÿ◊˜£¨œ»»°œ˚
-    //if (m_isDraggingElement) {
-    if (m_toolStateMachine->GetComponentState() == ComponentToolState::COMPONENT_PREVIEW) {
-        FinishElementDragging();
-    }
-    //if (m_isPanning) {
-    if (m_toolStateMachine->GetDragState() == DragToolState::CANVAS_DRAGGING) {
-        FinishPanning(startPos);
-    }
-    //m_isDrawingWire = true;
-	m_toolStateMachine->SetWireState(WireToolState::WIRE_DRAWING);
-    m_wireStartPos = startPos;
-    m_startCP = {startPos, startType};
-
-    // ≥ı ºªØ¡Ÿ ±µºœﬂ
-    m_canvas->m_tempWire.Clear();
-    m_canvas->m_tempWire.AddPoint(m_startCP);
+void CanvasEventHandler::StartWireDrawingDown(const wxPoint& startPos, CPType startType) {
+    // ÂàùÂßãÂåñ‰∏¥Êó∂ÂØºÁ∫ø
+    m_isWireDraingCancel = false;
+    m_tempWire.Clear();
+    m_tempWire.AddPoint({startPos , startType});
 
     switch (startType) {
     case CPType::Pin:
-        m_canvas->SetStatus("ªÊ÷∆µºœﬂ: ¥”“˝Ω≈ø™ º£¨µ„ª˜÷’µ„ÕÍ≥…ªÊ÷∆ (ESC»°œ˚)");
+        m_canvas->SetStatus("ÁªòÂà∂ÂØºÁ∫ø: ‰ªéÂºïËÑöÂºÄÂßãÔºåÁÇπÂáªÊîæÁΩÆÊäòÁÇπ");
         break;
     case CPType::Free:
-        m_canvas->SetStatus("ªÊ÷∆µºœﬂ: ¥”◊‘”…µ„ø™ º£¨µ„ª˜÷’µ„ÕÍ≥…ªÊ÷∆ (ESC»°œ˚)");
+        m_canvas->SetStatus("ÁªòÂà∂ÂØºÁ∫ø: ‰ªéËá™Áî±ÁÇπÂºÄÂßãÔºåÁÇπÂáªÊîæÁΩÆÊäòÁÇπ");
         break;
     case CPType::Branch:
-        m_canvas->SetStatus("ªÊ÷∆µºœﬂ: ¥”∑÷÷ßµ„ø™ º£¨µ„ª˜÷’µ„ÕÍ≥…ªÊ÷∆ (ESC»°œ˚)");
+        m_canvas->SetStatus("ÁªòÂà∂ÂØºÁ∫ø: ‰ªéÂàÜÊîØÁÇπÂºÄÂßãÔºåÁÇπÂáªÊîæÁΩÆÊäòÁÇπ");
         break;
     }
 }
 
-void CanvasEventHandler::UpdateWireDrawing(const wxPoint& currentPos) {
-    //if (!m_isDrawingWire) return;
+void  CanvasEventHandler::StartWireDrawingUp() {
+    m_toolStateMachine->SetWireState(WireToolState::WIRE_DRAWING);
+    lengthOfTempWire = m_tempWire.Size();
+}
+
+void CanvasEventHandler::UpdateWireDrawing(wxMouseEvent& evt) {
 	if (m_toolStateMachine->GetWireState() != WireToolState::WIRE_DRAWING) return;
-
-    bool snapped = false;
-    wxPoint snappedPos = m_canvas->Snap(currentPos, &snapped);
-    CPType endType = CPType::Free;
-    if(m_canvas->m_hoverInfo.IsOverPin()) endType = CPType::Pin;
-    if (m_canvas->m_hoverInfo.IsOverCell()) endType = CPType::Branch;
-	m_endCP = { snappedPos, endType};
-
-    // ∏¸–¬µºœﬂ‘§¿¿
-    wxString status = "ªÊ÷∆µºœﬂ: ";
-
-    switch (m_startCP.type) {
-    case CPType::Pin:
-        m_canvas->m_tempWire.pts = Wire::Route(m_startCP, m_endCP);
-        status = status + wxString::Format("∆µ„: “˝Ω≈(%d, %d)", m_startCP.pos.x, m_startCP.pos.y);
-        break;
-    case CPType::Free:
-        m_canvas->m_tempWire.pts = Wire::Route(m_startCP, m_endCP);
-        status = status + wxString::Format("∆µ„: ◊‘”…µ„(%d, %d)", m_startCP.pos.x, m_startCP.pos.y);
-        break;
-    case CPType::Branch:
-        m_canvas->m_tempWire.pts = Wire::Route(m_startCP, m_endCP);
-        status = status + wxString::Format("∆µ„: ∑÷÷ßµ„(%d, %d)", m_startCP.pos.x, m_startCP.pos.y);
-        break;
-    }
-
-    switch (endType) {
-    case CPType::Pin: {
-        status = status + wxString::Format("    ÷’µ„: “˝Ω≈(%d,%d)",
-            snappedPos.x, snappedPos.y);
-        break;
-    }
-    case CPType::Free: {
-        status = status + wxString::Format("    ÷’µ„: ◊‘”…µ„(%d,%d)",
-            snappedPos.x, snappedPos.y);
-        break;
-    }
-        
-    case CPType::Branch: {
-        status = status + wxString::Format("    ÷’µ„: ∑÷÷ßµ„(%d,%d)",
-            snappedPos.x, snappedPos.y);
-        break;
-    }
-        
-    }
-    m_canvas->SetStatus(status);
-    m_canvas->Refresh();
-}
-
-void CanvasEventHandler::FinishPanning(const wxPoint& currentPos) {
-    //m_isPanning = false;
-	m_toolStateMachine->SetDragState(DragToolState::IDLE);
-    m_panStartPos = currentPos;
-    m_fakeStartPos = currentPos;
-    if (m_isTemporaryAction) {
-        SetCurrentTool(m_previousTool);
-        m_isTemporaryAction = false;
-	}
-}
-
-void CanvasEventHandler::HandleComponentTool(const wxPoint& canvasPos) {
-    if (!m_currentComponent.IsEmpty() && m_canvas) {
-        // ∑≈÷√‘™º˛
-		bool snapped = false;
-		wxPoint snappedPos = m_canvas->Snap(canvasPos, &snapped);
-        m_canvas->PlaceElement(m_currentComponent, snappedPos);
-        SetCurrentTool(ToolType::SELECT_TOOL);
-        m_currentComponent.Clear(); // «Âø’µ±«∞‘™º˛
-
-        if (true) {
-            m_canvas->SetStatus(wxString::Format("“—∑≈÷√: %s£¨ Œ¸∏ΩµΩ (%d, %d)", m_currentComponent, snappedPos.x, snappedPos.y));
-        }
+    ControlPoint pt;
+    if (m_tempWire.Size() > lengthOfTempWire) pt = m_tempWire.pts[lengthOfTempWire];
+    else pt = m_tempWire.pts.back();
+    m_tempWire.pts.resize(lengthOfTempWire);
+    CPType type = CPType::Bend;
+    if(m_hoverInfo.IsOverPin()) type = CPType::Pin;
+    if (m_hoverInfo.IsOverCell()) type = CPType::Branch;
+    wxPoint pos = m_hoverInfo.snappedPos;
+    tempWirePlus = 1;
+    if (evt.ShiftDown()) {
+        m_tempWire.AddPoint({ pos, type });
     }
     else {
-        if (true) {
-            m_canvas->SetStatus("«Îœ»¥”‘™º˛ø‚—°‘Ò“ª∏ˆ‘™º˛");
+        if (pos.x == m_tempWire.pts.back().pos.x) {
+            m_tempWire.AddPoint({ pos, type });
         }
+        else if (pos.y == m_tempWire.pts.back().pos.y) {
+            m_tempWire.AddPoint({ pos, type });
+        }
+        else {
+            tempWirePlus = 2;
+            ControlPoint v = { wxPoint(m_tempWire.pts.back().pos.x, pos.y), CPType::Free };
+            ControlPoint h = { wxPoint(pos.x, m_tempWire.pts.back().pos.y), CPType::Free };
+            if (pt.pos.x == m_tempWire.pts.back().pos.x) {
+                m_tempWire.AddPoint(v);
+                m_tempWire.AddPoint({ pos, type });
+            }
+            else if (pt.pos.y == m_tempWire.pts.back().pos.y) {
+                m_tempWire.AddPoint(h);
+                m_tempWire.AddPoint({ pos, type });
+            }
+            else {
+                m_tempWire.AddPoint(h);
+                m_tempWire.AddPoint({ pos, type });
+            }
+        }
+    }
+    
+    
+    m_canvas->UpdatePreviewWire(m_tempWire);
+    m_canvas->SetStatus(wxString::Format("Ê≠£Âú®ÁªòÂà∂ÂØºÁ∫ø: Èº†Ê†áÁßªÂä®ÔºåÁÇπÂáªÊîæÁΩÆÊäòÁÇπ"));
+}
+
+void CanvasEventHandler::PlaceWirePoint() {
+    lengthOfTempWire += tempWirePlus;
+    if (m_tempWire.pts.back().type == CPType::Pin || m_tempWire.pts.back().type == CPType::Branch) {
+        FinishWireDrawing();
+        return;
+    }
+}
+
+void CanvasEventHandler::FinishWireDrawing() {
+    if (m_toolStateMachine->GetWireState() != WireToolState::WIRE_DRAWING) return;
+    m_tempWire.pts.resize(lengthOfTempWire);
+    if (m_tempWire.pts[lengthOfTempWire - 2].pos == m_tempWire.pts[lengthOfTempWire - 1].pos) {
+        m_tempWire.pts.pop_back();
+    }
+    m_tempWire.pts.back().type = CPType::Free;
+    m_canvas->AddWire(m_tempWire);
+    CancelWireDrawing();
+}
+
+void CanvasEventHandler::CancelWireDrawing() {
+    m_tempWire.Clear();
+    lengthOfTempWire = 0;
+    m_isWireDraingCancel = true;
+    m_toolStateMachine->SetWireState(WireToolState::IDLE);
+	m_canvas->ClearPreviewWire();
+}
+
+
+
+void CanvasEventHandler::HandleComponentTool() {
+    if (!m_currentComponent.IsEmpty()) {
+        m_canvas->AddElement(m_currentComponent, m_hoverInfo.snappedPos);
+        m_canvas->SetStatus(wxString::Format("Â∑≤ÊîæÁΩÆ: %sÔºå Âê∏ÈôÑÂà∞ (%d, %d)", m_currentComponent, m_hoverInfo.snappedPos.x, m_hoverInfo.snappedPos.y));
+        SetCurrentTool(ToolType::SELECT_TOOL);
+        m_currentComponent.Clear(); // Ê∏ÖÁ©∫ÂΩìÂâçÂÖÉ‰ª∂
+    }
+    else {
+        wxMessageBox("ËØ∑ÂÖà‰ªéÂÖÉ‰ª∂Â∫ìÈÄâÊã©‰∏Ä‰∏™ÂÖÉ‰ª∂");
     }
 }
 
@@ -381,171 +301,124 @@ void CanvasEventHandler::OnCanvasLeftUp(wxMouseEvent& evt) {
     //if (m_isEditingWire) {
 	ToolType currentTool = m_toolStateMachine->GetCurrentTool();
     
-
-    if (m_toolStateMachine->GetDragState() == DragToolState::COMPONENT_DRAGGING) {
-        wxLogDebug(wxString::Format("COMPONENT_DRAGGING"));
-        FinishElementDragging();
-        m_eventHandled = true;
-    }
-    else if (m_toolStateMachine->GetSelectState() == SelectToolState::CLICK_SELECT) {
+    // ÂçïÂáªÈÄâ‰∏≠
+    if (m_toolStateMachine->GetSelectState() == SelectToolState::CLICK_SELECT) {
         if (evt.ShiftDown()) {
+            m_canvas->SetStatus(wxString::Format("ÈÄâÊã©Â∑•ÂÖ∑ÔºöÁÇπÂáªÁªßÁª≠ÈÄâÊã©"));
             if (preIn) {
-                wxLogDebug(wxString::Format("PreIn"));
-                if (m_selectedIndex != -1) {
-                    auto it = std::find(m_compntIdx.begin(), m_compntIdx.end(), m_selectedIndex);
-                    if (it == m_compntIdx.end()) m_compntIdx.push_back(m_selectedIndex);
-                    else m_compntIdx.erase(it);
-                }
-                int cellIdx;
-                wxPoint tmpPos;
-                int wireIdx = m_canvas->HitHoverCell(canvasPos, &m_tmpwireIdx, &cellIdx, &tmpPos);
-                if (m_tmpwireIdx != -1) {
-                    auto it1 = std::find(m_wireIdx.begin(), m_wireIdx.end(), m_tmpwireIdx);
-                    if (it1 == m_wireIdx.end()) m_wireIdx.push_back(m_tmpwireIdx);
-                    else m_wireIdx.erase(it1);
-                }
-                m_textIdx = m_canvas->HitTestText(canvasPos);
-                if (m_textIdx != -1) {
-                    auto it2 = std::find(m_textElemIdx.begin(), m_textElemIdx.end(), m_textIdx);
-                    if (it2 == m_textElemIdx.end()) m_textElemIdx.push_back(m_textIdx);
-                    else m_textElemIdx.erase(it2);
-                }
-                m_canvas->Refresh();
+                auto AddOrRemove = [](std::vector<int>& vec, int idx) {
+                    if (idx != -1){
+                        auto it = std::find(vec.begin(), vec.end(), idx);
+                        if (it == vec.end()) vec.push_back(idx);
+                        else vec.erase(it);
+                    }
+                };
+
+                AddOrRemove(m_compntIdx, m_hoverInfo.elementIndex);
+                AddOrRemove(m_wireIdx, m_hoverInfo.wireIndex);
+                AddOrRemove(m_textElemIdx, m_hoverInfo.textIndex);
+                m_canvas->UpdateSelection(m_compntIdx, m_textElemIdx, m_wireIdx);
             }
-            else {
-
-            }
-
-
         }
         else {
-            wxLogDebug(wxString::Format("CLICK_SELECT"));
-            if (preIn) {
-                m_compntIdx.clear();
-                m_textElemIdx.clear();
-                m_wireIdx.clear();
-                m_canvas->Refresh();
-            }
-            else {
-                m_compntIdx.clear();
-                m_textElemIdx.clear();
-                m_wireIdx.clear();
-                if (m_selectedIndex != -1) {
-                    auto it = std::find(m_compntIdx.begin(), m_compntIdx.end(), m_selectedIndex);
-                    if (it == m_compntIdx.end()) m_compntIdx.push_back(m_selectedIndex);
-                    else m_compntIdx.erase(it);
-                }
-                int cellIdx;
-                wxPoint tmpPos;
-                int wireIdx = m_canvas->HitHoverCell(canvasPos, &m_tmpwireIdx, &cellIdx, &tmpPos);
-                if (m_tmpwireIdx != -1) {
-                    auto it1 = std::find(m_wireIdx.begin(), m_wireIdx.end(), m_tmpwireIdx);
-                    if (it1 == m_wireIdx.end()) m_wireIdx.push_back(m_tmpwireIdx);
-                    else m_wireIdx.erase(it1);
-                }
-                m_textIdx = m_canvas->HitTestText(canvasPos);
-                if (m_textIdx != -1) {
-                    auto it2 = std::find(m_textElemIdx.begin(), m_textElemIdx.end(), m_textIdx);
-                    if (it2 == m_textElemIdx.end()) m_textElemIdx.push_back(m_textIdx);
-                    else m_textElemIdx.erase(it2);
-                }
-                m_canvas->Refresh();
-            }
-        }
-
-        wxLogDebug(wxString::Format("CLICK_SELECT"));
-
-
-        m_canvas->Refresh();
-
-        m_canvas->SetStatus(wxString::Format("—°‘Òπ§æﬂ£∫Ω· ¯—°‘Ò"));
-        m_toolStateMachine->SetSelectState(SelectToolState::IDLE);
-        m_eventHandled = true;
-        return;
-    }
-    else if (m_toolStateMachine->GetSelectState() == SelectToolState::DRAG_SELECT) {
-        wxLogDebug(wxString::Format("DRAG_SELECT"));
-
-        wxLogDebug(wxString::Format("CLICK_SELECT"));
-        m_canvas->SetStatus(wxString::Format("—°‘Òπ§æﬂ£∫Ω· ¯Õœ∂Ø"));
-        m_toolStateMachine->SetSelectState(SelectToolState::IDLE);
-        m_eventHandled = true;
-        return;
-    }
-    else if (m_toolStateMachine->GetSelectState() == SelectToolState::RECTANGLE_SELECT) {
-        if (m_canvas->m_selectRect.IsEmpty()) {
+            m_canvas->SetStatus(wxString::Format("ÈÄâÊã©Â∑•ÂÖ∑ÔºöÁªìÊùüÈÄâÊã©"));
             m_compntIdx.clear();
             m_textElemIdx.clear();
             m_wireIdx.clear();
-        }
-        wxLogDebug(wxString::Format("RECTANGLE_SELECT")); 
-        auto searchSelectedElements = [&](std::vector<int>& indexList, const auto& elements) {
-            for (size_t i = 0; i < elements.size(); ++i) {
-                const auto& elem = elements[i];
-                wxRect elemRect = elem.GetBounds();
-                if (m_canvas->m_selectRect.Contains(elemRect)) {
-					auto it = std::find(indexList.begin(), indexList.end(), i);
-					if (it == indexList.end()) indexList.push_back(i);
-					else indexList.erase(it);
-                }
+            m_canvas->Refresh();
+            if (!preIn){
+                auto AddOrRemove = [](std::vector<int>& vec, int idx) {
+                    if (idx != -1) {
+                        auto it = std::find(vec.begin(), vec.end(), idx);
+                        if (it == vec.end()) vec.push_back(idx);
+                        else vec.erase(it);
+                    }
+                    };
+
+                AddOrRemove(m_compntIdx, m_hoverInfo.elementIndex);
+                AddOrRemove(m_wireIdx, m_hoverInfo.wireIndex);
+                AddOrRemove(m_textElemIdx, m_hoverInfo.textIndex);
+                m_canvas->UpdateSelection(m_compntIdx, m_textElemIdx, m_wireIdx);
             }
-            };
-		searchSelectedElements(m_compntIdx, m_canvas->m_elements);
-		searchSelectedElements(m_textElemIdx, m_canvas->m_textElements);
-		searchSelectedElements(m_wireIdx, m_canvas->m_wires);
+        }
         m_toolStateMachine->SetSelectState(SelectToolState::IDLE);
-        m_canvas->Refresh();
+        m_eventHandled = true;
+        return;
+    }
+    // ÈÄâ‰∏≠ÊãñÂä®
+    else if (m_toolStateMachine->GetSelectState() == SelectToolState::DRAG_SELECT) {
+        m_canvas->UndoStackPush(std::make_unique<CmdMoveSelected>(m_textElemIdx, m_compntIdx, m_wireIdx, m_textElemPos, m_compntPos, m_wirePos, m_movingWires));
+        m_canvas->SetStatus(wxString::Format("ÈÄâÊã©Â∑•ÂÖ∑ÔºöÁªìÊùüÊãñÂä®"));
+        m_toolStateMachine->SetSelectState(SelectToolState::IDLE);
+        m_eventHandled = true;
+        return;
+    }
+    // Áü©ÂΩ¢Ê°ÜÈÄâ
+    else if (m_toolStateMachine->GetSelectState() == SelectToolState::RECTANGLE_SELECT) {
+        FinishRectangleSelect();
 		m_eventHandled = true;
     }
-    //else if (m_isPanning) {
+    // ÁîªÂ∏ÉÊãñÂä®
     else if (m_toolStateMachine->GetDragState() == DragToolState::CANVAS_DRAGGING) {
-        //FinishPanning(canvasPos);
-        FinishPanning(m_canvas->CanvasToScreen(canvasPos));
+        FinishPanning();
         m_eventHandled = true;
     }
-    //else if (m_isDrawingWire && currentTool == ToolType::WIRE_TOOL) {
+    
+    // ÂØºÁ∫øÁªòÂà∂ÂâçÁöÑÂáÜÂ§á
+    else if (m_toolStateMachine->GetWireState() == WireToolState::IDLE && currentTool == ToolType::WIRE_TOOL) {
+        if (m_isWireDraingCancel) m_eventHandled = true;
+        else {
+            StartWireDrawingUp();
+            m_eventHandled = true;
+        }
+    }
+    
+    // ÂØºÁ∫øÁªòÂà∂‰∏≠
     else if (m_toolStateMachine->GetWireState() == WireToolState::WIRE_DRAWING && currentTool == ToolType::WIRE_TOOL) {
-        // µºœﬂπ§æﬂƒ£ Ωœ¬£¨µ„ª˜ÕÍ≥…µºœﬂ
-        FinishWireDrawing(canvasPos);
         m_eventHandled = true;
     }
     else {
-        // ∆‰À˚π§æﬂ≤ª¥¶¿Ì
+        // ÂÖ∂‰ªñÂ∑•ÂÖ∑‰∏çÂ§ÑÁêÜ
 	}
 }
 
+void CanvasEventHandler::OnCanvasLeftDoubleClick(wxMouseEvent& evt) {
+    FinishWireDrawing();
+    m_eventHandled = true;
+}
+
 void CanvasEventHandler::OnCanvasKeyDown(wxKeyEvent& evt) {
-    // Ctrl + z ≥∑œ˙
+    // Ctrl + z Êí§ÈîÄ
     if (evt.ControlDown() && evt.GetKeyCode() == 'z') {
         m_eventHandled = true;
         return;
     }
 
-    // Ctrl + s ±£¥Ê
+    // Ctrl + s ‰øùÂ≠ò
     if (evt.ControlDown() && evt.GetKeyCode() == 's') {
         m_eventHandled = true;
         return;
     }
 
-    // Space ø™ º/÷’÷π∑¬’Ê
+    // Space ÂºÄÂßã/ÁªàÊ≠¢‰ªøÁúü
     //if () {
     //    m_eventHandled = true;
     //    return;
     //}
 
-	// Ctrl + c ∏¥÷∆ª≠≤º‘™Àÿ
+	// Ctrl + c Â§çÂà∂ÁîªÂ∏ÉÂÖÉÁ¥†
     if (evt.ControlDown() && evt.GetKeyCode() == 'c') {
         m_eventHandled = true;
         return;
 	}
 
-	// Ctrl + v ’≥Ã˘ª≠≤º‘™Àÿ
+	// Ctrl + v Á≤òË¥¥ÁîªÂ∏ÉÂÖÉÁ¥†
     if (evt.ControlDown() && evt.GetKeyCode() == 'v') {
         m_eventHandled = true;
         return;
 	}
 
-	// Ctrl + x ºÙ«–ª≠≤º‘™Àÿ
+	// Ctrl + x Ââ™ÂàáÁîªÂ∏ÉÂÖÉÁ¥†
     if (evt.ControlDown() && evt.GetKeyCode() == 'x') {
         m_eventHandled = true;
         return;
@@ -564,7 +437,16 @@ void CanvasEventHandler::OnCanvasKeyDown(wxKeyEvent& evt) {
 
     }
     case ToolType::WIRE_TOOL: {
-
+        if (m_toolStateMachine->GetWireState() == WireToolState::WIRE_DRAWING) {
+            if (evt.GetKeyCode() == WXK_ESCAPE) {
+                CancelWireDrawing();
+                m_eventHandled = true;
+            }
+            if (evt.GetKeyCode() == WXK_RETURN) {
+                FinishWireDrawing();
+                m_eventHandled = true;
+            }
+        }
     }
 
     default: {
@@ -575,7 +457,7 @@ void CanvasEventHandler::OnCanvasKeyDown(wxKeyEvent& evt) {
 
 void CanvasEventHandler::OnCanvasMouseWheel(wxMouseEvent& evt) {
     if (evt.ControlDown()) {
-        // ¥¶¿ÌÀı∑≈
+        // Â§ÑÁêÜÁº©Êîæ
         wxPoint mouseScreenPos = evt.GetPosition();
         wxPoint mouseCanvasPos = m_canvas->ScreenToCanvas(mouseScreenPos);
 
@@ -583,49 +465,49 @@ void CanvasEventHandler::OnCanvasMouseWheel(wxMouseEvent& evt) {
         float newScale;
 
         if (evt.GetWheelRotation() > 0) {
-            newScale = oldScale * 1.1f;  // ∑≈¥Û
+            newScale = oldScale * 1.1f;  // ÊîæÂ§ß
         }
         else {
-            newScale = oldScale / 1.1f;  // Àı–°
+            newScale = oldScale / 1.1f;  // Áº©Â∞è
         }
 
         m_canvas->SetScale(newScale);
 
-        // µ˜’˚∆´“∆¡ø£¨ π Û±Í÷∏œÚµƒª≠≤ºŒª÷√±£≥÷≤ª±‰
+        // Ë∞ÉÊï¥ÂÅèÁßªÈáèÔºå‰ΩøÈº†Ê†áÊåáÂêëÁöÑÁîªÂ∏É‰ΩçÁΩÆ‰øùÊåÅ‰∏çÂèò
         wxPoint newMouseScreenPos = m_canvas->CanvasToScreen(mouseCanvasPos);
-        wxPoint offset = m_canvas->m_offset;
+        wxPoint offset = m_canvas->GetoffSet();
         m_canvas->SetoffSet(offset + mouseScreenPos - newMouseScreenPos);
 
-		m_canvas->SetStatus(wxString::Format("Àı∑≈ª≠≤º: %.2f%%", newScale * 100.0f));
+		m_canvas->SetStatus(wxString::Format("Áº©ÊîæÁîªÂ∏É: %.2f%%", newScale * 100.0f));
 
-        evt.Skip(false);  // “—¥¶¿Ì
+        evt.Skip(false);  // Â∑≤Â§ÑÁêÜ
     }
     else if(evt.ShiftDown() || evt.GetWheelAxis() == wxMOUSE_WHEEL_HORIZONTAL){
-        wxPoint offset = m_canvas->m_offset;
+        wxPoint offset = m_canvas->GetoffSet();
 
         wxPoint delta = wxPoint(40, 0);
         if (evt.GetWheelRotation() > 0) {
-            m_canvas->SetoffSet(offset - delta);;  // ”““∆
+            m_canvas->SetoffSet(offset - delta);;  // Âè≥Áßª
         }
         else {
-            m_canvas->SetoffSet(offset + delta);;  // ◊Û“∆
+            m_canvas->SetoffSet(offset + delta);;  // Â∑¶Áßª
         }
 
     
 
         m_canvas->Refresh();
-        //m_canvas->SetStatus(wxString::Format("∆Ω“∆ª≠≤º: ∆´“∆(%d, %d)", realDelta.x, 0));
-            //m_canvas->SetStatus(wxString::Format("∆Ω“∆ª≠≤º: ∆´“∆(%d, %d), (%d, %d)", m_panStartPos.x, m_panStartPos.y, currentPos.x, currentPos.y));
+        //m_canvas->SetStatus(wxString::Format("Âπ≥ÁßªÁîªÂ∏É: ÂÅèÁßª(%d, %d)", realDelta.x, 0));
+            //m_canvas->SetStatus(wxString::Format("Âπ≥ÁßªÁîªÂ∏É: ÂÅèÁßª(%d, %d), (%d, %d)", m_panStartPos.x, m_panStartPos.y, currentPos.x, currentPos.y));
     }
     else {
 
         wxPoint delta = wxPoint(0, 40);
-        wxPoint offset = m_canvas->m_offset;
+        wxPoint offset = m_canvas->GetoffSet();
         if (evt.GetWheelRotation() > 0) {
-            m_canvas->SetoffSet(offset + delta);;  // …œ“∆
+            m_canvas->SetoffSet(offset + delta);;  // ‰∏äÁßª
         }
         else {
-            m_canvas->SetoffSet(offset - delta);;  // œ¬“∆
+            m_canvas->SetoffSet(offset - delta);;  // ‰∏ãÁßª
         }
 
         m_canvas->Refresh();
@@ -635,239 +517,83 @@ void CanvasEventHandler::OnCanvasMouseWheel(wxMouseEvent& evt) {
 
 void CanvasEventHandler::HandleSelectTool(wxMouseEvent& evt) {
     preIn = false;
-    wxPoint canvasPos = m_canvas->ScreenToCanvas(evt.GetPosition());
-    wxString status = "—°‘Òπ§æﬂ: ";
-    if (evt.ShiftDown()) {
-        status = status + wxString::Format("∂‡¥Œµ•ª˜ø…∂‡—°£¨"); 
-    }
-    else {
-        status = status + wxString::Format("µ•ª˜µ•—°‘™Àÿ£¨");
-        //m_compntIdx.clear();
-        //m_textElemIdx.clear();
-        //m_wireIdx.clear();
-    }
-    m_toolStateMachine->SetSelectState(SelectToolState::RECTANGLE_SELECT);
-	m_canvas->m_selectRect = wxRect(canvasPos, wxSize(0, 0));
-    m_selectStartPos = canvasPos;
+    wxPoint canvasPos = m_hoverInfo.pos;
+    wxString status = "ÈÄâÊã©Â∑•ÂÖ∑: ";
 
-    m_selectedIndex = m_canvas->HitTestPublic(canvasPos);
-    if (m_selectedIndex != -1) {
-        auto it = std::find(m_compntIdx.begin(), m_compntIdx.end(), m_selectedIndex);
-        if (it == m_compntIdx.end()) {
-            m_compntIdx.push_back(m_selectedIndex);
-            wxLogDebug(wxString::Format("PreOut_1"));
+    int elemIdx = m_hoverInfo.elementIndex;
+    int textIdx = m_hoverInfo.textIndex;
+    int wireIdx = m_hoverInfo.wireIndex;
+
+    auto AddIfNew = [&](int idx, std::vector<int>& idxList) {
+        if (idx != -1) {
+            auto it = std::find(idxList.begin(), idxList.end(), idx);
+            if (it == idxList.end()) {
+                idxList.push_back(idx);
+            }
+            else return true;
         }
-        else {
-            preIn = true;
-            wxLogDebug(wxString::Format("PreIn_1"));
-        }
-        m_toolStateMachine->SetSelectState(SelectToolState::CLICK_SELECT);
-    }
-    int cellIdx;
-    wxPoint tmpPos;
-    int wireIdx = m_canvas->HitHoverCell(canvasPos, &m_tmpwireIdx, &cellIdx, &tmpPos);
-    if (m_tmpwireIdx != -1) {
-        auto it1 = std::find(m_wireIdx.begin(), m_wireIdx.end(), m_tmpwireIdx);
-        if (it1 == m_wireIdx.end()) m_wireIdx.push_back(m_tmpwireIdx);
-        else preIn = true;
-        m_toolStateMachine->SetSelectState(SelectToolState::CLICK_SELECT);
-    }
-   m_textIdx = m_canvas->HitTestText(canvasPos);
-    if (m_textIdx != -1) {
-        auto it2 = std::find(m_textElemIdx.begin(), m_textElemIdx.end(), m_textIdx);
-        if (it2 == m_textElemIdx.end()) m_textElemIdx.push_back(m_textIdx);
-        else preIn = true;
-        m_toolStateMachine->SetSelectState(SelectToolState::CLICK_SELECT);
-    }
+        else return false;
+    };
+ 
+    preIn = AddIfNew(elemIdx, m_compntIdx) || preIn;
+    preIn = AddIfNew(wireIdx, m_wireIdx) || preIn;
+    preIn = AddIfNew(textIdx, m_textElemIdx) || preIn;
+
     if (!evt.ShiftDown()) {
-        if (preIn) {
+        m_compntIdx.clear();
+        m_textElemIdx.clear();
+        m_wireIdx.clear();
 
-        }
-        else {
-            m_compntIdx.clear();
-            m_textElemIdx.clear();
-            m_wireIdx.clear();
-            if (m_selectedIndex != -1) {
-                auto it = std::find(m_compntIdx.begin(), m_compntIdx.end(), m_selectedIndex);
-                if (it == m_compntIdx.end()) {
-                    m_compntIdx.push_back(m_selectedIndex);
-                    wxLogDebug(wxString::Format("PreOut_1"));
-                }
-                else {
-                    wxLogDebug(wxString::Format("PreIn_1"));
-                }
-                m_toolStateMachine->SetSelectState(SelectToolState::CLICK_SELECT);
-            }
-            int cellIdx;
-            wxPoint tmpPos;
-            int wireIdx = m_canvas->HitHoverCell(canvasPos, &m_tmpwireIdx, &cellIdx, &tmpPos);
-            if (m_tmpwireIdx != -1) {
-                auto it1 = std::find(m_wireIdx.begin(), m_wireIdx.end(), m_tmpwireIdx);
-                if (it1 == m_wireIdx.end()) m_wireIdx.push_back(m_tmpwireIdx);
-                m_toolStateMachine->SetSelectState(SelectToolState::CLICK_SELECT);
-            }
-            m_textIdx = m_canvas->HitTestText(canvasPos);
-            if (m_textIdx != -1) {
-                auto it2 = std::find(m_textElemIdx.begin(), m_textElemIdx.end(), m_textIdx);
-                if (it2 == m_textElemIdx.end()) m_textElemIdx.push_back(m_textIdx);
-                m_toolStateMachine->SetSelectState(SelectToolState::CLICK_SELECT);
-            }
-        }
+        AddIfNew(elemIdx, m_compntIdx);
+        AddIfNew(wireIdx, m_wireIdx);
+        AddIfNew(textIdx, m_textElemIdx);
     }
+    m_canvas->UpdateSelection(m_compntIdx, m_textElemIdx, m_wireIdx);
 
 
-    if (m_toolStateMachine->GetSelectState() == SelectToolState::CLICK_SELECT) {
-        StartSelectedDragging(canvasPos);
-        status = status + wxString("Õœ∂Ø∆Ω“∆±ª—°÷–‘™Àÿ");
+    // Áä∂ÊÄÅÊ†èÊõ¥Êñ∞
+    if (m_hoverInfo.IsEmptyArea()) {
+        StartRectangleSelect(canvasPos);
+
+        if (evt.ShiftDown()) status = status + wxString::Format("ÊãñÂä®Ê°ÜÈÄâÔºåÈÄâ‰∏≠Êú™ÈÄâÊã©ÂÖÉÁ¥†ÔºåÂèñÊ∂àÈÄâ‰∏≠Â∑≤ÈÄâÊã©ÂÖÉÁ¥†Ôºå");
+        else status = status + wxString::Format("ÊãñÂä®Ê°ÜÈÄâÔºåÈÄâ‰∏≠Ê°ÜÂÜÖÈÄâÊã©ÂÖÉÁ¥†ÔºåÂèñÊ∂àÈÄâ‰∏≠Ê°ÜÂ§ñÂÖÉÁ¥†Ôºå");
+
     }
     else {
-        status = status + wxString("Õœ∂ØøÚ—°");
+        m_toolStateMachine->SetSelectState(SelectToolState::CLICK_SELECT);
+        StartSelectedDragging(canvasPos);
+
+        if (evt.ShiftDown()) status = status + wxString::Format("ÂçïÂáªÂ§öÈÄâÔºåÈÄâ‰∏≠Êú™ÈÄâÊã©ÂÖÉÁ¥†ÔºåÂèñÊ∂àÈÄâ‰∏≠Â∑≤ÈÄâÊã©ÂÖÉÁ¥†ÔºõÊãñÂä®Âπ≥ÁßªË¢´ÈÄâ‰∏≠ÂÖÉÁ¥†");
+        else status = status + wxString::Format("ÂçïÂáªÂçïÈÄâÔºåÈÄâ‰∏≠Ë¢´ÂçïÂáªÁöÑÂÖÉÁ¥†ÔºåÂèñÊ∂àÈÄâ‰∏≠ÂÖ∂‰ªñÂÖÉÁ¥†ÔºõÊãñÂä®Âπ≥ÁßªË¢´ÈÄâ‰∏≠ÂÖÉÁ¥†");
     }
     m_canvas->SetStatus(status);
-    m_canvas->Refresh();
 }
 
-void CanvasEventHandler::HandleTextTool(const wxPoint& canvasPos) {
-    // ºÏ≤È «∑Òµ„ª˜¡Àœ÷”–Œƒ±æ‘™Àÿ
-    int textIndex = m_canvas->inWhichTextBox(canvasPos);
-    if (textIndex != -1) {
-        m_isTemporaryAction = true;
-        SetCurrentTool(ToolType::TEXT_TOOL);
-        StartTextEditing(textIndex);
-        m_eventHandled = true;
-        return;
+void CanvasEventHandler::HandleTextTool() {
+    // Ê£ÄÊü•ÊòØÂê¶ÁÇπÂáª‰∫ÜÁé∞ÊúâÊñáÊú¨ÂÖÉÁ¥†
+    if (m_hoverInfo.IsOverText()) StartTextEditing(m_hoverInfo.textIndex);
+    else {
+        m_canvas->CreateTextElement(m_hoverInfo.pos);
+        m_canvas->SetStatus(wxString::Format("ÊîæÁΩÆÊñáÊú¨Ê°ÜÔºö(%d, %d)", m_hoverInfo.pos.x, m_hoverInfo.pos.y));
     }
-
-    // ¥¥Ω®–¬Œƒ±æ‘™Àÿ
-    CreateTextElement(canvasPos);
-    m_canvas->Refresh();
-
-
-    m_canvas->SetStatus(wxString::Format("∑≈÷√Œƒ±æøÚ£∫(%d, %d)", canvasPos.x, canvasPos.y));
-    
 }
 
-// ÃÌº”…Ë÷√µ±«∞‘™º˛µƒ∑Ω∑®
+// Ê∑ªÂä†ËÆæÁΩÆÂΩìÂâçÂÖÉ‰ª∂ÁöÑÊñπÊ≥ï
 void CanvasEventHandler::SetCurrentComponent(const wxString& componentName) {
     m_currentComponent = componentName;
     SetCurrentTool(ToolType::COMPONENT_TOOL);
 
     if (true) {
-        m_canvas->SetStatus(wxString::Format("◊º±∏∑≈÷√: %s - ‘⁄ª≠≤º…œµ„ª˜∑≈÷√", componentName));
-        // …Ë÷√ Æ◊÷π‚±Í
+        m_canvas->SetStatus(wxString::Format("ÂáÜÂ§áÊîæÁΩÆ: %s - Âú®ÁîªÂ∏É‰∏äÁÇπÂáªÊîæÁΩÆ", componentName));
+        // ËÆæÁΩÆÂçÅÂ≠óÂÖâÊ†á
         m_canvas->SetCursor(wxCursor(wxCURSOR_CROSS));
     }
 }
 
-// ∏ƒΩ¯µƒµºœﬂªÊ÷∆ÕÍ≥…∑Ω∑®
-void CanvasEventHandler::FinishWireDrawing(const wxPoint& endPos) {
-    if (m_toolStateMachine->GetWireState() != WireToolState::WIRE_DRAWING) return;
 
-    //  π”√πÃ∂®µƒ∆µ„¥¥Ω®ÕÍ’˚µºœﬂ
-    Wire completedWire;
-    completedWire.AddPoint(m_startCP);
-    completedWire.AddPoint(m_endCP);
-
-    //  π”√¬∑”…À„∑®…˙≥…◊Ó÷’¬∑æ∂
-    completedWire.pts = Wire::Route(m_startCP, m_endCP);
-
-    // ÃÌº”µΩµºœﬂ¡–±Ì
-    m_canvas->m_wires.emplace_back(completedWire);
-    Wire& newWire = m_canvas->m_wires.back();
-    newWire.GenerateCells();
-
-    //// º«¬º¡¨Ω”πÿœµ£®»Áπ˚¡¨Ω”µΩ“˝Ω≈£©
-    //auto recordConnection = [&](const wxPoint& pinPos, size_t ptIdx) {
-    //    for (size_t i = 0; i < m_canvas->m_elements.size(); ++i) {
-    //        const auto& elem = m_canvas->m_elements[i];
-    //        auto test = [&](const auto& pins, bool isIn) {
-    //            for (size_t p = 0; p < pins.size(); ++p) {
-    //                wxPoint w = elem.GetPos() + wxPoint(pins[p].pos.x, pins[p].pos.y);
-    //                if (w == pinPos) {
-    //                    m_movingWires.push_back({ m_canvas->m_wires.size() - 1, ptIdx, isIn, p });
-    //                    return true;
-    //                }
-    //            }
-    //            return false;
-    //            };
-    //        if (test(elem.GetInputPins(), true)) return;
-    //        test(elem.GetOutputPins(), false);
-    //    }
-    //    };
-
-    //// º«¬º∆µ„¡¨Ω”
-    //if (newWire.pts.front().type == CPType::Pin)
-    //    recordConnection(newWire.pts.front().pos, 0);
-
-    //if (m_isTemporaryAction) {
-    //    SetCurrentTool(m_previousTool);
-    //    m_isTemporaryAction = false;
-    //}
-    //// º«¬º÷’µ„¡¨Ω”
-    //if (newWire.pts.back().type == CPType::Pin)
-    //    recordConnection(newWire.pts.back().pos, newWire.pts.size() - 1);
-
-    //// ÷ÿ÷√◊¥Ã¨
-    ////m_isDrawingWire = false;
-    m_toolStateMachine->SetWireState(WireToolState::IDLE);
-    m_canvas->m_tempWire.Clear();
-    if (m_isTemporaryAction) {
-        SetCurrentTool(m_previousTool);
-        m_isTemporaryAction = false;
-    }
-
-    wxString status = "“—ªÊ÷∆µºœﬂ: ";
-
-    switch (m_startCP.type) {
-    case CPType::Pin:
-        m_canvas->m_tempWire.pts = Wire::Route(m_startCP, m_endCP);
-        status = status + wxString::Format("∆µ„: “˝Ω≈(%d, %d)", m_startCP.pos.x, m_startCP.pos.y);
-        break;
-    case CPType::Free:
-        m_canvas->m_tempWire.pts = Wire::Route(m_startCP, m_endCP);
-        status = status + wxString::Format("∆µ„: ◊‘”…µ„(%d, %d)", m_startCP.pos.x, m_startCP.pos.y);
-        break;
-    case CPType::Branch:
-        m_canvas->m_tempWire.pts = Wire::Route(m_startCP, m_endCP);
-        status = status + wxString::Format("∆µ„: ∑÷÷ßµ„(%d, %d)", m_startCP.pos.x, m_startCP.pos.y);
-        break;
-    }
-
-    switch (m_endCP.type) {
-    case CPType::Pin: {
-        status = status + wxString::Format("    ÷’µ„: “˝Ω≈(%d,%d)",
-            m_endCP.pos.x, m_endCP.pos.y);
-        break;
-    }
-    case CPType::Free: {
-        status = status + wxString::Format("    ÷’µ„: ◊‘”…µ„(%d,%d)",
-            m_endCP.pos.x, m_endCP.pos.y);
-        break;
-    }
-
-    case CPType::Branch: {
-        status = status + wxString::Format("    ÷’µ„: ∑÷÷ßµ„(%d,%d)",
-            m_endCP.pos.x, m_endCP.pos.y);
-        break;
-    }
-    }
-    m_canvas->SetStatus(status);
-    m_canvas->Refresh();
-}
-
-void CanvasEventHandler::CancelWireDrawing() {
-    //m_isDrawingWire = false;
-	m_toolStateMachine->SetWireState(WireToolState::IDLE);
-    m_canvas->m_tempWire.Clear();
-    m_canvas->Refresh();
-
-    if (true) {
-        m_canvas->SetStatus("µºœﬂªÊ÷∆»°œ˚");
-    }
-}
-// µºœﬂ±‡º≠∑Ω∑®
+// ÂØºÁ∫øÁºñËæëÊñπÊ≥ï
 void CanvasEventHandler::StartWireEditing(int wireIndex, int pointIndex, const wxPoint& startPos) {
-    if (wireIndex < 0 || wireIndex >= (int)m_canvas->m_wires.size()) return;
+    if (wireIndex < 0 || wireIndex >= (int)m_canvas->GetWires().size()) return;
     ToolType currentTool = m_toolStateMachine->GetCurrentTool();
 
 	currentTool = ToolType::WIRE_TOOL;
@@ -878,27 +604,27 @@ void CanvasEventHandler::StartWireEditing(int wireIndex, int pointIndex, const w
     m_editStartPos = startPos;
 
     if (true) {
-        m_canvas->SetStatus("±‡º≠µºœﬂ: Õœ∂Øøÿ÷∆µ„µ˜’˚¬∑æ∂");
+        m_canvas->SetStatus("ÁºñËæëÂØºÁ∫ø: ÊãñÂä®ÊéßÂà∂ÁÇπË∞ÉÊï¥Ë∑ØÂæÑ");
     }
 }
 
 void CanvasEventHandler::UpdateWireEditing(const wxPoint& currentPos) {
     if (m_toolStateMachine->GetWireState() != WireToolState::WIRE_EDITING) return;
 
-    Wire& wire = m_canvas->m_wires[m_editingWireIndex];
+    //Wire& wire = m_canvas->m_wires[m_editingWireIndex];
 
-    // ∏¸–¬øÿ÷∆µ„Œª÷√
-    if (m_editingPointIndex >= 0 && m_editingPointIndex < (int)wire.pts.size()) {
-        wire.pts[m_editingPointIndex].pos = currentPos;
+    //// Êõ¥Êñ∞ÊéßÂà∂ÁÇπ‰ΩçÁΩÆ
+    //if (m_editingPointIndex >= 0 && m_editingPointIndex < (int)wire.pts.size()) {
+    //    wire.pts[m_editingPointIndex].pos = currentPos;
 
-        // ÷ÿ–¬…˙≥…µºœﬂ¬∑æ∂£®»Áπ˚ «∂Àµ„£©
-        if (m_editingPointIndex == 0 || m_editingPointIndex == (int)wire.pts.size() - 1) {
-            wire.pts = Wire::Route(wire.pts.front(), wire.pts.back());
-        }
+    //    // ÈáçÊñ∞ÁîüÊàêÂØºÁ∫øË∑ØÂæÑÔºàÂ¶ÇÊûúÊòØÁ´ØÁÇπÔºâ
+    //    if (m_editingPointIndex == 0 || m_editingPointIndex == (int)wire.pts.size() - 1) {
+    //        wire.pts = Wire::Route(wire.pts.front(), wire.pts.back());
+    //    }
 
-        // ÷ÿ–¬…˙≥…øÿ÷∆µ„
-        wire.GenerateCells();
-    }
+    //    // ÈáçÊñ∞ÁîüÊàêÊéßÂà∂ÁÇπ
+    //    wire.GenerateCells();
+    //}
 
     m_canvas->Refresh();
 }
@@ -915,7 +641,7 @@ void CanvasEventHandler::FinishWireEditing() {
     }
 
     if (true) {
-        m_canvas->SetStatus("µºœﬂ±‡º≠ÕÍ≥…");
+        m_canvas->SetStatus("ÂØºÁ∫øÁºñËæëÂÆåÊàê");
     }
 }
 
@@ -926,276 +652,76 @@ void CanvasEventHandler::CancelWireEditing() {
     m_editingPointIndex = -1;
 
     if (true) {
-        m_canvas->SetStatus("µºœﬂ±‡º≠»°œ˚");
+        m_canvas->SetStatus("ÂØºÁ∫øÁºñËæëÂèñÊ∂à");
     }
-}
-
-// ‘™º˛Õœ∂Ø∑Ω∑®
-void CanvasEventHandler::StartElementDragging(int elementIndex, const wxPoint& startPos) {
-    if (elementIndex < 0 || elementIndex >= (int)m_canvas->m_elements.size()) return;
-
-    //m_isDraggingElement = true;
-    m_toolStateMachine->SetDragState(DragToolState::COMPONENT_DRAGGING);
-    m_draggingElementIndex = elementIndex;
-    m_elementDragStartPos = startPos;
-    m_elementStartCanvasPos = m_canvas->m_elements[elementIndex].GetPos();
-
-    //  ’ºØ∏√‘™º˛À˘”–“˝Ω≈∂‘”¶µƒµºœﬂ∂Àµ„
-    m_movingWires.clear();
-    const auto& elem = m_canvas->m_elements[elementIndex];
-    auto collect = [&](const auto& pins, bool isIn) {
-        for (size_t p = 0; p < pins.size(); ++p) {
-            wxPoint pinWorld = elem.GetPos() + wxPoint(pins[p].pos.x, pins[p].pos.y);
-            for (size_t w = 0; w < m_canvas->m_wires.size(); ++w) {
-                const auto& wire = m_canvas->m_wires[w];
-                if (!wire.pts.empty() && wire.pts.front().type == CPType::Pin &&
-                    wire.pts.front().pos == pinWorld)
-                    ;
-                    //m_movingWires.push_back({ w, 0, isIn, p });
-
-                    if (wire.pts.size() > 1 &&
-                        wire.pts.back().type == CPType::Pin &&
-                        wire.pts.back().pos == pinWorld)
-                        ;
-                        //m_movingWires.push_back({ w, wire.pts.size() - 1, isIn, p });
-            
-            }
-        }
-    };
-
-    collect(elem.GetInputPins(), true);
-    collect(elem.GetOutputPins(), false);
-
-    if (true) {
-        m_canvas->SetStatus("Õœ∂Ø‘™º˛: “∆∂Ø Û±Íµ˜’˚Œª÷√ (ESC»°œ˚)");
-    }
-}
-
-void CanvasEventHandler::UpdateElementDragging(const wxPoint& currentPos) {
-    if ((m_toolStateMachine->GetDragState() != DragToolState::COMPONENT_DRAGGING) || m_draggingElementIndex == -1) return;
-
-    // º∆À„∆´“∆¡ø
-    wxPoint raw = currentPos - m_elementDragStartPos;
-    const int grid = 20;
-    wxPoint delta((raw.x + grid / 2) / grid * grid, (raw.y + grid / 2) / grid * grid);
-
-    wxPoint newPos = m_elementStartCanvasPos + delta;
-
-    // ππΩ®µ˜ ‘–≈œ¢◊÷∑˚¥Æ
-    wxString debugInfo = wxString::Format("Õœ∂Ø‘™º˛: (%d,%d)    πÿ¡™µºœﬂ[",
-        newPos.x, newPos.y);
-
-    // ∏¸–¬‘™º˛Œª÷√
-    m_canvas->m_elements[m_draggingElementIndex].SetPos(newPos);
-
-    // ∏¸–¬À˘”–œ‡πÿµºœﬂ∂Àµ„
-    bool firstWire = true;
-    for (const auto& aw : m_movingWires) {
-        //if (aw.wireIdx >= m_canvas->m_wires.size()) continue;
-
-        //Wire& wire = m_canvas->m_wires[aw.wireIdx];
-
-        // º∆À„–¬“˝Ω≈ ¿ΩÁ◊¯±Í
-        const auto& elem = m_canvas->m_elements[m_draggingElementIndex];
-        //const auto& pins = aw.isInput ? elem.GetInputPins() : elem.GetOutputPins();
-        //if (aw.pinIdx >= pins.size()) continue;
-
-        //wxPoint pinOffset = wxPoint(pins[aw.pinIdx].pos.x, pins[aw.pinIdx].pos.y);
-        //wxPoint newPinPos = elem.GetPos() + pinOffset;
-
-        // ÃÌº”œÍœ∏µºœﬂ–≈œ¢µΩµ˜ ‘–≈œ¢ - ∑÷ø™ππΩ®±‹√‚∏Ò ΩªØŒ Ã‚
-        if (!firstWire) {
-            debugInfo += ", ";
-        }
-
-        // ∑÷ø™ππΩ®◊÷∑˚¥Æ£¨±‹√‚∏¥‘”µƒ∏Ò ΩªØ
-        //wxString wireType = aw.isInput ? wxString(" ‰»Î") : wxString(" ‰≥ˆ");
-        //wxString wireInfo = wxString::Format("µºœﬂ%d-%s“˝Ω≈%d(%d,%d)",
-        //    (int)aw.wireIdx,
-        //    wireType,
-        //    (int)aw.pinIdx,
-        //    newPinPos.x, newPinPos.y);
-        //debugInfo += wireInfo;
-        //firstWire = false;
-
-        //// ∏¸–¬µºœﬂ∂Àµ„
-        //if (aw.ptIdx == 0)
-        //    wire.pts.front().pos = newPinPos;
-        //else
-        //    wire.pts.back().pos = newPinPos;
-
-        //// ÷ÿ–¬…˙≥…µºœﬂ¬∑æ∂
-        //wire.pts = Wire::Route(wire.pts.front(), wire.pts.back());
-        //wire.GenerateCells();
-    }
-
-    debugInfo += "]";
-    // ∏¸–¬◊¥Ã¨¿∏œ‘ æµ˜ ‘–≈œ¢
-    if (true) {
-        m_canvas->SetStatus(debugInfo);
-    }
-
-    m_canvas->Refresh();
-}
-
-void CanvasEventHandler::FinishElementDragging() {
-    //m_isDraggingElement = false;
-	m_toolStateMachine->SetDragState(DragToolState::IDLE);
-    m_draggingElementIndex = -1;
-    m_movingWires.clear();
-
-    if (m_isTemporaryAction) {
-        SetCurrentTool(m_previousTool);
-        m_isTemporaryAction = false;
-	}
 }
 
 void CanvasEventHandler::OnCanvasMouseMove(wxMouseEvent& evt) {
-    wxPoint canvasPos = m_canvas->ScreenToCanvas(evt.GetPosition());
-    m_eventHandled = false;
+    wxPoint canvasPos = m_hoverInfo.pos;
 
-    // ∞¥”≈œ»º∂¥¶¿Ì∏˜÷÷≤Ÿ◊˜
+    // ÂØºÁ∫øÁªòÂà∂
     if (m_toolStateMachine->GetWireState() == WireToolState::WIRE_DRAWING) {
-        UpdateWireDrawing(canvasPos);
+        if (SnapPosChanged()) {
+            UpdateWireDrawing(evt);
+        }
         m_eventHandled = true;
     }
+
+    // ÈÄâ‰∏≠ÊãñÂä®
     else if (m_toolStateMachine->GetSelectState() == SelectToolState::CLICK_SELECT) {
+        UpdateSelectedDragging();
         m_toolStateMachine->SetSelectState(SelectToolState::DRAG_SELECT);
-        wxPoint raw = canvasPos - m_selectedDragPos;
-        const int grid = 20;
-        wxPoint delta((raw.x + grid / 2) / grid * grid, (raw.y + grid / 2) / grid * grid);
-        for (int i = 0; i < m_compntIdx.size(); i++) {
-            wxPoint rawPos = m_compntPos[i];
-            m_canvas->m_elements[m_compntIdx[i]].SetPos(rawPos + delta);
-        }
-        for (int i = 0; i < m_textElemIdx.size(); i++) {
-            wxPoint rawPos = m_textElemPos[i];
-            m_canvas->m_textElements[m_textElemIdx[i]].SetPosition(rawPos + raw);
-
-        }
-        for (int i = 0; i < m_wireIdx.size(); i++) {
-            for (int j = 0; j < m_canvas->m_wires[m_wireIdx[i]].Size(); j++) {
-				wxPoint rawPos = m_wirePos[i][j];
-                m_canvas->m_wires[m_wireIdx[i]].pts[j].pos = rawPos + delta;
-
-            }
-            m_canvas->m_wires[m_wireIdx[i]].GenerateCells();
-        }
-
-
-
-        m_canvas->SetStatus(wxString::Format("—°‘Òπ§æﬂ£∫∂Ø“——°÷–‘™Àÿ(%d, %d)", delta.x, delta.y));
-
-
         m_eventHandled = true;
 	}
     else if (m_toolStateMachine->GetSelectState() == SelectToolState::DRAG_SELECT) {
-        wxPoint raw = canvasPos - m_selectedDragPos;
-        const int grid = 20;
-        wxPoint delta((raw.x + grid / 2) / grid * grid, (raw.y + grid / 2) / grid * grid);
-        for (int i = 0; i < m_compntIdx.size(); i++) {
-            wxPoint rawPos = m_compntPos[i];
-            m_canvas->m_elements[m_compntIdx[i]].SetPos(rawPos + delta);
-            // ∏¸–¬À˘”–œ‡πÿµºœﬂ∂Àµ„
-            bool firstWire = true;
-            for (const auto& aw : m_movingWires[i]) {
-                if (aw.wireIdx >= m_canvas->m_wires.size()) continue;
-                auto it = std::find(m_wireIdx.begin(), m_wireIdx.end(), aw.wireIdx);
-                //if (it == m_wireIdx.end()) continue;
-                Wire& wire = m_canvas->m_wires[aw.wireIdx];
-                
-                
-                //auto it = m_wireIdx.find(aw.wireIdx);
-
-                // º∆À„–¬“˝Ω≈ ¿ΩÁ◊¯±Í
-                const auto& elem = m_canvas->m_elements[m_compntIdx[i]];
-                const auto& pins = aw.isInput ? elem.GetInputPins() : elem.GetOutputPins();
-                if (aw.pinIdx >= pins.size()) continue;
-                wxPoint pinOffset = wxPoint(pins[aw.pinIdx].pos.x, pins[aw.pinIdx].pos.y);
-                wxPoint newPinPos = elem.GetPos() + pinOffset;
-
-
-                // ∏¸–¬µºœﬂ∂Àµ„
-                if (aw.ptIdx == 0)
-                    wire.pts.front().pos = newPinPos;
-                else
-                    wire.pts.back().pos = newPinPos;
-
-                // ÷ÿ–¬…˙≥…µºœﬂ¬∑æ∂
-                wire.pts = Wire::Route(wire.pts.front(), wire.pts.back());
-                wire.GenerateCells();
-            }
-            }
-
-        for (int i = 0; i < m_textElemIdx.size(); i++) {
-            wxPoint rawPos = m_textElemPos[i];
-            m_canvas->m_textElements[m_textElemIdx[i]].SetPosition(rawPos + raw);
-
-        }
-        for (int i = 0; i < m_wireIdx.size(); i++) {
-            for (int j = 0; j < m_canvas->m_wires[m_wireIdx[i]].Size(); j++) {
-                wxPoint rawPos = m_wirePos[i][j];
-                m_canvas->m_wires[m_wireIdx[i]].pts[j].pos = rawPos + delta;
-            }
-            m_canvas->m_wires[m_wireIdx[i]].GenerateCells();
-        }
-        m_canvas->SetStatus(wxString::Format("—°‘Òπ§æﬂ£∫∂Ø“——°÷–‘™Àÿ(%d, %d)", delta.x, delta.y));
-
-
+        UpdateSelectedDragging();
         m_eventHandled = true;
     }
+
+    // Áü©ÂΩ¢Ê°ÜÈÄâ
     else if (m_toolStateMachine->GetSelectState() == SelectToolState::RECTANGLE_SELECT) {
-        wxRect selectionRect(
-            wxPoint(std::min(m_selectStartPos.x, canvasPos.x),
-                std::min(m_selectStartPos.y, canvasPos.y)),
-            wxSize(std::abs(canvasPos.x - m_selectStartPos.x),
-                std::abs(canvasPos.y - m_selectStartPos.y))
-		);
-		m_canvas->m_selectRect = selectionRect;
-		m_canvas->Refresh();
+        UpdateRectangleSelect(evt);
         m_eventHandled = true;
     }
-    else if (m_toolStateMachine->GetDragState() == DragToolState::COMPONENT_DRAGGING) {
-        UpdateElementDragging(canvasPos);
-        m_eventHandled = true;
-    }
+    
+    // ÁîªÂ∏ÉÊãñÂä® 
     else if (m_toolStateMachine->GetDragState() == DragToolState::CANVAS_DRAGGING) {
-        //UpdatePanning(canvasPos);
-        UpdatePanning(m_canvas->CanvasToScreen(canvasPos));
+        UpdatePanning();
         m_eventHandled = true;
     }
+
     else if (m_toolStateMachine->GetComponentState() == ComponentToolState::COMPONENT_PREVIEW) {
-        bool snapped = false;
-        wxPoint snappedPos = m_canvas->Snap(canvasPos, &snapped);
+        //bool snapped = false;
+        wxPoint snappedPos = m_hoverInfo.snappedPos;
 		m_canvas->SetPreviewElement(m_currentComponent, snappedPos);
-        m_canvas->SetStatus(wxString::Format("∑≈÷√%s: (%d, %d)", m_currentComponent, snappedPos.x, snappedPos.y));
+        m_canvas->SetStatus(wxString::Format("ÊîæÁΩÆ%s: (%d, %d)", m_currentComponent, snappedPos.x, snappedPos.y));
         m_eventHandled = true;
 	}
     else {
         wxString toolInfo;
         switch (m_toolStateMachine->GetCurrentTool()) {
             case ToolType::DRAG_TOOL:{
-                toolInfo = wxString::Format("π§æﬂ: Õœ◊ßπ§æﬂ£¨≥§∞¥ø’∞◊¥¶Õœ∂Øª≠≤º£¨µ•ª˜Pin‘™º˛ø…∏ƒ±‰◊¥Ã¨");
+                toolInfo = wxString::Format("Â∑•ÂÖ∑: ÊãñÊãΩÂ∑•ÂÖ∑ÔºåÈïøÊåâÁ©∫ÁôΩÂ§ÑÊãñÂä®ÁîªÂ∏ÉÔºåÂçïÂáªPinÂÖÉ‰ª∂ÂèØÊîπÂèòÁä∂ÊÄÅ");
 				break;
             }
             case ToolType::SELECT_TOOL: {
-                toolInfo = wxString::Format("π§æﬂ: —°÷–π§æﬂ");
+                toolInfo = wxString::Format("Â∑•ÂÖ∑: ÈÄâ‰∏≠Â∑•ÂÖ∑");
                 break;
             }
             case ToolType::TEXT_TOOL: {
-                toolInfo = wxString::Format("π§æﬂ: Œƒ±æπ§æﬂ");
+                toolInfo = wxString::Format("Â∑•ÂÖ∑: ÊñáÊú¨Â∑•ÂÖ∑");
                 break;
             }
             case ToolType::COMPONENT_TOOL: {
-                toolInfo = wxString::Format("π§æﬂ: ‘™º˛π§æﬂ %s", m_currentComponent);
+                toolInfo = wxString::Format("Â∑•ÂÖ∑: ÂÖÉ‰ª∂Â∑•ÂÖ∑ %s", m_currentComponent);
                 break;
             }
             case ToolType::WIRE_TOOL: {
-                toolInfo = wxString::Format("π§æﬂ: µºœﬂπ§æﬂ");
+                toolInfo = wxString::Format("Â∑•ÂÖ∑: ÂØºÁ∫øÂ∑•ÂÖ∑");
                 break;
             }
             case ToolType::DRAWING_TOOL: {
-                toolInfo = wxString::Format("π§æﬂ: ªÊÕºπ§æﬂ");
+                toolInfo = wxString::Format("Â∑•ÂÖ∑: ÁªòÂõæÂ∑•ÂÖ∑");
                 break;
             }
         }
@@ -1204,159 +730,37 @@ void CanvasEventHandler::OnCanvasMouseMove(wxMouseEvent& evt) {
 }
 
 void CanvasEventHandler::StartPanning(const wxPoint& startPos) {
-    // »Áπ˚“—æ≠‘⁄Ω¯––∆‰À˚≤Ÿ◊˜£¨œ»»°œ˚
-    if (m_toolStateMachine->GetWireState() == WireToolState::WIRE_DRAWING) {
-        CancelWireDrawing();
-    }
-    if (m_toolStateMachine->GetComponentState() == ComponentToolState::COMPONENT_PREVIEW) {
-        FinishElementDragging();
-    }
-    if (m_toolStateMachine->GetWireState() == WireToolState::WIRE_DRAWING) {
-        CancelWireEditing();
-    }
-
-    //m_isPanning = true;
 	m_toolStateMachine->SetDragState(DragToolState::CANVAS_DRAGGING);
     m_panStartPos = startPos;
-	m_fakeStartPos = startPos;
+    m_panStartOffSet = m_canvas->GetoffSet();
 }
 
-void CanvasEventHandler::UpdatePanning(const wxPoint& currentPos) {
+void CanvasEventHandler::UpdatePanning() {
     if (m_toolStateMachine->GetDragState() != DragToolState::CANVAS_DRAGGING) return;
+    wxPoint delta = m_hoverInfo.pos - m_panStartPos;
+    m_canvas->SetoffSet(m_panStartOffSet + delta);
 
-    wxPoint delta = currentPos - m_fakeStartPos;
-    //m_canvas->m_offset += delta;
-    wxPoint offset = m_canvas->m_offset;
-    m_canvas->SetoffSet(offset + delta);
-    m_fakeStartPos = currentPos;
+    m_canvas->SetStatus(wxString::Format("Âπ≥ÁßªÁîªÂ∏É: ÂÅèÁßª(%d, %d)", delta.x, delta.y));
+}
 
-	wxPoint realDelta = currentPos - m_panStartPos;
-    
-    m_canvas->Refresh();
-
-    if (true) {
-        m_canvas->SetStatus(wxString::Format("∆Ω“∆ª≠≤º: ∆´“∆(%d, %d)", realDelta.x, realDelta.y));
-        //m_canvas->SetStatus(wxString::Format("∆Ω“∆ª≠≤º: ∆´“∆(%d, %d), (%d, %d)", m_panStartPos.x, m_panStartPos.y, currentPos.x, currentPos.y));
+void CanvasEventHandler::FinishPanning() {
+    m_toolStateMachine->SetDragState(DragToolState::IDLE);
+    if (m_isTemporaryAction) {
+        SetCurrentTool(m_previousTool);
+        m_isTemporaryAction = false;
     }
 }
 
-void CanvasEventHandler::OnCanvasRightDown(wxMouseEvent& evt){
-    wxPoint toolBarPos = evt.GetPosition() + wxPoint(240, 124);
-	m_canvas->m_HandyToolKit->SetPosition(toolBarPos);
-	m_canvas->m_HandyToolKit->Show();
-	m_canvas->m_HandyToolKit->SetFocus();
-}
-
-void CanvasEventHandler::OnCanvasRightUp(wxMouseEvent& evt) {
-    m_canvas->m_HandyToolKit->Hide();
-}
-
-bool CanvasEventHandler::IsCharacterKey(const wxKeyEvent& event) {
-    int keyCode = event.GetKeyCode();
-
-    // ÷±Ω”≈≈≥˝“—÷™µƒÃÿ ‚º¸
-    switch (keyCode) {
-    case WXK_BACK:
-    case WXK_TAB:
-    case WXK_RETURN:
-    case WXK_ESCAPE:
-    case WXK_DELETE:
-    case WXK_START:
-    case WXK_LBUTTON:
-    case WXK_RBUTTON:
-    case WXK_CANCEL:
-    case WXK_MBUTTON:
-    case WXK_CLEAR:
-    case WXK_SHIFT:
-    case WXK_ALT:
-    case WXK_CONTROL:
-    case WXK_MENU:
-    case WXK_PAUSE:
-    case WXK_CAPITAL:
-    case WXK_END:
-    case WXK_HOME:
-    case WXK_LEFT:
-    case WXK_UP:
-    case WXK_RIGHT:
-    case WXK_DOWN:
-    case WXK_SELECT:
-    case WXK_PRINT:
-    case WXK_EXECUTE:
-    case WXK_SNAPSHOT:
-    case WXK_INSERT:
-    case WXK_HELP:
-    case WXK_NUMPAD0:
-    case WXK_NUMPAD1:
-    case WXK_NUMPAD2:
-    case WXK_NUMPAD3:
-    case WXK_NUMPAD4:
-    case WXK_NUMPAD5:
-    case WXK_NUMPAD6:
-    case WXK_NUMPAD7:
-    case WXK_NUMPAD8:
-    case WXK_NUMPAD9:
-    case WXK_MULTIPLY:
-    case WXK_ADD:
-    case WXK_SEPARATOR:
-    case WXK_SUBTRACT:
-    case WXK_DECIMAL:
-    case WXK_DIVIDE:
-    case WXK_F1:
-    case WXK_F2:
-    case WXK_F3:
-    case WXK_F4:
-    case WXK_F5:
-    case WXK_F6:
-    case WXK_F7:
-    case WXK_F8:
-    case WXK_F9:
-    case WXK_F10:
-    case WXK_F11:
-    case WXK_F12:
-    case WXK_F13:
-    case WXK_F14:
-    case WXK_F15:
-    case WXK_F16:
-    case WXK_F17:
-    case WXK_F18:
-    case WXK_F19:
-    case WXK_F20:
-    case WXK_F21:
-    case WXK_F22:
-    case WXK_F23:
-    case WXK_F24:
-    case WXK_NUMLOCK:
-    case WXK_SCROLL:
-    case WXK_PAGEUP:
-    case WXK_PAGEDOWN:
-    case WXK_WINDOWS_LEFT:
-    case WXK_WINDOWS_RIGHT:
-    case WXK_WINDOWS_MENU:
-        return false;
-    }
-
-    // ºÏ≤ÈUnicode◊÷∑˚
-    wxChar unicodeChar = event.GetUnicodeKey();
-    return (unicodeChar >= 32 && unicodeChar != 127);
-}
-
-void CanvasEventHandler::CreateTextElement(const wxPoint& position) {
-    // ¥¥Ω®–¬Œƒ±æ‘™Àÿ
-    m_toolStateMachine->SetTextState(TextToolState::CANVAS_TEXT_EDITING);
-	m_canvas->CreateTextElement(position);
-
-}
-
-// –ﬁ∏ƒStartTextEditing∑Ω∑®
+// ‰øÆÊîπStartTextEditingÊñπÊ≥ï
 void CanvasEventHandler::StartTextEditing(int index) {
-    // Ω· ¯÷Æ«∞µƒ±‡º≠
+    // ÁªìÊùü‰πãÂâçÁöÑÁºñËæë
     if (m_editingTextIndex != -1) {
-        FinishTextEditing();
+        m_canvas->FinishTextEditing();
     }
 
     m_toolStateMachine->SetTextState(TextToolState::CANVAS_TEXT_EDITING);
 
-    // ø™ º–¬µƒ±‡º≠
+    // ÂºÄÂßãÊñ∞ÁöÑÁºñËæë
     m_editingTextIndex = index;
 
     if (m_canvas) {
@@ -1364,116 +768,8 @@ void CanvasEventHandler::StartTextEditing(int index) {
     }
 
 
-     m_canvas->SetStatus("Œƒ±æ±‡º≠: ‘⁄Œƒ±æøÚ÷– ‰»Îƒ⁄»›£¨∞¥ªÿ≥µÕÍ≥…");
+     m_canvas->SetStatus("ÊñáÊú¨ÁºñËæë: Âú®ÊñáÊú¨Ê°Ü‰∏≠ËæìÂÖ•ÂÜÖÂÆπÔºåÊåâÂõûËΩ¶ÂÆåÊàê");
 
-}
-
-// –ﬁ∏ƒFinishTextEditing∑Ω∑®
-void CanvasEventHandler::FinishTextEditing() {
-    if (m_canvas) {
-        m_canvas->DetachHiddenTextCtrl();
-    }
-    m_toolStateMachine->SetTextState(TextToolState::IDLE);
-    m_editingTextIndex = -1;
-
-    m_canvas->SetStatus("Œƒ±æ±‡º≠ÕÍ≥…");
-    
-}
-// Œƒ±æ ¬º˛∞Û∂®∑Ω∑®
-void CanvasEventHandler::BindTextCtrlEvents(wxTextCtrl* textCtrl, int textIndex) {
-    if (!textCtrl) return;
-
-    // ∏˙◊Ÿ∞Û∂®
-    m_textCtrlBindings[textCtrl] = textIndex;
-
-    // ∞Û∂® ¬º˛
-    textCtrl->Bind(wxEVT_TEXT, [this, textCtrl](wxCommandEvent& evt) {
-        auto it = m_textCtrlBindings.find(textCtrl);
-        if (it != m_textCtrlBindings.end()) {
-            OnTextCtrlTextChanged(evt, it->second);
-        }
-        });
-
-    textCtrl->Bind(wxEVT_TEXT_ENTER, [this, textCtrl](wxCommandEvent& evt) {
-        auto it = m_textCtrlBindings.find(textCtrl);
-        if (it != m_textCtrlBindings.end()) {
-            OnTextCtrlEnter(evt, it->second);
-        }
-        });
-
-    textCtrl->Bind(wxEVT_KILL_FOCUS, [this, textCtrl](wxFocusEvent& evt) {
-        auto it = m_textCtrlBindings.find(textCtrl);
-        if (it != m_textCtrlBindings.end()) {
-            OnTextCtrlKillFocus(evt, it->second);
-        }
-        });
-}
-
-void CanvasEventHandler::UnbindTextCtrlEvents(wxTextCtrl* textCtrl) {
-    if (!textCtrl) return;
-
-    // “∆≥˝∞Û∂®∏˙◊Ÿ
-    m_textCtrlBindings.erase(textCtrl);
-
-    // ◊¢“‚£∫”…”⁄Œ“√« π”√lambda£¨–Ë“™–°–ƒµÿΩ‚∞Û
-    // ‘⁄ µº  π”√÷–£¨ø…ƒ‹–Ë“™∏¸∏¥‘”µƒ ¬º˛π‹¿Ì
-}
-
-// Œƒ±æ ¬º˛¥¶¿Ì∑Ω∑®
-void CanvasEventHandler::OnTextCtrlTextChanged(wxCommandEvent& evt, int textIndex) {
-    if (textIndex >= 0 && textIndex < (int)m_canvas->m_textElements.size()) {
-        wxTextCtrl* textCtrl = wxDynamicCast(evt.GetEventObject(), wxTextCtrl);
-        if (textCtrl) {
-            // ±Ì√Ê≤Ÿ◊˜£∫∏¸–¬CanvasTextElement
-            m_canvas->m_textElements[textIndex].OnTextChanged(textCtrl->GetValue());
-            m_canvas->Refresh();
-        }
-    }
-    evt.Skip();
-}
-
-void CanvasEventHandler::OnTextCtrlEnter(wxCommandEvent& evt, int textIndex) {
-    if (textIndex >= 0 && textIndex < (int)m_canvas->m_textElements.size()) {
-        m_canvas->m_textElements[textIndex].OnTextEnter();
-        FinishTextEditing();
-    }
-    evt.Skip();
-}
-
-void CanvasEventHandler::OnTextCtrlKillFocus(wxFocusEvent& evt, int textIndex) {
-    if (textIndex >= 0 && textIndex < (int)m_canvas->m_textElements.size()) {
-        m_canvas->m_textElements[textIndex].OnTextKillFocus();
-        FinishTextEditing();
-    }
-    evt.Skip();
-}
-
-void CanvasEventHandler::BindHiddenTextCtrlEvents() {
-    if (m_canvas && m_canvas->m_hiddenTextCtrl) {
-        wxTextCtrl* hiddenCtrl = m_canvas->m_hiddenTextCtrl;
-
-        hiddenCtrl->Bind(wxEVT_TEXT, &CanvasEventHandler::OnHiddenTextCtrlText, this);
-        hiddenCtrl->Bind(wxEVT_TEXT_ENTER, &CanvasEventHandler::OnHiddenTextCtrlEnter, this);
-        hiddenCtrl->Bind(wxEVT_KILL_FOCUS, &CanvasEventHandler::OnHiddenTextCtrlKillFocus, this);
-    }
-}
-
-void CanvasEventHandler::OnHiddenTextCtrlText(wxCommandEvent& evt) {
-    if (m_canvas && m_canvas->m_currentEditingTextIndex != -1) {
-        // Œƒ±æ±‰ªØ ±À¢–¬ª≠≤º£¨»√CanvasTextElement÷ÿªÊ
-        m_canvas->Refresh();
-    }
-    evt.Skip();
-}
-
-void CanvasEventHandler::OnHiddenTextCtrlEnter(wxCommandEvent& evt) {
-    FinishTextEditing();
-    evt.Skip();
-}
-
-void CanvasEventHandler::OnHiddenTextCtrlKillFocus(wxFocusEvent& evt) {
-    FinishTextEditing();
-    evt.Skip();
 }
 
 void CanvasEventHandler::StartSelectedDragging(const wxPoint& startPos) {
@@ -1484,34 +780,39 @@ void CanvasEventHandler::StartSelectedDragging(const wxPoint& startPos) {
 
     std::vector<wxPoint> points;
     m_movingWires.clear();
+
+    const std::vector<CanvasElement> elements = m_canvas->GetElements();
+	const std::vector<CanvasTextElement> textElements = m_canvas->GetTextElements();
+    const std::vector<Wire> wires = m_canvas->GetWires();
+
     for (int i = 0; i < m_compntIdx.size(); i++) {
-        _StartElementDragging(i);
-        m_compntPos.push_back(m_canvas->m_elements[m_compntIdx[i]].GetPos());
+        StartElementDragging(i);
+        m_compntPos.push_back(elements[m_compntIdx[i]].GetPos());
     }
     for (int i = 0; i < m_textElemIdx.size(); i++) {
-        m_textElemPos.push_back(m_canvas->m_textElements[m_textElemIdx[i]].GetPosition());
+        m_textElemPos.push_back(textElements[m_textElemIdx[i]].GetPosition());
     }
     for (int i = 0; i < m_wireIdx.size(); i++) {
         points.clear();
-        for (int j = 0; j < m_canvas->m_wires[m_wireIdx[i]].Size(); j++) {
-            points.push_back(m_canvas->m_wires[m_wireIdx[i]].pts[j].pos);
+        for (int j = 0; j < wires[m_wireIdx[i]].Size(); j++) {
+            points.push_back(wires[m_wireIdx[i]].pts[j].pos);
         }
         m_wirePos.push_back(points);
     }
 }
 
-void CanvasEventHandler::_StartElementDragging(int i) {
-    if (m_compntIdx[i] < 0 || m_compntIdx[i] >= (int)m_canvas->m_elements.size()) return;
+void CanvasEventHandler::StartElementDragging(int i) {
+    if (m_compntIdx[i] < 0 || m_compntIdx[i] >= (int)m_canvas->GetElements().size()) return;
 
-    //  ’ºØ∏√‘™º˛À˘”–“˝Ω≈∂‘”¶µƒµºœﬂ∂Àµ„
-    const auto& elem = m_canvas->m_elements[m_compntIdx[i]];
+    // Êî∂ÈõÜËØ•ÂÖÉ‰ª∂ÊâÄÊúâÂºïËÑöÂØπÂ∫îÁöÑÂØºÁ∫øÁ´ØÁÇπ
+    const auto& elem = m_canvas->GetElements()[m_compntIdx[i]];
 
     std::vector<WireAnchor> tmp;
     auto collect = [&](const auto& pins, bool isIn) {
         for (size_t p = 0; p < pins.size(); ++p) {
             wxPoint pinWorld = elem.GetPos() + wxPoint(pins[p].pos.x, pins[p].pos.y);
-            for (size_t w = 0; w < m_canvas->m_wires.size(); ++w) {
-                const auto& wire = m_canvas->m_wires[w];
+            for (size_t w = 0; w < m_canvas->GetWires().size(); ++w) {
+                const auto& wire = m_canvas->GetWires()[w];
                 if (!wire.pts.empty() && wire.pts.front().type == CPType::Pin &&
                     wire.pts.front().pos == pinWorld)
                     tmp.push_back({w, 0, isIn, p});
@@ -1526,4 +827,150 @@ void CanvasEventHandler::_StartElementDragging(int i) {
     collect(elem.GetInputPins(), true);
     collect(elem.GetOutputPins(), false);
 	m_movingWires.push_back(tmp);
+}
+
+void CanvasEventHandler::UpdateSelectedDragging() {
+    int grid = m_canvas->GetGrid();
+
+    wxPoint raw = m_hoverInfo.pos - m_selectedDragPos;
+    wxPoint delta((raw.x + grid / 2) / grid * grid, (raw.y + grid / 2) / grid * grid);
+
+    for (int i = 0; i < m_compntIdx.size(); i++) {
+        m_canvas->ElementSetPos(m_compntIdx[i], m_compntPos[i] + delta);
+
+        for (const auto& aw : m_movingWires[i]) {
+            if (aw.wireIdx >= m_canvas->GetWires().size()) continue;
+            auto it = std::find(m_wireIdx.begin(), m_wireIdx.end(), aw.wireIdx);
+            const Wire& wire = m_canvas->GetWires()[aw.wireIdx];
+
+            // ËÆ°ÁÆóÊñ∞ÂºïËÑö‰∏ñÁïåÂùêÊ†á
+            const auto& elem = m_canvas->GetElements()[m_compntIdx[i]];
+            const auto& pins = aw.isInput ? elem.GetInputPins() : elem.GetOutputPins();
+            if (aw.pinIdx >= pins.size()) continue;
+            wxPoint pinOffset = wxPoint(pins[aw.pinIdx].pos.x, pins[aw.pinIdx].pos.y);
+            wxPoint newPinPos = elem.GetPos() + pinOffset;
+
+            Wire tmp_wire = wire;
+            // Êõ¥Êñ∞ÂØºÁ∫øÁ´ØÁÇπ
+            if (aw.ptIdx == 0) {
+                tmp_wire.pts.front().pos = newPinPos;
+                tmp_wire.pts[1].pos.y = newPinPos.y;
+            }  
+            else{
+                tmp_wire.pts.back().pos = newPinPos;
+                tmp_wire.pts[tmp_wire.pts.size() - 2].pos.y = newPinPos.y;
+            }
+            m_canvas->UpdateWire(tmp_wire, aw.wireIdx);
+        }
+    }
+    for (int i = 0; i < m_textElemIdx.size(); i++) {
+        m_canvas->TextSetPos(m_textElemIdx[i], m_textElemPos[i] + delta);
+
+    }
+    for (int i = 0; i < m_wireIdx.size(); i++) {
+        for (int j = 0; j < m_canvas->GetWires()[m_wireIdx[i]].Size(); j++) {
+            wxPoint rawPos = m_wirePos[i][j];
+            m_canvas->WirePtsSetPos(m_wireIdx[i], j, m_wirePos[i][j] + delta);
+
+        }
+    }
+    m_canvas->SetStatus(wxString::Format("ÈÄâÊã©Â∑•ÂÖ∑ÔºöÂä®Â∑≤ÈÄâ‰∏≠ÂÖÉÁ¥†(%d, %d)", delta.x, delta.y));
+}
+
+
+void CanvasEventHandler::UpdateHoverInfo(HoverInfo hf) {
+    m_snapPosChanged = m_hoverInfo.snappedPos != hf.snappedPos ? true : false;
+
+	m_hoverInfo.pos = hf.pos;
+    m_hoverInfo.snappedPos = hf.snappedPos;
+	m_hoverInfo.pinIndex = hf.pinIndex;
+	m_hoverInfo.isInputPin = hf.isInputPin;
+	m_hoverInfo.pinWorldPos = hf.pinWorldPos;
+
+	m_hoverInfo.cellIndex = hf.cellIndex;
+	m_hoverInfo.wireIndex = hf.wireIndex;
+	m_hoverInfo.cellWorldPos = hf.cellWorldPos;
+	
+	m_hoverInfo.elementIndex = hf.elementIndex;
+	m_hoverInfo.elementName = hf.elementName;
+
+	m_hoverInfo.textIndex = hf.textIndex;
+}
+
+
+
+void CanvasEventHandler::StartRectangleSelect(const wxPoint& startPos){
+    m_toolStateMachine->SetSelectState(SelectToolState::RECTANGLE_SELECT);
+    m_selectStartPos = startPos;
+    m_textRecElemIdx.clear();
+    m_compntRecIdx.clear();
+    m_wireRecIdx.clear();
+}
+
+void CanvasEventHandler::UpdateRectangleSelect(wxMouseEvent& evt) {
+    wxPoint canvasPos = m_hoverInfo.pos;
+    wxRect selectionRect(
+        wxPoint(std::min(m_selectStartPos.x, canvasPos.x),
+            std::min(m_selectStartPos.y, canvasPos.y)),
+        wxSize(std::abs(canvasPos.x - m_selectStartPos.x),
+            std::abs(canvasPos.y - m_selectStartPos.y))
+    );
+    m_canvas->SetSelectionRect(selectionRect);
+
+    auto searchSelectedElements0 = [&](std::vector<int>& indexList, std::vector<int>& recList, const auto& elements) {
+        for (size_t i = 0; i < elements.size(); ++i) {
+            const auto& elem = elements[i];
+            wxRect elemRect = elem.GetBounds();
+            if (m_canvas->GetSelectionRect().Contains(elemRect)) {
+                auto it0 = std::find(recList.begin(), recList.end(), i);
+                if (it0 == recList.end()) {
+                    recList.push_back(i);
+                    auto it = std::find(indexList.begin(), indexList.end(), i);
+                    if (it == indexList.end()) indexList.push_back(i);
+                    else indexList.erase(it);
+                }
+            }
+            else {
+                auto it0 = std::find(recList.begin(), recList.end(), i);
+                if (it0 != recList.end()) {
+                    recList.erase(it0);
+                    auto it = std::find(indexList.begin(), indexList.end(), i);
+                    if (it != indexList.end()) indexList.erase(it);
+                    else indexList.push_back(i);
+                }
+            }
+        }
+        };
+
+    auto searchSelectedElements1 = [&](std::vector<int>& indexList, const auto& elements) {
+        for (size_t i = 0; i < elements.size(); ++i) {
+            const auto& elem = elements[i];
+            wxRect elemRect = elem.GetBounds();
+            if (m_canvas->GetSelectionRect().Contains(elemRect)) {
+                auto it = std::find(indexList.begin(), indexList.end(), i);
+                if (it == indexList.end()) indexList.push_back(i);
+                else indexList.erase(it);
+            }
+        }
+        };
+
+    if (! evt.ShiftDown()) {
+        m_compntIdx.clear();
+        m_textElemIdx.clear();
+        m_wireIdx.clear();
+        searchSelectedElements1(m_compntIdx, m_canvas->GetElements());
+        searchSelectedElements1(m_textElemIdx, m_canvas->GetTextElements());
+        searchSelectedElements1(m_wireIdx, m_canvas->GetWires());
+    }
+    else {
+        searchSelectedElements0(m_compntIdx, m_compntRecIdx, m_canvas->GetElements());
+        searchSelectedElements0(m_textElemIdx, m_textRecElemIdx, m_canvas->GetTextElements());
+        searchSelectedElements0(m_wireIdx, m_wireRecIdx, m_canvas->GetWires());
+    }
+    m_canvas->UpdateSelection(m_compntIdx, m_textElemIdx, m_wireIdx);
+}
+
+void CanvasEventHandler::FinishRectangleSelect() {
+    m_toolStateMachine->SetSelectState(SelectToolState::IDLE);
+    m_canvas->ClearSelectionRect();
 }

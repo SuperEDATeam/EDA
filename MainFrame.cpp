@@ -320,7 +320,7 @@ void MainFrame::DoFileOpen(const wxString& path)
             // 移除下面这行关于rotation的读取
             // int rotation = wxAtoi(child->GetAttribute("rotation", "0"));
 
-            m_canvas->PlaceElement(name, wxPoint(x, y));
+            m_canvas->AddElement(name, wxPoint(x, y));
             // 同时移除设置旋转角度的逻辑（如果有的话）
         }
 
@@ -734,7 +734,7 @@ void MainFrame::OnAbout(wxCommandEvent&)
 
 void MainFrame::DoEditUndo()
 {
-    m_canvas->m_undoStack.Undo(m_canvas);
+    m_canvas->UndoStackUndo();
     OnUndoStackChanged();   // 刷新菜单
 }
 
@@ -894,12 +894,12 @@ void MainFrame::OnUndoStackChanged()
     wxMenuItem* undoItem = editMenu->FindItem(wxID_UNDO);
     if (undoItem)
     {
-        wxString base = m_canvas->m_undoStack.GetUndoName(); // "Add AND Gate"
-        wxString text = m_canvas->m_undoStack.CanUndo()
-            ? wxString("Undo ") + base
+        wxString base = m_canvas->UndoStackGetUndoName(); // "Add AND Gate"
+		wxString text = m_canvas->UndoStackCanUndo()
+            ? wxString("Undo ") + base + wxString("\tCtrl+Z")
             : wxString("Can't Undo");
         undoItem->SetItemLabel(text);
-        undoItem->Enable(m_canvas->m_undoStack.CanUndo());
+        undoItem->Enable(m_canvas->UndoStackCanUndo());
     }
 
 }

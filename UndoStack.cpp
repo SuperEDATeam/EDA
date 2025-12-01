@@ -4,15 +4,14 @@
 
 class CanvasElement;
 class Wire;
+class CanvasTextElement;
 
 /* ---------------- CmdAddElement ---------------- */
 void CmdAddElement::undo(CanvasPanel* canvas)
 {
-    if (m_index < canvas->m_elements.size())
+    if (m_index < canvas->GetElements().size())
     {
-        canvas->m_elements.erase(canvas->m_elements.begin() + m_index);
-        canvas->m_selectedIndex = -1;
-        canvas->Refresh();
+        canvas->DeleteElement(m_index);
     }
 }
 
@@ -44,41 +43,60 @@ wxString UndoStack::GetUndoName() const
     return CanUndo() ? m_stack.back()->GetName() : wxString("Can't Undo");
 }
 
-void CmdMoveElement::undo(CanvasPanel* canvas)
-{
-    if (m_index >= canvas->m_elements.size()) return;
-
-    /* 1. 恢复元件位置 */
-    canvas->m_elements[m_index].SetPos(m_oldPos);
-
-    /* 2. 恢复导线端点 */
-    for (const auto& a : m_anchors) {
-        if (a.wireIdx >= canvas->m_wires.size()) continue;
-        auto& wire = canvas->m_wires[a.wireIdx];
-        if (a.ptIdx < wire.pts.size())
-            wire.pts[a.ptIdx].pos = a.oldPos;
-
-        // 重新布线 & 小格
-        wire.pts = Wire::Route(wire.pts.front(), wire.pts.back());
-        wire.GenerateCells();
-    }
-    canvas->Refresh();
-}
-
 void CmdAddWire::undo(CanvasPanel* canvas)
 {
-    if (m_wireIdx < canvas->m_wires.size())
+    if (m_wireIdx < canvas->GetWires().size())
     {
-        canvas->m_wires.erase(canvas->m_wires.begin() + m_wireIdx);
-        canvas->Refresh();
+        canvas->DeleteWire(m_wireIdx);
     }
 }
 
-void CmdAddBranchWire::undo(CanvasPanel* canvas) {
-    // 删除分支关系 - 撤销操作
-    if (canvas && m_parentWire < canvas->GetWires().size() &&
-        m_branchWire < canvas->GetWires().size()) {
-
-        // 调用 CanvasPanel 的方法来移除分支连接
+void CmdAddText::undo(CanvasPanel* canvas)
+{
+    if (m_textIdx < canvas->GetTextElements().size())
+    {
+        canvas->DeleteTextElement(m_textIdx);
     }
+}
+
+void CmdMoveSelected::undo(CanvasPanel* canvas) {
+    for (int i = 0; i < m_textElemIdx.size(); i++) {
+        canvas->TextSetPos(m_textElemIdx[i], m_textElemPos[i]);
+    }
+    for (int i = 0; i < m_compntIdx.size(); i++) {
+        canvas->ElementSetPos(m_compntIdx[i], m_compntPos[i]);
+
+        for (const auto& aw : m_movingWires[i]) {
+            if (aw.wireIdx >= canvas->GetWires().size()) continue;
+            auto it = std::find(m_wireIdx.begin(), m_wireIdx.end(), aw.wireIdx);
+            const Wire& wire = canvas->GetWires()[aw.wireIdx];
+
+            // 计算新引脚世界坐标
+            const auto& elem = canvas->GetElements()[m_compntIdx[i]];
+            const auto& pins = aw.isInput ? elem.GetInputPins() : elem.GetOutputPins();
+            if (aw.pinIdx >= pins.size()) continue;
+            wxPoint pinOffset = wxPoint(pins[aw.pinIdx].pos.x, pins[aw.pinIdx].pos.y);
+            wxPoint newPinPos = elem.GetPos() + pinOffset;
+
+            Wire tmp_wire = wire;
+            // 更新导线端点
+            if (aw.ptIdx == 0) {
+                tmp_wire.pts.front().pos = newPinPos;
+                tmp_wire.pts[1].pos.y = newPinPos.y;
+            }
+            else {
+                tmp_wire.pts.back().pos = newPinPos;
+                tmp_wire.pts[tmp_wire.pts.size() - 2].pos.y = newPinPos.y;
+            }
+            canvas->UpdateWire(tmp_wire, aw.wireIdx);
+        }
+
+    }
+    for (int i = 0; i < m_wireIdx.size(); i++) {
+        for (int j = 0; j < canvas->GetWires()[m_wireIdx[i]].Size(); j++) {
+            canvas->WirePtsSetPos(m_wireIdx[i], j, m_wirePos[i][j]);
+        }
+    }
+
+
 }
