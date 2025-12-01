@@ -297,7 +297,7 @@ void CanvasEventHandler::OnCanvasLeftUp(wxMouseEvent& evt) {
     
     // 单击选中
     if (m_toolStateMachine->GetSelectState() == SelectToolState::CLICK_SELECT) {
-        FinishClickSelect();
+        FinishClickSelect(evt);
         m_eventHandled = true;
         return;
     }
@@ -387,6 +387,7 @@ void CanvasEventHandler::OnCanvasKeyDown(wxKeyEvent& evt) {
 
     }
     case ToolType::SELECT_TOOL: {
+
 
     }
     case ToolType::TEXT_TOOL: {
@@ -933,7 +934,7 @@ void CanvasEventHandler::FinishRectangleSelect() {
     m_canvas->ClearSelectionRect();
 }
 
-void CanvasEventHandler::FinishClickSelect() {
+void CanvasEventHandler::FinishClickSelect(wxMouseEvent& evt) {
     if (evt.ShiftDown()) {
         m_canvas->SetStatus(wxString::Format("选择工具：点击继续选择"));
         if (preIn) {
