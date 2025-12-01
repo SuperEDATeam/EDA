@@ -71,6 +71,9 @@ private:
     void StartElementDragging(int index);
     void UpdateSelectedDragging();
 
+    // 单击选中相关操作
+    void FinishClickSelect();
+
     // ==================== 元件工具画布事件处理 ====================
 private:
     wxString m_currentComponent;
