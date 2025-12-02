@@ -102,13 +102,25 @@ void CmdMoveSelected::undo(CanvasPanel* canvas) {
 }
 
 void CmdDeleteSelected::undo(CanvasPanel* canvas) {
-    for (int i = 0; i < elementNames.size(); i++) {
-        canvas->AddElementWithoutRecord(elementNames[i], elementPos[i]);
+    for (int i = 0; i < Elements.size(); i++) {
+        canvas->ReclaimElement(Elements[i].elem, Elements[i].idx);
     }
-    for (int i = 0; i < wires.size(); i++) {
-        canvas->AddWireWithoutRecord(wires[i]);
+    for (int i = 0; i < Wires.size(); i++) {
+        canvas->ReclaimWire(Wires[i].wire, Wires[i].idx);
     }
-    for (int i = 0; i < txtBoxPos.size(); i++) {
-        canvas->CreateTextElementWithoutRecord(txtBoxPos[i], txtBoxText[i]);
+    for (int i = 0; i < Texts.size(); i++) {
+        canvas->ReclaimText(Texts[i].txt, Texts[i].idx);
     }
 }
+
+//void CmdCopySelected::undo(CanvasPanel* canvas) {
+//    for (int i = 0; i < elementNames.size(); i++) {
+//        canvas->AddElementWithoutRecord(elementNames[i], elementPos[i]);
+//    }
+//    for (int i = 0; i < wires.size(); i++) {
+//        canvas->AddWireWithoutRecord(wires[i]);
+//    }
+//    for (int i = 0; i < txtBoxPos.size(); i++) {
+//        canvas->CreateTextElementWithoutRecord(txtBoxPos[i], txtBoxText[i]);
+//    }
+//}

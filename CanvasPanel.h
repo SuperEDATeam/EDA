@@ -111,7 +111,9 @@ public:
     // 元件管理
     const std::vector<CanvasElement>& GetElements() const { return m_elements; }
     void AddElement(const wxString& name, const wxPoint& pos);
+    void AddElementWithIns(CanvasElement element);
     void AddElementWithoutRecord(const wxString& name, const wxPoint& pos);
+    void ReclaimElement(CanvasElement element, int index);
     void DeleteElement(int index) { m_elements.erase(m_elements.begin() + index);  m_selElemIdx.erase(std::remove(m_selElemIdx.begin(), m_selElemIdx.end(), index), m_selElemIdx.end()); Refresh(); };
     void ElementSetPos(int index, const wxPoint& pos);
     void ElementStatusChange(int index);
@@ -120,6 +122,7 @@ public:
     const std::vector<Wire>& GetWires() const { return m_wires; }
     void AddWire(const Wire& wire); 
     void AddWireWithoutRecord(const Wire& wire);
+    void ReclaimWire(Wire wire, int index);
     void DeleteWire(int index) { m_wires.erase(m_wires.begin() + index); m_selWireIdx.erase(std::remove(m_selWireIdx.begin(), m_selWireIdx.end(), index), m_selWireIdx.end()); Refresh(); };
     void WireSetWholeOffSet(int index, const wxPoint& offset);
     void WirePtsSetPos(int wireIndex, int controlPointIndex, const wxPoint& pos);
@@ -131,6 +134,8 @@ public:
     // 文本管理
     const std::vector<CanvasTextElement>& GetTextElements() const { return m_textElements; }
     void CreateTextElement(const wxPoint& position, wxString text);
+    void AddTextWithIns(CanvasTextElement text);
+    void ReclaimText(CanvasTextElement text, int index);
     void CreateTextElementWithoutRecord(const wxPoint& position, wxString text);
     void DeleteTextElement(int index) { m_textElements.erase(m_textElements.begin() + index); m_selTxtIdx.erase(std::remove(m_selTxtIdx.begin(), m_selTxtIdx.end(), index), m_selTxtIdx.end()); Refresh(); };
     void TextSetPos(int index, const wxPoint& pos) { m_textElements[index].SetPosition(pos); Refresh(); };
@@ -243,3 +248,26 @@ public:
     // ==================== 事件表 ====================
     wxDECLARE_EVENT_TABLE();
 };
+
+//class CopyBuffer {
+//private:
+//    CanvasPanel* m_canvas;
+//    std::vector<CanvasElement>& m_elements;
+//    std::vector<Wire>& m_wires;
+//    std::vector<CanvasTextElement>& m_txtBoxes;
+//
+//public:
+//    CopyBuffer(CanvasPanel* canvas) m_canvas(canvas), m_elements(), m_wires(), m_txtBoxes() { ; };
+//    void Clear() { m_elements.clear(); m_wires.clear(); m_txtBoxes.clear(); }
+//    void SetCopyBuffer(const std::vector<CanvasElement>& elements, const std::vector<Wire>& wires, const std::vector<CanvasTextElement>& txtBoxes) {
+//        m_elements = elements;
+//        m_wires = wires;
+//        m_txtBoxes = txtBoxes;
+//    }
+//    void Copy() {
+//        for (auto& element : m_elements) m_canvas->AddElementWithIns(element);
+//        for (auto& text : m_txtBoxes) m_canvas->AddTextWithIns(text);
+//        for (auto& wire : m_wires) m_canvas->AddWireWithoutRecord(wire);
+//        m_canvas->UndoStackPush();
+//    }
+//};

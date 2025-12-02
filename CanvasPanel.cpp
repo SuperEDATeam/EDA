@@ -188,6 +188,12 @@ void CanvasPanel::AddElement(const wxString& name, const wxPoint& pos){
     UndoStackPush(std::make_unique<CmdAddElement>(clone.GetName(), m_elements.size() - 1));
 }
 
+void CanvasPanel::AddElementWithIns(CanvasElement element) {
+    m_elements.push_back(element);
+    Refresh();
+
+}
+
 void CanvasPanel::AddElementWithoutRecord(const wxString& name, const wxPoint& pos) {
     extern std::vector<CanvasElement> g_elements;
     auto it = std::find_if(g_elements.begin(), g_elements.end(),
@@ -213,6 +219,12 @@ void CanvasPanel::AddElementWithoutRecord(const wxString& name, const wxPoint& p
     clone.SetPos(standardpos);
 
     m_elements.push_back(clone);
+    Refresh();
+}
+
+
+void CanvasPanel::ReclaimElement(CanvasElement element, int index) {
+    m_elements.insert(m_elements.begin() + index, element);
     Refresh();
 }
 
@@ -628,6 +640,16 @@ void CanvasPanel::CreateTextElement(const wxPoint& position, wxString text) {
     UndoStackPush(std::make_unique<CmdAddText>( m_textElements.size() - 1));
 }
 
+void CanvasPanel::AddTextWithIns(CanvasTextElement text) {
+    m_textElements.push_back(std::move(text));
+    Refresh();
+}
+
+void CanvasPanel::ReclaimText(CanvasTextElement text, int index) {
+    m_textElements.insert(m_textElements.begin() + index, std::move(text));
+    Refresh();
+}
+
 void CanvasPanel::CreateTextElementWithoutRecord(const wxPoint& position, wxString text) {
     m_textElements.push_back(std::move(CanvasTextElement(this, text, position)));
     //AttachHiddenTextCtrlToElement(static_cast<int>(m_textElements.size() - 1));
@@ -816,6 +838,12 @@ void CanvasPanel::AddWire(const Wire& wire) {
 void CanvasPanel::AddWireWithoutRecord(const Wire& wire) {
     m_wires.push_back(wire);
     m_wires.back().GenerateCells();
+    Refresh();
+};
+
+void CanvasPanel::ReclaimWire(Wire wire, int index) {
+    m_wires.insert(m_wires.begin() + index, std::move(wire));
+    m_wires[index].GenerateCells();
     Refresh();
 };
 

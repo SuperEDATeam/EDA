@@ -1015,12 +1015,9 @@ void CanvasEventHandler::FinishClickSelect(wxMouseEvent& evt) {
 }
 
 void CanvasEventHandler::DeleteSelected() {
-
-    std::vector<wxString> elementNames;
-    std::vector<wxPoint> elementPos;
+    std::vector<CanvasElement> elements;
     std::vector<Wire> wires;
-    std::vector<wxPoint> txtBoxPos;
-    std::vector<wxString> txtBoxText;
+    std::vector<CanvasTextElement> texts;
 
     std::sort(m_compntIdx.rbegin(), m_compntIdx.rend());
     std::sort(m_wireIdx.rbegin(), m_wireIdx.rend());
@@ -1028,8 +1025,7 @@ void CanvasEventHandler::DeleteSelected() {
     m_canvas->UpdateSelection(m_compntIdx, m_textElemIdx, m_wireIdx);
 
     for(auto& idx : m_compntIdx) {
-        elementNames.push_back(m_canvas->GetElements()[idx].GetName());
-        elementPos.push_back(m_canvas->GetElements()[idx].GetPos() + wxPoint(140, 40));
+        elements.push_back(m_canvas->GetElements()[idx]);
         m_canvas->DeleteElement(idx);
     }
     for (auto& idx : m_wireIdx) {
@@ -1038,24 +1034,22 @@ void CanvasEventHandler::DeleteSelected() {
         
     }
     for (auto& idx : m_textElemIdx) {
-        txtBoxPos.push_back(m_canvas->GetTextElements()[idx].GetPosition());
-        txtBoxText.push_back(m_canvas->GetTextElements()[idx].GetText());
+        texts.push_back(m_canvas->GetTextElements()[idx]);
         m_canvas->DeleteTextElement(idx);
     }
+    m_canvas->UndoStackPush(std::make_unique<CmdDeleteSelected>(elements, m_compntIdx, wires, m_wireIdx, texts, m_textElemIdx));
     m_compntIdx.clear();
     m_wireIdx.clear();
     m_textElemIdx.clear();
     m_canvas->UpdateSelection(m_compntIdx, m_textElemIdx, m_wireIdx);
-    m_canvas->UndoStackPush(std::make_unique<CmdDeleteSelected>(elementNames, elementPos, wires, txtBoxPos, txtBoxText));
+    
 }
 
 
 void CanvasEventHandler::HandleEraserTool() {
-    std::vector<wxString> elementNames;
-    std::vector<wxPoint> elementPos;
+    std::vector<CanvasElement> elements;
     std::vector<Wire> wires;
-    std::vector<wxPoint> txtBoxPos;
-    std::vector<wxString> txtBoxText;
+    std::vector<CanvasTextElement> texts;
 
     m_canvas->SetStatus("擦除工具: 点击擦除元素，拖动框选批量擦除");
 
@@ -1069,8 +1063,7 @@ void CanvasEventHandler::HandleEraserTool() {
     else {
         m_toolStateMachine->SetEraserState(EraserToolState::CLICK_ERASER);
         if (m_hoverInfo.elementIndex != -1) {
-            elementNames.push_back(m_canvas->GetElements()[m_hoverInfo.elementIndex].GetName());
-            elementPos.push_back(m_canvas->GetElements()[m_hoverInfo.elementIndex].GetPos() + wxPoint(140, 40));
+            elements.push_back(m_canvas->GetElements()[m_hoverInfo.elementIndex]);
             m_canvas->DeleteElement(m_hoverInfo.elementIndex);
         }
         if (m_hoverInfo.wireIndex != -1) {
@@ -1078,11 +1071,10 @@ void CanvasEventHandler::HandleEraserTool() {
             m_canvas->DeleteWire(m_hoverInfo.wireIndex);
         }
         if (m_hoverInfo.textIndex != -1) {
-            txtBoxPos.push_back(m_canvas->GetTextElements()[m_hoverInfo.textIndex].GetPosition());
-            txtBoxText.push_back(m_canvas->GetTextElements()[m_hoverInfo.textIndex].GetText());
+            texts.push_back(m_canvas->GetTextElements()[m_hoverInfo.textIndex]);
             m_canvas->DeleteTextElement(m_hoverInfo.textIndex);
         }
-        m_canvas->UndoStackPush(std::make_unique<CmdDeleteSelected>(elementNames, elementPos, wires, txtBoxPos, txtBoxText));
+        m_canvas->UndoStackPush(std::make_unique<CmdDeleteSelected>(elements, std::vector<int>{m_hoverInfo.elementIndex == -1 ? 0 : m_hoverInfo.elementIndex}, wires, std::vector<int>{m_hoverInfo.wireIndex == -1 ? 0 : m_hoverInfo.wireIndex}, texts, std::vector<int>{m_hoverInfo.textIndex == -1 ? 0 : m_hoverInfo.textIndex}));
     }
 }
 
@@ -1097,11 +1089,10 @@ void CanvasEventHandler::UpdateRectangleEraser() {
 }
 
 void CanvasEventHandler::FinishRectangleEraser() {
-    std::vector<wxString> elementNames;
-    std::vector<wxPoint> elementPos;
+    std::vector<CanvasElement> elements;
     std::vector<Wire> wires;
-    std::vector<wxPoint> txtBoxPos;
-    std::vector<wxString> txtBoxText;
+    std::vector<CanvasTextElement> texts;
+
 
     auto searchEraserElements = [&](std::vector<int>& indexList, const auto& elements) {
         for (size_t i = 0; i < elements.size(); ++i) {
@@ -1116,9 +1107,13 @@ void CanvasEventHandler::FinishRectangleEraser() {
     searchEraserElements(m_wireDelIdx, m_canvas->GetWires());
     searchEraserElements(m_textDelIdx, m_canvas->GetTextElements());
 
+    std::sort(m_compntDelIdx.rbegin(), m_compntDelIdx.rend());
+    std::sort(m_wireDelIdx.rbegin(), m_wireDelIdx.rend());
+    std::sort(m_textDelIdx.rbegin(), m_textDelIdx.rend());
+
+
     for (auto& idx : m_compntDelIdx) {
-        elementNames.push_back(m_canvas->GetElements()[idx].GetName());
-        elementPos.push_back(m_canvas->GetElements()[idx].GetPos() + wxPoint(140, 40));
+        elements.push_back(m_canvas->GetElements()[idx]);
         m_canvas->DeleteElement(idx);
     }
     for (auto& idx : m_wireDelIdx) {
@@ -1126,11 +1121,10 @@ void CanvasEventHandler::FinishRectangleEraser() {
         m_canvas->DeleteWire(idx);
     }
     for (auto& idx : m_textDelIdx) {
-        txtBoxPos.push_back(m_canvas->GetTextElements()[idx].GetPosition());
-        txtBoxText.push_back(m_canvas->GetTextElements()[idx].GetText());
+        texts.push_back(m_canvas->GetTextElements()[idx]);
         m_canvas->DeleteTextElement(idx);
     }
-    m_canvas->UndoStackPush(std::make_unique<CmdDeleteSelected>(elementNames, elementPos, wires, txtBoxPos, txtBoxText));
+    m_canvas->UndoStackPush(std::make_unique<CmdDeleteSelected>(elements, m_compntDelIdx, wires, m_wireDelIdx, texts, m_textDelIdx));
     m_canvas->ClearEraserRect();
     m_toolStateMachine->SetEraserState(EraserToolState::IDLE);
 }

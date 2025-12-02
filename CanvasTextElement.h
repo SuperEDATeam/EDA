@@ -8,6 +8,7 @@ class CanvasPanel; // Ç°ÏòÉùÃ÷
 
 class CanvasTextElement {
 public:
+    CanvasTextElement() = default;
     CanvasTextElement(CanvasPanel* parent, const wxString& text = "", const wxPoint& pos = wxPoint(0, 0));
     ~CanvasTextElement();
 
