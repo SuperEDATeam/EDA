@@ -15,7 +15,8 @@ class CanvasEventHandler;
 class MainFrame;
 
 struct HoverInfo {
-    wxPoint pos;
+    wxPoint screenPos;
+    wxPoint canvasPos;
     wxPoint snappedPos; // ���ȼ������ţ����߿��Ƶ�
 
     // 1. 引脚 (Pin) 悬停信息
@@ -28,6 +29,9 @@ struct HoverInfo {
     int wireIndex = -1;        // 控制点所属导线的索引。
     wxPoint cellWorldPos;      // 控制点在世界坐标系中的位置。
 
+    int midCellIndex = -1;     // 悬停导线的中间点的索引。-1 表示没有悬停在中间点上。
+    int midWireIndex = -1;   // 导线的中间点所属导线的索引。
+    
     // 3. 元件 (Element) 悬停信息 (用于状态栏反馈)
     int elementIndex = -1;     // 悬停元件的索引。-1 表示没有悬停在任何元件上。
     wxString elementName;      // 悬停元件的名称。
@@ -40,12 +44,14 @@ struct HoverInfo {
     bool IsOverCell() const { return cellIndex != -1; }
     bool IsOverElement() const { return elementIndex != -1; }
 	bool IsOverText() const { return textIndex != -1; }
+    bool IsOverMidCell() const { return midCellIndex != -1; }
     bool IsEmptyArea() const {
-        return pinIndex == -1 && cellIndex == -1 && elementIndex == -1 && textIndex == -1;
+        return pinIndex == -1 && cellIndex == -1 && elementIndex == -1 && textIndex == -1 && midCellIndex == -1;
 	}
+   
 
     // 构造函数
-	HoverInfo() : pinIndex(-1), isInputPin(false), cellIndex(-1), wireIndex(-1), elementIndex(-1), textIndex(-1){}
+	HoverInfo() : pinIndex(-1), isInputPin(false), cellIndex(-1), wireIndex(-1), elementIndex(-1), textIndex(-1), midCellIndex(-1), midWireIndex(-1) {}
 };
 
 class CanvasPanel : public wxPanel
@@ -197,17 +203,37 @@ public:
 private:
     HoverInfo m_hoverInfo;
 
-    void UpdateHoverInfo(const wxPoint& canvasPos);
+    void UpdateHoverInfo(const wxPoint& screenPos);
+    HoverInfo GetHoverInfo(HoverInfo& hoverInfo) const { hoverInfo = m_hoverInfo; }
     int HitElementTest(const wxPoint& canvasPos);
     int HitTestText(wxPoint canvasPos);
     int HitHoverPin(const wxPoint& canvasPos, bool* isInput, wxPoint* worldPos);
     int HitHoverCell(const wxPoint& canvasPos, int* wireIdx, int* cellIdx, wxPoint* cellPos);
+    std::tuple<int, int> HitMidCell(const wxPoint& canvasPos);
     wxPoint Snap(const wxPoint& canvasPos) { return wxPoint((canvasPos.x + m_grid / 2) / m_grid * m_grid, (canvasPos.y + m_grid / 2) / m_grid * m_grid); };
 
 public:
     // 工具管理
     void SetCurrentTool(ToolType tool);
     void SetCurrentComponent(const wxString& componentName);
+
+    // 悬停信息汇报
+    bool IsOverPin() const { return m_hoverInfo.IsOverPin(); }
+    bool IsOverCell() const { return m_hoverInfo.IsOverCell(); }
+    bool IsOverElement() const { return m_hoverInfo.IsOverElement(); }
+    bool IsOverText() const { return m_hoverInfo.IsOverText(); }
+    wxPoint GetHoverPos() const { return m_hoverInfo.canvasPos; }
+    wxPoint GetSnappedPos() const { return m_hoverInfo.snappedPos; }
+    int GetHoverPinIndex() const { return m_hoverInfo.pinIndex; }
+    bool IsHoverInputPin() const { return m_hoverInfo.isInputPin; }
+    wxPoint GetHoverPinWorldPos() const { return m_hoverInfo.pinWorldPos; }
+    int GetHoverCellIndex() const { return m_hoverInfo.cellIndex; }
+    int GetHoverWireIndex() const { return m_hoverInfo.wireIndex; }
+    wxPoint GetHoverCellWorldPos() const { return m_hoverInfo.cellWorldPos; }
+    int GetHoverElementIndex() const { return m_hoverInfo.elementIndex; }
+    const wxString& GetHoverElementName() const { return m_hoverInfo.elementName; }
+    int GetHoverTextIndex() const { return m_hoverInfo.textIndex; }
+    bool IsEmptyArea() const { return m_hoverInfo.IsEmptyArea(); }
 
     // ==================== 画布的子系统 ====================
 private:

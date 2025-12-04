@@ -93,7 +93,7 @@ void CanvasEventHandler::OnCanvasLeftDown(wxMouseEvent& evt) {
         m_canvas->FinishTextEditing();
     }
 
-    wxPoint canvasPos = m_hoverInfo.pos;
+    wxPoint canvasPos = m_hoverInfo.canvasPos;
     ToolType currentTool = m_toolStateMachine->GetCurrentTool();
     
     // 按优先级高低处理
@@ -226,9 +226,16 @@ void CanvasEventHandler::UpdateWireDrawing(wxMouseEvent& evt) {
     if (m_tempWire.Size() > lengthOfTempWire) pt = m_tempWire.pts[lengthOfTempWire];
     else pt = m_tempWire.pts.back();
     m_tempWire.pts.resize(lengthOfTempWire);
-    CPType type = CPType::Bend;
-    if(m_hoverInfo.IsOverPin()) type = CPType::Pin;
-    if (m_hoverInfo.IsOverCell()) type = CPType::Branch;
+    CPType type;
+    if (m_hoverInfo.IsOverPin()) {
+        type = CPType::Pin;
+    }
+    else if (m_hoverInfo.IsOverCell()) {
+        type = CPType::Branch; 
+    }
+    else {
+        type = CPType::Bend;
+    }
     wxPoint pos = m_hoverInfo.snappedPos;
     tempWirePlus = 1;
     if (evt.ShiftDown()) {
@@ -243,8 +250,8 @@ void CanvasEventHandler::UpdateWireDrawing(wxMouseEvent& evt) {
         }
         else {
             tempWirePlus = 2;
-            ControlPoint v = { wxPoint(m_tempWire.pts.back().pos.x, pos.y), CPType::Free };
-            ControlPoint h = { wxPoint(pos.x, m_tempWire.pts.back().pos.y), CPType::Free };
+            ControlPoint v = { wxPoint(m_tempWire.pts.back().pos.x, pos.y), CPType::Bend };
+            ControlPoint h = { wxPoint(pos.x, m_tempWire.pts.back().pos.y), CPType::Bend };
             if (pt.pos.x == m_tempWire.pts.back().pos.x) {
                 m_tempWire.AddPoint(v);
                 m_tempWire.AddPoint({ pos, type });
@@ -281,7 +288,7 @@ void CanvasEventHandler::FinishWireDrawing() {
     if (m_tempWire.pts[lengthOfTempWire - 2].pos == m_tempWire.pts[lengthOfTempWire - 1].pos) {
         m_tempWire.pts.pop_back();
     }
-    m_tempWire.pts.back().type = CPType::Free;
+    if (m_tempWire.pts.back().type == CPType::Bend) m_tempWire.pts.back().type = CPType::Free;
     m_canvas->AddWire(m_tempWire);
     CancelWireDrawing();
 }
@@ -506,7 +513,7 @@ void CanvasEventHandler::OnCanvasMouseWheel(wxMouseEvent& evt) {
 
 void CanvasEventHandler::HandleSelectTool(wxMouseEvent& evt) {
     preIn = false;
-    wxPoint canvasPos = m_hoverInfo.pos;
+    wxPoint canvasPos = m_hoverInfo.canvasPos;
     wxString status = "选择工具: ";
 
     int elemIdx = m_hoverInfo.elementIndex;
@@ -562,8 +569,8 @@ void CanvasEventHandler::HandleTextTool() {
     // 检查是否点击了现有文本元素
     if (m_hoverInfo.IsOverText()) StartTextEditing(m_hoverInfo.textIndex);
     else {
-        m_canvas->CreateTextElement(m_hoverInfo.pos, "");
-        m_canvas->SetStatus(wxString::Format("放置文本框：(%d, %d)", m_hoverInfo.pos.x, m_hoverInfo.pos.y));
+        m_canvas->CreateTextElement(m_hoverInfo.canvasPos, "");
+        m_canvas->SetStatus(wxString::Format("放置文本框：(%d, %d)", m_hoverInfo.canvasPos.x, m_hoverInfo.canvasPos.y));
     }
 }
 
@@ -646,13 +653,13 @@ void CanvasEventHandler::CancelWireEditing() {
 }
 
 void CanvasEventHandler::OnCanvasMouseMove(wxMouseEvent& evt) {
-    wxPoint canvasPos = m_hoverInfo.pos;
+    wxPoint canvasPos = m_hoverInfo.canvasPos;
 
     // 导线绘制
     if (m_toolStateMachine->GetWireState() == WireToolState::WIRE_DRAWING) {
-        if (SnapPosChanged()) {
+        //if (SnapPosChanged()) {
             UpdateWireDrawing(evt);
-        }
+        //}
         m_eventHandled = true;
     }
 
@@ -728,13 +735,13 @@ void CanvasEventHandler::OnCanvasMouseMove(wxMouseEvent& evt) {
 
 void CanvasEventHandler::StartPanning(const wxPoint& startPos) {
 	m_toolStateMachine->SetDragState(DragToolState::CANVAS_DRAGGING);
-    m_panStartPos = startPos;
+    m_panStartPos = m_hoverInfo.screenPos;
     m_panStartOffSet = m_canvas->GetoffSet();
 }
 
 void CanvasEventHandler::UpdatePanning() {
     if (m_toolStateMachine->GetDragState() != DragToolState::CANVAS_DRAGGING) return;
-    wxPoint delta = m_hoverInfo.pos - m_panStartPos;
+    wxPoint delta = m_hoverInfo.screenPos - m_panStartPos;
     m_canvas->SetoffSet(m_panStartOffSet + delta);
 
     m_canvas->SetStatus(wxString::Format("平移画布: 偏移(%d, %d)", delta.x, delta.y));
@@ -829,7 +836,7 @@ void CanvasEventHandler::StartElementDragging(int i) {
 void CanvasEventHandler::UpdateSelectedDragging() {
     int grid = m_canvas->GetGrid();
 
-    wxPoint raw = m_hoverInfo.pos - m_selectedDragPos;
+    wxPoint raw = m_hoverInfo.canvasPos - m_selectedDragPos;
     wxPoint delta((raw.x + grid / 2) / grid * grid, (raw.y + grid / 2) / grid * grid);
 
     for (int i = 0; i < m_compntIdx.size(); i++) {
@@ -878,7 +885,8 @@ void CanvasEventHandler::UpdateSelectedDragging() {
 void CanvasEventHandler::UpdateHoverInfo(HoverInfo hf) {
     m_snapPosChanged = m_hoverInfo.snappedPos != hf.snappedPos ? true : false;
 
-	m_hoverInfo.pos = hf.pos;
+    m_hoverInfo.screenPos = hf.screenPos;
+	m_hoverInfo.canvasPos = hf.canvasPos;
     m_hoverInfo.snappedPos = hf.snappedPos;
 	m_hoverInfo.pinIndex = hf.pinIndex;
 	m_hoverInfo.isInputPin = hf.isInputPin;
@@ -887,6 +895,9 @@ void CanvasEventHandler::UpdateHoverInfo(HoverInfo hf) {
 	m_hoverInfo.cellIndex = hf.cellIndex;
 	m_hoverInfo.wireIndex = hf.wireIndex;
 	m_hoverInfo.cellWorldPos = hf.cellWorldPos;
+
+    m_hoverInfo.midCellIndex = hf.midCellIndex;
+    m_hoverInfo.midWireIndex = hf.midWireIndex;
 	
 	m_hoverInfo.elementIndex = hf.elementIndex;
 	m_hoverInfo.elementName = hf.elementName;
@@ -905,7 +916,7 @@ void CanvasEventHandler::StartRectangleSelect(const wxPoint& startPos){
 }
 
 void CanvasEventHandler::UpdateRectangleSelect(wxMouseEvent& evt) {
-    wxPoint canvasPos = m_hoverInfo.pos;
+    wxPoint canvasPos = m_hoverInfo.canvasPos;
     wxRect selectionRect(
         wxPoint(std::min(m_selectStartPos.x, canvasPos.x),
             std::min(m_selectStartPos.y, canvasPos.y)),
@@ -1055,7 +1066,7 @@ void CanvasEventHandler::HandleEraserTool() {
 
     if (m_hoverInfo.IsEmptyArea()) {
         m_toolStateMachine->SetEraserState(EraserToolState::RECTANGLE_ERASER);
-        m_erasingStartPos = m_hoverInfo.pos;
+        m_erasingStartPos = m_hoverInfo.canvasPos;
         m_compntDelIdx.clear();
         m_wireDelIdx.clear();
         m_textDelIdx.clear();
@@ -1080,10 +1091,10 @@ void CanvasEventHandler::HandleEraserTool() {
 
 void CanvasEventHandler::UpdateRectangleEraser() {
     wxRect eraserRect(
-        wxPoint(std::min(m_erasingStartPos.x, m_hoverInfo.pos.x),
-            std::min(m_erasingStartPos.y, m_hoverInfo.pos.y)),
-        wxSize(std::abs(m_hoverInfo.pos.x - m_erasingStartPos.x),
-            std::abs(m_hoverInfo.pos.y - m_erasingStartPos.y))
+        wxPoint(std::min(m_erasingStartPos.x, m_hoverInfo.canvasPos.x),
+            std::min(m_erasingStartPos.y, m_hoverInfo.canvasPos.y)),
+        wxSize(std::abs(m_hoverInfo.canvasPos.x - m_erasingStartPos.x),
+            std::abs(m_hoverInfo.canvasPos.y - m_erasingStartPos.y))
     );
     m_canvas->SetEraserRect(eraserRect);
 }

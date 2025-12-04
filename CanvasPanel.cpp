@@ -76,7 +76,7 @@ void CanvasPanel::OnLeftDown(wxMouseEvent& evt){
 }
 
 void CanvasPanel::OnMouseMove(wxMouseEvent& evt) {
-    UpdateHoverInfo(ScreenToCanvas(evt.GetPosition()));
+    UpdateHoverInfo(evt.GetPosition());
 
     m_CanvasEventHandler->ResetEventHandled();
     if (m_CanvasEventHandler) {
@@ -269,6 +269,11 @@ void CanvasPanel::OnPaint(wxPaintEvent&) {
             gc->StrokeLine(0, y, maxX, y);
         }
 
+        // 绘制导线（矢量线段）
+        gc->SetPen(wxPen(*wxBLACK, 1.5 / m_scale)); // 导线宽度自适应
+        for (const auto& w : m_wires) w.Draw(*gcdc);
+        if (m_toolStateMachine->GetWireState() == WireToolState::WIRE_DRAWING) m_previewWire.Draw(*gcdc);
+
         // 绘制预览元素
         if (m_toolStateMachine->GetComponentState() == ComponentToolState::COMPONENT_PREVIEW) {
             m_previewElement.Draw(*gcdc);
@@ -279,23 +284,23 @@ void CanvasPanel::OnPaint(wxPaintEvent&) {
             m_elements[i].Draw(*gcdc); // 确保元素内部使用gc绘制
         }
 
-
-        // 绘制导线（矢量线段）
-        gc->SetPen(wxPen(*wxBLACK, 1.5 / m_scale)); // 导线宽度自适应
-        for (const auto& w : m_wires) w.Draw(*gcdc);
-        if (m_toolStateMachine->GetWireState() == WireToolState::WIRE_DRAWING) m_previewWire.Draw(*gcdc);
-
         // 悬停引脚高亮（绿色空心圆）
-        if (m_hoverInfo.pinIndex != -1) {
+        if (m_hoverInfo.IsOverPin()) {
             gc->SetBrush(*wxTRANSPARENT_BRUSH);
             gc->SetPen(wxPen(wxColour(0, 255, 0), 1.0 / m_scale));
-            gc->DrawEllipse(m_hoverInfo.pinWorldPos.x - 3, m_hoverInfo.pinWorldPos.y - 3, 6, 6);
+            gc->DrawEllipse(m_hoverInfo.snappedPos.x - 3, m_hoverInfo.snappedPos.y - 3, 6, 6);
         }
 
-        if (m_hoverInfo.cellIndex != -1) {
+        if (m_hoverInfo.IsOverCell()) {
             gc->SetBrush(*wxTRANSPARENT_BRUSH);
             gc->SetPen(wxPen(wxColour(0, 255, 0), 1.0 / m_scale));
-            gc->DrawEllipse(m_hoverInfo.cellWorldPos.x - 3, m_hoverInfo.cellWorldPos.y - 3, 6, 6);
+            gc->DrawEllipse(m_hoverInfo.snappedPos.x - 3, m_hoverInfo.snappedPos.y - 3, 6, 6);
+        }
+
+        if (m_hoverInfo.IsOverMidCell()) {
+            gc->SetPen(wxPen(wxColour(*wxBLACK), 1.0 / m_scale));
+            gc->SetBrush(wxColour(*wxBLACK));
+            gc->DrawEllipse(GetWires()[m_hoverInfo.midWireIndex].midCells[m_hoverInfo.midCellIndex].pos.x-6, GetWires()[m_hoverInfo.midWireIndex].midCells[m_hoverInfo.midCellIndex].pos.y - 6, 12, 12);
         }
 
         // 绘制文本元素 - 修改为使用 unique_ptr
@@ -473,6 +478,23 @@ int CanvasPanel::HitHoverCell(const wxPoint& canvasPos, int* wireIdx, int* cellI
     return -1;
 }
 
+std::tuple<int, int> CanvasPanel::HitMidCell(const wxPoint& canvasPos) {
+    const int HIT_RADIUS = 8;
+    for (size_t w = 0; w < m_wires.size(); ++w) {
+        const auto& wire = m_wires[w];
+        for (size_t c = 0; c < wire.midCells.size(); ++c) {
+            const MidCell& midcell = wire.midCells[c];
+
+            if (abs(canvasPos.x - midcell.pos.x) <= HIT_RADIUS &&
+                abs(canvasPos.y - midcell.pos.y) <= HIT_RADIUS) {
+                return std::make_tuple(w, c);
+            }
+
+        }
+    }
+    return std::make_tuple(-1, -1);
+}
+
 void CanvasPanel::DeleteSelected() {
 
 
@@ -490,35 +512,8 @@ void CanvasPanel::OnRightUp(wxMouseEvent& evt) {
 }
 
 void CanvasPanel::SetStatus(wxString status) {
-	wxString hover = "";
-    if (m_hoverInfo.IsOverPin()) {
-        hover = (wxString::Format("悬停于: %sPin[%d]",
-            m_hoverInfo.isInputPin ? "Input" : "Output", m_hoverInfo.pinIndex));
-    }
-    else if (m_hoverInfo.IsOverCell()) {
-        hover = (wxString::Format("悬停于: Wire[%d] Cell[%d]",
-            m_hoverInfo.wireIndex, m_hoverInfo.cellIndex));
-    }
-    else if (m_hoverInfo.IsOverElement()) {
-        hover =(wxString::Format("悬停于: Component[%s]",
-            m_hoverInfo.elementName));
-    }
-    else if (m_hoverInfo.IsOverText()) {
-        hover = (wxString::Format("悬停于: TextBox[%d]",
-            m_hoverInfo.textIndex));
-    }
-    else {
-        hover = wxString::Format("悬停于: 无悬停对象");
-    }
-
-    wxString cursor = wxString::Format("指针位置: (%d, %d)", m_hoverInfo.pos.x, m_hoverInfo.pos.y);
-
-    wxString zoom = wxString::Format("缩放：%d%%", int(m_scale*100));
-
     m_mainFrame->SetStatusText(status, 0);
-    m_mainFrame->SetStatusText(cursor, 1);
-    m_mainFrame->SetStatusText(hover, 2);
-    m_mainFrame->SetStatusText(zoom, 3);
+
 }
 
 void CanvasPanel::SetCurrentTool(ToolType tool) {
@@ -531,26 +526,31 @@ void CanvasPanel::SetCurrentComponent(const wxString& componentName) {
 	m_CanvasEventHandler->SetCurrentComponent(componentName);
 }
 
-void CanvasPanel::UpdateHoverInfo(const wxPoint& canvasPos) {
-    m_hoverInfo.pos = canvasPos;
-    m_hoverInfo.snappedPos = Snap(canvasPos);
+void CanvasPanel::UpdateHoverInfo(const wxPoint& screenPos) {
+    m_hoverInfo.screenPos = screenPos;
+    m_hoverInfo.canvasPos = ScreenToCanvas(screenPos);
+    m_hoverInfo.snappedPos = Snap(m_hoverInfo.canvasPos);
 
     // 悬停引脚信息检测
     bool isInput = false;
     wxPoint pinWorldPos;
-	int pinIdx = HitHoverPin(canvasPos, &isInput, &pinWorldPos);
+	int pinIdx = HitHoverPin(m_hoverInfo.canvasPos, &isInput, &pinWorldPos);
 
 	// 导线控制点信息检测
     int cellWire = -1;
     int cellIdx = -1;
 	wxPoint cellWorldPos;
-	int hitCellIdx = HitHoverCell(canvasPos, &cellWire, &cellIdx, &cellWorldPos);
+	int hitCellIdx = HitHoverCell(m_hoverInfo.canvasPos, &cellWire, &cellIdx, &cellWorldPos);
+    
+    int midCellWire = -1;
+    int midCellIdx = -1;
+    std::tie(midCellWire, midCellIdx) = HitMidCell(m_hoverInfo.canvasPos);
 
 	// 悬停元件信息检测
-    int elementIndex = HitElementTest(canvasPos);
+    int elementIndex = HitElementTest(m_hoverInfo.canvasPos);
 
     // 悬停文本检测
-	int textIndex = HitTestText(canvasPos);
+	int textIndex = HitTestText(m_hoverInfo.canvasPos);
 
     // 更新信息
     m_hoverInfo.pinIndex = pinIdx;
@@ -561,13 +561,43 @@ void CanvasPanel::UpdateHoverInfo(const wxPoint& canvasPos) {
     m_hoverInfo.wireIndex = cellWire;
 	m_hoverInfo.cellWorldPos = cellWorldPos;
 
+    m_hoverInfo.midWireIndex = midCellWire;
+    m_hoverInfo.midCellIndex = midCellIdx;
+
     m_hoverInfo.elementIndex = elementIndex;
     if (elementIndex != -1) m_hoverInfo.elementName = m_elements[elementIndex].GetName();
     else m_hoverInfo.elementName = "";
 
 	m_hoverInfo.textIndex = textIndex;
     Refresh(); // 触发重绘以显示悬停效果
-        
+    wxString hover = "";
+    if (m_hoverInfo.IsOverPin()) {
+        hover = (wxString::Format("悬停于: %sPin[%d]",
+            m_hoverInfo.isInputPin ? "Input" : "Output", m_hoverInfo.pinIndex));
+    }
+    else if (m_hoverInfo.IsOverCell()) {
+        hover = (wxString::Format("悬停于: Wire[%d] Cell[%d]",
+            m_hoverInfo.wireIndex, m_hoverInfo.cellIndex));
+    }
+    else if (m_hoverInfo.IsOverElement()) {
+        hover = (wxString::Format("悬停于: Component[%s]",
+            m_hoverInfo.elementName));
+    }
+    else if (m_hoverInfo.IsOverText()) {
+        hover = (wxString::Format("悬停于: TextBox[%d]",
+            m_hoverInfo.textIndex));
+    }
+    else {
+        hover = wxString::Format("悬停于: 无悬停对象");
+    }
+
+    wxString cursor = wxString::Format("指针位置: (%d, %d)", m_hoverInfo.canvasPos.x, m_hoverInfo.canvasPos.y);
+
+    wxString zoom = wxString::Format("缩放：%d%%", int(m_scale * 100));
+
+    m_mainFrame->SetStatusText(cursor, 1);
+    m_mainFrame->SetStatusText(hover, 2);
+    m_mainFrame->SetStatusText(zoom, 3);
     m_CanvasEventHandler->UpdateHoverInfo(m_hoverInfo);
 }
 

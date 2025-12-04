@@ -66,8 +66,8 @@ void CanvasElement::DrawVector(wxGCDC& gcdc) const
             if (m_id == "Pin_Input") {
                 if constexpr (std::is_same_v<T, Circle>) {
                     // 根据状态选择颜色
-                    wxColour circleColor = m_state ? wxColour(0, 128, 0) : wxColour(0, 255, 0); // 深绿色 : 绿色
-                    wxColour fillColor = m_state ? wxColour(0, 128, 0) : wxColour(0, 255, 0);
+                    wxColour circleColor = m_state ? wxColour(0, 255, 0) : wxColour(0, 128, 0); // 深绿色 : 绿色
+                    wxColour fillColor = m_state ? wxColour(0, 255, 0) : wxColour(0, 128, 0);
 
                     gc->SetPen(wxPen(circleColor, 3.0));
                     gc->SetBrush(wxBrush(fillColor));
@@ -106,13 +106,13 @@ void CanvasElement::DrawVector(wxGCDC& gcdc) const
 
                         switch (m_outputState) {
                         case 1: // 状态0
-                            circleColor = wxColour(0, 255, 0); // 绿色
-                            fillColor = wxColour(0, 255, 0);
+                            circleColor = wxColour(0, 128, 0); // 绿色
+                            fillColor = wxColour(0, 128, 0);
                             displayText = "0";
                             break;
                         case 2: // 状态1
-                            circleColor = wxColour(0, 128, 0); // 深绿色
-                            fillColor = wxColour(0, 128, 0);
+                            circleColor = wxColour(0, 255, 0); // 深绿色
+                            fillColor = wxColour(0, 255, 0);
                             displayText = "1";
                             break;
                         default: // 状态X（默认）
@@ -144,8 +144,6 @@ void CanvasElement::DrawVector(wxGCDC& gcdc) const
                     return; // 跳过原始绘制
                 }
             }
-
-
             // 分支1：Line
             if constexpr (std::is_same_v<T, Line>) {
                 gc->SetPen(wxPen(s.color, 3.0));

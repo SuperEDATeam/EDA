@@ -1,16 +1,18 @@
-﻿#include "MainFrame.h"
+﻿#include <wx/msgdlg.h>
+#include <wx/filename.h> 
+#include <wx/sstream.h>
+#include <wx/aui/aui.h>
+
+#include "MainFrame.h"
 #include "MainMenuBar.h"
 #include "CanvasPanel.h"
 #include "PropertyPanel.h"
-#include <wx/msgdlg.h>
 #include "ToolboxPanel.h"   // ��Ĳ����
-#include <wx/aui/aui.h>
 #include "CanvasModel.h"
 #include "my_log.h"
-#include <wx/filename.h> 
-#include <wx/sstream.h>
 #include "UndoStack.h"
 #include "UndoNotifier.h"
+#include "ToolBars.h"
 #include "HandyToolKit.h"
 
 extern std::vector<CanvasElement> g_elements;

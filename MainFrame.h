@@ -1,16 +1,15 @@
 ﻿#pragma once
 #include <wx/wx.h>
 #include <wx/aui/aui.h>
-#include "PropertyPanel.h"
-#include "CanvasPanel.h"
-#include "3rd/json/json.h"
-#include <wx/file.h>  // ����wxFile��Ķ���
+#include <wx/file.h>
 #include <wx/xml/xml.h>
 #include <wx/mstream.h>
-#include "ToolBars.h"
 
-class ToolBars;   // ǰ������
-class CanvasPanel; // ǰ������
+#include "3rd/json/json.h"
+#include "PropertyPanel.h"
+
+class ToolBars; 
+class CanvasPanel; 
 class HandyToolKit;
 
 class MainFrame : public wxFrame
@@ -19,24 +18,21 @@ class MainFrame : public wxFrame
 
 
 private:
-    // �����ﶨ�� m_currentFilePath
-    wxString m_currentFilePath;  // ��¼��ǰ�ļ��ı���·����Ϊ�ձ�ʾδ���棩
-    bool m_isModified;           // ����ļ��Ƿ��޸ģ���ϱ����߼���
+    wxString m_currentFilePath;
+    bool m_isModified;  
 
-    // ����˽�г�Ա����...
 private:
-    // ˽�и�����������...
+
     bool SaveToFile(const wxString& filePath);
     wxString GenerateFileContent();
+
 private:
     void AddLibraryNode(wxXmlNode* parent, const wxString& name, const wxString& desc);
     void AddWireNode(wxXmlNode* parent, const wxString& from, const wxString& to);
     bool SaveAsNodeFile(const wxString& filePath);
     bool SaveAsNetFile(const wxString& filePath);
-    // �������ر��¼�������������
     void OnClose(wxCloseEvent& event);
-    // ...
-    void OnToolSelected(wxCommandEvent& evt);  // ��������ѡ���¼�
+    void OnToolSelected(wxCommandEvent& evt);
 
 public:
     MainFrame();
