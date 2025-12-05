@@ -22,15 +22,14 @@ struct HoverInfo {
     // 1. 引脚 (Pin) 悬停信息
     int pinIndex = -1;         // 悬停引脚的索引。-1 表示没有悬停在任何引脚上。
 	bool isInputPin = false;   // 悬停引脚是否为输入引脚。
-    wxPoint pinWorldPos;       // 悬停引脚在世界坐标系中的位置。
+    wxPoint pinPos;       // 悬停引脚在世界坐标系中的位置。
 
-    // 2. 导线控制点 (Cell/Wire Control Point) 悬停信息
+    // 2. 导线 (Wire) 悬停信息
+    int wireIndex = -1;        // 导线的索引。
+    int wireSectionIndex = -1; // 导线的分段索引。
     int cellIndex = -1;        // 悬停导线控制点的索引。-1 表示没有悬停在控制点上。
-    int wireIndex = -1;        // 控制点所属导线的索引。
-    wxPoint cellWorldPos;      // 控制点在世界坐标系中的位置。
-
-    int midCellIndex = -1;     // 悬停导线的中间点的索引。-1 表示没有悬停在中间点上。
-    int midWireIndex = -1;   // 导线的中间点所属导线的索引。
+    bool isCellMiddle; // 悬停导线的中间点。
+    wxPoint cellPos;      // 控制点在世界坐标系中的位置。
     
     // 3. 元件 (Element) 悬停信息 (用于状态栏反馈)
     int elementIndex = -1;     // 悬停元件的索引。-1 表示没有悬停在任何元件上。
@@ -44,14 +43,14 @@ struct HoverInfo {
     bool IsOverCell() const { return cellIndex != -1; }
     bool IsOverElement() const { return elementIndex != -1; }
 	bool IsOverText() const { return textIndex != -1; }
-    bool IsOverMidCell() const { return midCellIndex != -1; }
+    bool IsOverMidCell() const { return cellIndex != -1 && isCellMiddle; }
     bool IsEmptyArea() const {
-        return pinIndex == -1 && cellIndex == -1 && elementIndex == -1 && textIndex == -1 && midCellIndex == -1;
+        return pinIndex == -1 && cellIndex == -1 && elementIndex == -1 && textIndex == -1;
 	}
    
 
     // 构造函数
-	HoverInfo() : pinIndex(-1), isInputPin(false), cellIndex(-1), wireIndex(-1), elementIndex(-1), textIndex(-1), midCellIndex(-1), midWireIndex(-1) {}
+	HoverInfo() : pinIndex(-1), isInputPin(false), cellIndex(-1), wireIndex(-1), elementIndex(-1), textIndex(-1), wireSectionIndex(-1){}
 };
 
 class CanvasPanel : public wxPanel
@@ -95,7 +94,7 @@ private:
     wxRect m_selectRect; // 选中矩形框
     std::vector<int> m_selTxtIdx;
     std::vector<int> m_selElemIdx;
-    std::vector<int> m_selWireIdx;
+    std::vector<int> m_selWireIdx; 
 
     // 擦除框管理
     wxRect m_eraserRect;
@@ -162,7 +161,7 @@ public:
     void ClearEraserRect() { m_eraserRect = wxRect(); Refresh(); };
 
     // 选中元素管理
-    void UpdateSelection(std::vector<int> m_textIdx, std::vector<int> m_elemIdx, std::vector<int> m_wireIdx);
+    void UpdateSelection(std::vector<int> m_textIdx, std::vector<int> m_elemIdx, std::vector<int> m_wireIdx );
     void ClearSelection() { m_selTxtIdx.clear(); m_selElemIdx.clear(); m_selWireIdx.clear(); Refresh(); };
 
     // 选择矩形框框管理
@@ -202,14 +201,16 @@ public:
     // ==================== 画布键鼠工具状态管理 ====================
 private:
     HoverInfo m_hoverInfo;
+    const int HIT_RADIUS = 8;
 
     void UpdateHoverInfo(const wxPoint& screenPos);
     HoverInfo GetHoverInfo(HoverInfo& hoverInfo) const { hoverInfo = m_hoverInfo; }
     int HitElementTest(const wxPoint& canvasPos);
     int HitTestText(wxPoint canvasPos);
     int HitHoverPin(const wxPoint& canvasPos, bool* isInput, wxPoint* worldPos);
-    int HitHoverCell(const wxPoint& canvasPos, int* wireIdx, int* cellIdx, wxPoint* cellPos);
-    std::tuple<int, int> HitMidCell(const wxPoint& canvasPos);
+    int HitWire(const wxPoint& canvasPos);
+    int HitHoverCell(const wxPoint& canvasPos);
+    int HitWireSection(const wxPoint& canvasPos);
     wxPoint Snap(const wxPoint& canvasPos) { return wxPoint((canvasPos.x + m_grid / 2) / m_grid * m_grid, (canvasPos.y + m_grid / 2) / m_grid * m_grid); };
 
 public:
@@ -226,10 +227,10 @@ public:
     wxPoint GetSnappedPos() const { return m_hoverInfo.snappedPos; }
     int GetHoverPinIndex() const { return m_hoverInfo.pinIndex; }
     bool IsHoverInputPin() const { return m_hoverInfo.isInputPin; }
-    wxPoint GetHoverPinWorldPos() const { return m_hoverInfo.pinWorldPos; }
+    wxPoint GetHoverPinWorldPos() const { return m_hoverInfo.pinPos; }
     int GetHoverCellIndex() const { return m_hoverInfo.cellIndex; }
     int GetHoverWireIndex() const { return m_hoverInfo.wireIndex; }
-    wxPoint GetHoverCellWorldPos() const { return m_hoverInfo.cellWorldPos; }
+    wxPoint GetHoverCellWorldPos() const { return m_hoverInfo.cellPos; }
     int GetHoverElementIndex() const { return m_hoverInfo.elementIndex; }
     const wxString& GetHoverElementName() const { return m_hoverInfo.elementName; }
     int GetHoverTextIndex() const { return m_hoverInfo.textIndex; }

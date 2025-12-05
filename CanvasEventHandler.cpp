@@ -125,12 +125,20 @@ void CanvasEventHandler::OnCanvasLeftDown(wxMouseEvent& evt) {
         return;
     }
 
-    // 其他工具下，点击导线Cell，转换到导线工具，拉出分支导线
+    // 其他工具下，点击导线Cell，如果是控制点，转换到选择工具进行拖动；转换到导线工具，拉出分支导线
     if (m_hoverInfo.IsOverCell()) {
-        m_previousTool = currentTool;
-        m_isTemporaryAction = true;// 定义为临时切换，使用完毕后恢复
-        SetCurrentTool(ToolType::WIRE_TOOL);
-        StartWireDrawingDown(m_hoverInfo.snappedPos, CPType::Branch);
+        if (m_hoverInfo.IsOverMidCell()) {
+            m_previousTool = currentTool;
+            m_isTemporaryAction = true;// 定义为临时切换，使用完毕后恢复
+            SetCurrentTool(ToolType::SELECT_TOOL);
+            HandleSelectTool(evt);
+        }
+        else {
+            m_previousTool = currentTool;
+            m_isTemporaryAction = true;// 定义为临时切换，使用完毕后恢复
+            SetCurrentTool(ToolType::WIRE_TOOL);
+            StartWireDrawingDown(m_hoverInfo.snappedPos, CPType::Branch);
+        }
         m_eventHandled = true;
         return;
     }
@@ -516,6 +524,8 @@ void CanvasEventHandler::HandleSelectTool(wxMouseEvent& evt) {
     wxPoint canvasPos = m_hoverInfo.canvasPos;
     wxString status = "选择工具: ";
 
+    bool isWireControlPoint = m_hoverInfo.IsOverMidCell();
+
     int elemIdx = m_hoverInfo.elementIndex;
     int textIdx = m_hoverInfo.textIndex;
     int wireIdx = m_hoverInfo.wireIndex;
@@ -532,18 +542,20 @@ void CanvasEventHandler::HandleSelectTool(wxMouseEvent& evt) {
     };
  
     preIn = AddIfNew(elemIdx, m_compntIdx) || preIn;
-    preIn = AddIfNew(wireIdx, m_wireIdx) || preIn;
     preIn = AddIfNew(textIdx, m_textElemIdx) || preIn;
+    preIn = AddIfNew(wireIdx, m_wireIdx) || preIn;
 
     if (!evt.ShiftDown()) {
         m_compntIdx.clear();
         m_textElemIdx.clear();
         m_wireIdx.clear();
 
+
         AddIfNew(elemIdx, m_compntIdx);
         AddIfNew(wireIdx, m_wireIdx);
         AddIfNew(textIdx, m_textElemIdx);
     }
+
     m_canvas->UpdateSelection(m_compntIdx, m_textElemIdx, m_wireIdx);
 
 
@@ -890,14 +902,13 @@ void CanvasEventHandler::UpdateHoverInfo(HoverInfo hf) {
     m_hoverInfo.snappedPos = hf.snappedPos;
 	m_hoverInfo.pinIndex = hf.pinIndex;
 	m_hoverInfo.isInputPin = hf.isInputPin;
-	m_hoverInfo.pinWorldPos = hf.pinWorldPos;
+	m_hoverInfo.pinPos = hf.pinPos;
 
-	m_hoverInfo.cellIndex = hf.cellIndex;
 	m_hoverInfo.wireIndex = hf.wireIndex;
-	m_hoverInfo.cellWorldPos = hf.cellWorldPos;
-
-    m_hoverInfo.midCellIndex = hf.midCellIndex;
-    m_hoverInfo.midWireIndex = hf.midWireIndex;
+    m_hoverInfo.wireSectionIndex = hf.wireSectionIndex;
+    m_hoverInfo.cellIndex = hf.cellIndex;
+    m_hoverInfo.isCellMiddle = hf.isCellMiddle;
+	m_hoverInfo.cellPos = hf.cellPos;
 	
 	m_hoverInfo.elementIndex = hf.elementIndex;
 	m_hoverInfo.elementName = hf.elementName;

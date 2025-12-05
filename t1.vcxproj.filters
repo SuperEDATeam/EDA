@@ -51,16 +51,25 @@
     <ClCompile Include="ToolBars.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="ToolManager.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="QuickToolBar.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="UndoStack.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="UndoNotifier.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="CanvasTextElement.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="HandyToolKit.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="CanvasEventHandler.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="ToolStateMachine.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="SimulationEngine.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
@@ -98,12 +107,6 @@
     <ClInclude Include="ToolBars.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="ToolManager.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="QuickToolBar.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="UndoStack.h">
       <Filter>头文件</Filter>
     </ClInclude>
@@ -111,6 +114,21 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="UndoNotifier.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="CanvasTextElement.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="HandyToolKit.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="CanvasEventHandler.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="ToolStateMachine.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="SimulationEngine.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

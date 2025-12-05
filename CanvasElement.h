@@ -95,22 +95,53 @@ using Shape = std::variant<Line, PolyShape, Circle, Text, Path, ArcShape, Bezier
 
 class CanvasElement
 {
+    // 元件基本信息，形状和位置管理
+private:
+    wxString m_id;        // 元件ID
+    wxString m_name;
+    wxPoint m_pos;
+    wxPoint m_anchorPoint; // 旋转锚点
+    int m_rotation = 0;     // 旋转角度（默认0°=East）
+    std::vector<Shape> m_shapes;
+    
+    
+    void DrawVector(wxGCDC& gcdc) const;
+    std::vector<wxPoint> CalculateBezier(const Point& p0, const Point& p1, const Point& p2, int segments = 16) const;
+    void DrawFallback(wxDC& dc) const;
+    void DrawPathFallback(wxGCDC& gcdc, const Path& arg, std::function<wxPoint(const Point&)> off) const;
+    void DrawPathFallback(wxDC& dc, const Path& arg, std::function<wxPoint(const Point&)> off) const;
+
+public:
+
+    void AddShape(const Shape& shape) { m_shapes.push_back(shape); }
+    const wxString& GetName() const { return m_name; }
+    void SetPos(const wxPoint& p) { m_pos = p; }
+    const wxPoint& GetPos() const { return m_pos; }
+    void SetRotation(int rotation) { m_rotation = rotation % 360; }
+    int GetRotation() const { return m_rotation; }
+    void SetAnchorPoint(const wxPoint& anchor) { m_anchorPoint = anchor; }
+    const std::vector<Shape>& GetShapes() const { return m_shapes; }
+    void Draw(wxDC& dc) const;
+    wxRect GetBounds() const;
+    void SetId(const wxString& id) { m_id = id; }
+    const wxString& GetId() const { return m_id; }
+    void AddInputPin(const Point& p, const wxString& name) { m_inputPins.push_back(Pin(p, name, true)); }
+    void AddOutputPin(const Point& p, const wxString& name) { m_outputPins.push_back(Pin(p, name, false)); }
+
+
+    // 元件的引脚与状态管理，仿真相关
 public:
     CanvasElement() = default;
     CanvasElement(const wxString& name, const wxPoint& pos);
-    void Draw(wxDC& dc) const;
-    void AddShape(const Shape& shape) { m_shapes.push_back(shape); }
-    void AddInputPin(const Point& p, const wxString& name) { m_inputPins.push_back(Pin(p, name, true)); }
-    void AddOutputPin(const Point& p, const wxString& name) { m_outputPins.push_back(Pin(p, name, false)); }
-    void SetPos(const wxPoint& p) { m_pos = p; }
 
-    const wxString& GetName() const { return m_name; }
-    const wxPoint& GetPos() const { return m_pos; }
-    const std::vector<Shape>& GetShapes() const { return m_shapes; }
+
+
+
+    
     const std::vector<Pin>& GetInputPins() const { return m_inputPins; }
     const std::vector<Pin>& GetOutputPins() const { return m_outputPins; }
 
-    wxRect GetBounds() const;
+    
 
     // 添加状态管理方法
     void ToggleState() { m_state = !m_state; }
@@ -118,35 +149,34 @@ public:
     void SetState(bool state) { m_state = state; }
 
     // 设置元件ID用于识别Pin_Input
-    void SetId(const wxString& id) { m_id = id; }
-    const wxString& GetId() const { return m_id; }
+
+    
 
     // 状态控制方法
     void SetOutputState(int state);  // 0:X, 1:0, 2:1
     int GetOutputState() const { return m_outputState; }
 
-    void SetRotation(int rotation) { m_rotation = rotation % 360; }
-    int GetRotation() const { return m_rotation; }
-    void SetAnchorPoint(const wxPoint& anchor) { m_anchorPoint = anchor; }
 
-private:
-    wxString m_name;
-    wxPoint m_pos;
-    std::vector<Shape> m_shapes;
+
+
     std::vector<Pin> m_inputPins;
     std::vector<Pin> m_outputPins;
-    void DrawVector(wxGCDC& gcdc) const;
-    std::vector<wxPoint> CalculateBezier(const Point& p0, const Point& p1, const Point& p2, int segments = 16) const;
-    // 回退绘制方法
-    void DrawFallback(wxDC& dc) const;
-    // 1. 正确声明 wxGCDC 版本的 DrawPathFallback（别注释！）
-    void DrawPathFallback(wxGCDC& gcdc, const Path& arg, std::function<wxPoint(const Point&)> off) const;
-    // 2. 保留 wxDC 版本的 DrawPathFallback
-    void DrawPathFallback(wxDC& dc, const Path& arg, std::function<wxPoint(const Point&)> off) const;
+
     // 添加状态和ID成员
     bool m_state = false; // 默认状态为0/false
-    wxString m_id;        // 元件ID
+
     int m_outputState = 0; // Pin_Output状态：0=X, 1=0, 2=1
-    wxPoint m_anchorPoint; // 旋转锚点
-    int m_rotation = 0;     // 旋转角度（默认0°=East）
+
 };
+
+
+
+
+
+
+
+
+
+
+
+

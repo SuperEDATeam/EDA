@@ -19,8 +19,15 @@ void Wire::Draw(wxDC& dc) const {
             dc.DrawCircle(pts[i - 1].pos, 3);
             break;
         case CPType::Free:
-            dc.SetPen(wxPen(colors[3], 1));
-            dc.SetBrush(wxBrush(colors[3], wxBRUSHSTYLE_SOLID));
+            if (status == false) {
+                dc.SetPen(wxPen(colors[0], 2));
+                dc.SetBrush(wxBrush(colors[0], wxBRUSHSTYLE_SOLID));
+            }
+            else {
+                dc.SetPen(wxPen(colors[1], 2));
+                dc.SetBrush(wxBrush(colors[1], wxBRUSHSTYLE_SOLID));
+            }
+            
             dc.DrawCircle(pts[i - 1].pos, 3);
             break;
         }
@@ -42,10 +49,9 @@ void Wire::DrawColor(wxDC& dc) const {
 void Wire::GenerateCells()
 {
     cells.clear();
-    midCells.clear();
     if (pts.size() < 2) return;
 
-    for (size_t i = 1; i < pts.size(); ++i) {
+    for (int i = 1; i < pts.size(); ++i) {
         wxPoint p0 = pts[i - 1].pos;
         wxPoint p1 = pts[i].pos;
         int dx = abs(p1.x - p0.x);
@@ -57,15 +63,15 @@ void Wire::GenerateCells()
             wxPoint cell((1 - t) * p0.x + t * p1.x,
                 (1 - t) * p0.y + t * p1.y);
             // 去重（可选）
-            if (cells.empty() || cell != cells.back())
-                cells.push_back(cell);
+            if (cells.empty() || cell != cells.back().pos)
+                cells.push_back({cell, CellType::Norm, i-1, i});
         }
     }
     for (int i = 1; i < pts.size(); ++i) {
         wxPoint p0 = pts[i - 1].pos;
         wxPoint p1 = pts[i].pos;
         wxPoint pos = p0 + (p1 - p0) / 2;
-        midCells.push_back({ pos , i-1 , i});
+        cells.push_back({ pos , CellType::Mid , i-1 , i});
     }
 }
 

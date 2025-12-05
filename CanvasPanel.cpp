@@ -294,14 +294,24 @@ void CanvasPanel::OnPaint(wxPaintEvent&) {
         if (m_hoverInfo.IsOverCell()) {
             gc->SetBrush(*wxTRANSPARENT_BRUSH);
             gc->SetPen(wxPen(wxColour(0, 255, 0), 1.0 / m_scale));
-            gc->DrawEllipse(m_hoverInfo.snappedPos.x - 3, m_hoverInfo.snappedPos.y - 3, 6, 6);
-        }
+            gc->DrawEllipse(m_hoverInfo.cellPos.x - 3, m_hoverInfo.cellPos.y - 3, 6, 6);
 
-        if (m_hoverInfo.IsOverMidCell()) {
             gc->SetPen(wxPen(wxColour(*wxBLACK), 1.0 / m_scale));
             gc->SetBrush(wxColour(*wxBLACK));
-            gc->DrawEllipse(GetWires()[m_hoverInfo.midWireIndex].midCells[m_hoverInfo.midCellIndex].pos.x-6, GetWires()[m_hoverInfo.midWireIndex].midCells[m_hoverInfo.midCellIndex].pos.y - 6, 12, 12);
+            Wire w = GetWires()[m_hoverInfo.wireIndex];
+            wxPoint sectionStart = w.pts[m_hoverInfo.wireSectionIndex].pos;
+            wxPoint sectionEnd = w.pts[m_hoverInfo.wireSectionIndex + 1].pos;
+            wxPoint sectionMid = (sectionStart + sectionEnd) / 2;
+            gc->DrawRectangle(sectionMid.x - 3, sectionMid.y - 3, 6, 6);
         }
+
+        
+
+        //if (m_hoverInfo.IsOverMidCell()) {
+        //    gc->SetPen(wxPen(wxColour(*wxBLACK), 1.0 / m_scale));
+        //    gc->SetBrush(wxColour(*wxBLACK));
+        //    gc->DrawEllipse(GetWires()[m_hoverInfo.midWireIndex].midCells[m_hoverInfo.midCellIndex].pos.x-6, GetWires()[m_hoverInfo.midWireIndex].midCells[m_hoverInfo.midCellIndex].pos.y - 6, 12, 12);
+        //}
 
         // 绘制文本元素 - 修改为使用 unique_ptr
         for (auto& textElem : m_textElements) {
@@ -391,7 +401,7 @@ void CanvasPanel::OnPaint(wxPaintEvent&) {
         if (m_hoverInfo.pinIndex != -1) {
             dc.SetBrush(*wxTRANSPARENT_BRUSH);              // 不填充 → 空心
             dc.SetPen(wxPen(wxColour(0, 255, 0), 1));       // 绿色边框，线宽 2
-            dc.DrawCircle(m_hoverInfo.pinWorldPos, 3);                // 半径 3 像素
+            dc.DrawCircle(m_hoverInfo.pinPos, 3);                // 半径 3 像素
         }
 
         if (m_hoverInfo.cellIndex != -1) {
@@ -400,7 +410,7 @@ void CanvasPanel::OnPaint(wxPaintEvent&) {
                 m_hoverCellPos.x, m_hoverCellPos.y);*/
             dc.SetBrush(*wxTRANSPARENT_BRUSH);
             dc.SetPen(wxPen(wxColour(0, 255, 0), 1));
-            dc.DrawCircle(m_hoverInfo.cellWorldPos, 3);
+            dc.DrawCircle(m_hoverInfo.cellPos, 3);
         }
         // 5. 绘制文本元素 - 修改为使用 unique_ptr
         for (auto& textElem : m_textElements) {
@@ -447,52 +457,80 @@ int CanvasPanel::HitHoverPin(const wxPoint& canvasPos, bool* isInput, wxPoint* w
     return -1;
 }
 
-int CanvasPanel::HitHoverCell(const wxPoint& canvasPos, int* wireIdx, int* cellIdx, wxPoint* cellPos){
-    const int HIT_RADIUS = 8;
-
+int CanvasPanel::HitWire(const wxPoint& canvasPos) {
     // 首先将点击位置对齐到最近的网格点
     wxPoint snappedPos = Snap(canvasPos);
     for (size_t w = 0; w < m_wires.size(); ++w) {
         const auto& wire = m_wires[w];
         for (size_t c = 0; c < wire.cells.size(); ++c) {
-            const wxPoint& cell = wire.cells[c];
+            const wxPoint& cell = wire.cells[c].pos;
 
             // 检查是否在网格点上且与对齐后的点击位置匹配
             if (cell.x == snappedPos.x && cell.y == snappedPos.y) {
                 // 二次验证：确保在点击半径内
                 if (abs(canvasPos.x - cell.x) <= HIT_RADIUS &&
                     abs(canvasPos.y - cell.y) <= HIT_RADIUS) {
-
-                    *wireIdx = w;
-                    *cellIdx = c;
-                    *cellPos = cell;
-                    return c;
+                    return w;
                 }
             }
         }
     }
-
-    *wireIdx = -1;
-    *cellIdx = -1;
-    *cellPos = wxPoint(0, 0);
     return -1;
 }
 
-std::tuple<int, int> CanvasPanel::HitMidCell(const wxPoint& canvasPos) {
-    const int HIT_RADIUS = 8;
-    for (size_t w = 0; w < m_wires.size(); ++w) {
-        const auto& wire = m_wires[w];
-        for (size_t c = 0; c < wire.midCells.size(); ++c) {
-            const MidCell& midcell = wire.midCells[c];
+int CanvasPanel::HitHoverCell(const wxPoint& canvasPos) {
+    int wireIdx = HitWire(canvasPos);
+    if (wireIdx == -1) return -1;
 
-            if (abs(canvasPos.x - midcell.pos.x) <= HIT_RADIUS &&
-                abs(canvasPos.y - midcell.pos.y) <= HIT_RADIUS) {
-                return std::make_tuple(w, c);
+    wxPoint snappedPos = Snap(canvasPos);
+
+    // 用于暂存命中的非Mid节点（作为备选）
+    int fallbackIndex = -1;
+
+    for (size_t c = 0; c < m_wires[wireIdx].cells.size(); ++c) {
+        const auto& cellData = m_wires[wireIdx].cells[c];
+        const wxPoint& cell = cellData.pos;
+        bool isHit = false;
+
+        // --- 命中检测逻辑 (保持原样) ---
+        if (cell.x == snappedPos.x && cell.y == snappedPos.y) {
+            if (abs(canvasPos.x - cell.x) <= HIT_RADIUS &&
+                abs(canvasPos.y - cell.y) <= HIT_RADIUS) {
+                isHit = true;
+            }
+        }
+        else {
+            // 原逻辑：只有Mid类型才允许在没Snap住的情况下进行半径检测
+            if (cellData.type == CellType::Mid) {
+                if (abs(canvasPos.x - cell.x) <= HIT_RADIUS &&
+                    abs(canvasPos.y - cell.y) <= HIT_RADIUS) {
+                    isHit = true;
+                }
+            }
+        }
+
+        // --- 优先级处理逻辑 ---
+        if (isHit) {
+            if (cellData.type == CellType::Mid) {
+                return c; // 优先级最高：一旦发现 Mid 命中，立即返回！
             }
 
+            // 如果不是 Mid，但命中了，先记下来。
+            // 只有当 fallbackIndex 还没被赋值时才赋值(保留第一个命中的)，
+            // 或者你可以根据距离更新最近的一个。
+            if (fallbackIndex == -1) {
+                fallbackIndex = c;
+            }
+            // 关键：不要在这里 return，继续找后面有没有 Mid
         }
     }
-    return std::make_tuple(-1, -1);
+
+    // 如果循环跑完都没找到 Mid，但找到了其他点，就返回那个点
+    return fallbackIndex;
+}
+
+int CanvasPanel::HitWireSection(const wxPoint& canvasPos) {
+    return GetWires()[HitWire(canvasPos)].cells[HitHoverCell(canvasPos)].pre_pts_idx;
 }
 
 void CanvasPanel::DeleteSelected() {
@@ -537,14 +575,18 @@ void CanvasPanel::UpdateHoverInfo(const wxPoint& screenPos) {
 	int pinIdx = HitHoverPin(m_hoverInfo.canvasPos, &isInput, &pinWorldPos);
 
 	// 导线控制点信息检测
-    int cellWire = -1;
-    int cellIdx = -1;
+    int wireIdx = HitWire(m_hoverInfo.canvasPos);
+    int wireSectionIdx = -1;
+    int cellIdx = HitHoverCell(m_hoverInfo.canvasPos);
+    bool isCellMid = false;
 	wxPoint cellWorldPos;
-	int hitCellIdx = HitHoverCell(m_hoverInfo.canvasPos, &cellWire, &cellIdx, &cellWorldPos);
-    
-    int midCellWire = -1;
-    int midCellIdx = -1;
-    std::tie(midCellWire, midCellIdx) = HitMidCell(m_hoverInfo.canvasPos);
+
+    if (wireIdx != -1 && cellIdx != -1) {
+        Cell cell = m_wires[wireIdx].cells[cellIdx];
+        isCellMid = cell.type == CellType::Mid ? true : false;
+        cellWorldPos = cell.pos;
+        wireSectionIdx = cell.pre_pts_idx;
+    }
 
 	// 悬停元件信息检测
     int elementIndex = HitElementTest(m_hoverInfo.canvasPos);
@@ -555,14 +597,13 @@ void CanvasPanel::UpdateHoverInfo(const wxPoint& screenPos) {
     // 更新信息
     m_hoverInfo.pinIndex = pinIdx;
 	m_hoverInfo.isInputPin = isInput;
-	m_hoverInfo.pinWorldPos = pinWorldPos;
+	m_hoverInfo.pinPos = pinWorldPos;
 
+    m_hoverInfo.wireIndex = wireIdx;
+    m_hoverInfo.wireSectionIndex = wireSectionIdx;
     m_hoverInfo.cellIndex = cellIdx;
-    m_hoverInfo.wireIndex = cellWire;
-	m_hoverInfo.cellWorldPos = cellWorldPos;
-
-    m_hoverInfo.midWireIndex = midCellWire;
-    m_hoverInfo.midCellIndex = midCellIdx;
+    m_hoverInfo.isCellMiddle = isCellMid;
+	m_hoverInfo.cellPos = cellWorldPos;
 
     m_hoverInfo.elementIndex = elementIndex;
     if (elementIndex != -1) m_hoverInfo.elementName = m_elements[elementIndex].GetName();
@@ -576,8 +617,14 @@ void CanvasPanel::UpdateHoverInfo(const wxPoint& screenPos) {
             m_hoverInfo.isInputPin ? "Input" : "Output", m_hoverInfo.pinIndex));
     }
     else if (m_hoverInfo.IsOverCell()) {
-        hover = (wxString::Format("悬停于: Wire[%d] Cell[%d]",
-            m_hoverInfo.wireIndex, m_hoverInfo.cellIndex));
+        if (m_hoverInfo.isCellMiddle) {
+            hover = (wxString::Format("悬停于: Wire[%d] Section[%d] 控制点",
+                m_hoverInfo.wireIndex, m_hoverInfo.wireSectionIndex));
+        }
+        else {
+            hover = (wxString::Format("悬停于: Wire[%d] Cell[%d]",
+                m_hoverInfo.wireIndex, m_hoverInfo.cellIndex));
+        }
     }
     else if (m_hoverInfo.IsOverElement()) {
         hover = (wxString::Format("悬停于: Component[%s]",
@@ -851,7 +898,7 @@ void CanvasPanel::ClearAll() {
     Refresh();
 }
 
-void CanvasPanel::UpdateSelection(std::vector<int> m_elemIdx, std::vector<int> m_textIdx, std::vector<int> m_wireIdx) {
+void CanvasPanel::UpdateSelection(std::vector<int> m_elemIdx, std::vector<int> m_textIdx, std::vector<int> m_wireIdx ) {
     m_selTxtIdx = m_textIdx;
     m_selElemIdx = m_elemIdx;
     m_selWireIdx = m_wireIdx;
