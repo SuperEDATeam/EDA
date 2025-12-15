@@ -6,8 +6,8 @@ void Wire::Draw(wxDC& dc) const {
     for (size_t i = 1; i < pts.size() + 1; ++i) {
         
         if (i != pts.size()) {
-            if (status == false) dc.SetPen(wxPen(colors[0], 2));
-            else dc.SetPen(wxPen(colors[1], 2));
+            if (status == false) dc.SetPen(wxPen(colors[0], 3));
+            else dc.SetPen(wxPen(colors[1], 3));
             dc.DrawLine(pts[i - 1].pos, pts[i].pos);
         }
         switch (pts[i - 1].type) {
