@@ -323,7 +323,7 @@
       {"type": "line", "start": {"x": 20, "y": 20}, "end": {"x": 60, "y": 20}, "color": "#333333"},
       {"type": "line", "start": {"x": 20, "y": 60}, "end": {"x": 60, "y": 60}, "color": "#333333"},
       {"type": "line", "start": {"x": 60, "y": 20}, "end": {"x": 60, "y": 60}, "color": "#333333"},
-      {"type": "text", "x": 30, "y": 30, "text": "0", "fontSize": 20, "color": "white"}
+      {"type": "text", "x": 33, "y": 27, "text": "0", "fontSize": 20, "color": "white"}
     ]
   },
  {
@@ -353,8 +353,8 @@
     },
     {
       "type": "text",
-      "x": 30,
-      "y": 30,
+      "x": 33,
+      "y": 27,
       "text": "X",
       "fontSize": 20,
       "color": "white"
