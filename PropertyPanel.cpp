@@ -29,12 +29,27 @@ PropertyPanel::PropertyPanel(wxWindow* parent)
 void PropertyPanel::ShowElement(const wxString& name, const std::map<wxString, wxVariant>& currentProps)
 {
     m_title->SetLabel("Tool: " + name);
-    UpdateProperties(name, currentProps); // ���� currentProps �Ǻ�������������δ���������
+    UpdateProperties(name, currentProps); // currentProps 被正确传递
 }
 
 // �� ToolboxPanel Ǩ�ƹ����� InitToolPropertyMap ʵ��
 void PropertyPanel::InitToolPropertyMap()
 {
+    // -------------------------- AND Gate 及其矩形版本属性 --------------------------
+    std::vector<ToolProperty> andGateProps;
+    andGateProps.push_back(ToolProperty("Facing", "facing", "East"));       // 朝向：默认朝东
+    andGateProps.push_back(ToolProperty("Data Bits", "int", 1L));          // 数据位：默认1位
+    andGateProps.push_back(ToolProperty("Gate Size", "string", "Medium"));  // 门大小：默认中等
+    andGateProps.push_back(ToolProperty("Number Of Inputs", "int", 2L));    // 输入数量：默认2个（AND门标准输入）
+    andGateProps.push_back(ToolProperty("Output Value", "string", "0/1"));  // 输出值范围
+    andGateProps.push_back(ToolProperty("Label", "string", ""));            // 标签：默认空
+    andGateProps.push_back(ToolProperty("Label Font", "string", "SansSerif Plain 12")); // 标签字体
+    andGateProps.push_back(ToolProperty("Negate 1 (Top)", "bool", false));  // 顶部输入取反：否
+    andGateProps.push_back(ToolProperty("Negate 2 (Bottom)", "bool", false));// 底部输入取反：否
+    // 为标准型和矩形型AND门绑定同一属性表
+    m_toolPropMap["AND Gate"] = andGateProps;
+    m_toolPropMap["AND Gate (Rect)"] = andGateProps;
+
     // -------------------------- 1. Pin (Input) ���� --------------------------
     std::vector<ToolProperty> pinInputProps;
     pinInputProps.push_back(ToolProperty("Facing", "facing", "East"));
@@ -111,16 +126,17 @@ void PropertyPanel::InitToolPropertyMap()
 }
 
 // �� ToolboxPanel Ǩ�ƹ����� UpdateProperties ʵ��
+// PropertyPanel.cpp - 修改 UpdateProperties 方法
 void PropertyPanel::UpdateProperties(const wxString& toolName, const std::map<wxString, wxVariant>& currentProps)
 {
-    // 1. ���ԭ������
+    // 1. 清空原有属性
     m_propGrid->Clear();
 
-    // 2. ���ӷ������
+    // 2. 添加分类
     wxPropertyCategory* category = new wxPropertyCategory(wxString::Format("Tool: %s", toolName));
     m_propGrid->Append(category);
 
-    // 3. ��ӳ����л�ȡ��ǰ���ߵ������б�
+    // 3. 从映射表中获取当前工具的属性列表
     auto it = m_toolPropMap.find(toolName);
     if (it == m_toolPropMap.end()) {
         wxStringProperty* noProps = new wxStringProperty("Info", "Info", "No configurable properties");
@@ -128,43 +144,45 @@ void PropertyPanel::UpdateProperties(const wxString& toolName, const std::map<wx
         return;
     }
 
-    // 4. �������ԣ�ֻ֧�ֻ������ͣ�
+    // 4. 创建属性，优先使用 currentProps 中的值
     std::vector<ToolProperty> props = it->second;
     for (auto& prop : props) {
+        wxVariant defaultValue = prop.defaultValue;
+
+        // 检查 currentProps 中是否有该属性的当前值
+        auto currIt = currentProps.find(prop.propName);
+        if (currIt != currentProps.end()) {
+            defaultValue = currIt->second;
+        }
+
         if (prop.propType == "facing") {
-            // ��������ѡ�East/South/West/North��
             wxArrayString options;
             options.Add("East");
             options.Add("South");
             options.Add("West");
             options.Add("North");
             auto facingProp = new wxEnumProperty(prop.propName, prop.propName, options);
-
-            // �� currentProps ��ȡ��ǰֵ������У���û�о���Ĭ��ֵ
-            auto currIt = currentProps.find(prop.propName);
-            if (currIt != currentProps.end()) {
-                facingProp->SetValue(currIt->second);
-            }
-            else {
-                facingProp->SetValue(prop.defaultValue);
-            }
+            facingProp->SetValue(defaultValue);
             m_propGrid->Append(facingProp);
         }
         else if (prop.propType == "bool") {
             wxBoolProperty* boolProp = new wxBoolProperty(prop.propName, prop.propName);
-            boolProp->SetValue(prop.defaultValue.GetBool());
+            boolProp->SetValue(defaultValue.GetBool());
             m_propGrid->Append(boolProp);
         }
         else if (prop.propType == "int") {
             wxIntProperty* intProp = new wxIntProperty(prop.propName, prop.propName);
-            intProp->SetValue(prop.defaultValue.GetLong());
+            intProp->SetValue(defaultValue.GetLong());
             m_propGrid->Append(intProp);
         }
         else if (prop.propType == "string") {
             wxStringProperty* strProp = new wxStringProperty(prop.propName, prop.propName);
-            strProp->SetValue(prop.defaultValue.GetString());
+            strProp->SetValue(defaultValue.GetString());
             m_propGrid->Append(strProp);
         }
-        // ��ɫ������ʱ����
+        // 可以添加颜色属性等其他类型的处理
     }
+
+    // 5. 刷新属性面板
+    m_propGrid->Refresh();
 }

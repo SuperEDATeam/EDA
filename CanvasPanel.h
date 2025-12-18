@@ -271,6 +271,18 @@ private:
 public:
     // 状态栏更新
     void SetStatus(wxString status);
+
+    // 添加获取选中索引的方法
+    std::vector<int> GetSelectedElementIndexes() const { return m_selElemIdx; }
+    std::vector<int> GetSelectedWireIndexes() const { return m_selWireIdx; }
+    std::vector<int> GetSelectedTextIndexes() const { return m_selTxtIdx; }
+
+    // 如果有需要，可以添加一个统一的方法
+    std::vector<int> GetSelectedIndexes() const {
+        std::vector<int> allSelected;
+        // 这里可以合并所有选中的索引，或者根据你的需求实现
+        return allSelected;
+    }
     
     // ==================== 事件表 ====================
     wxDECLARE_EVENT_TABLE();

@@ -1,4 +1,5 @@
-﻿#pragma once
+﻿// MainFrame.h
+#pragma once
 #include <wx/wx.h>
 #include <wx/aui/aui.h>
 #include <wx/file.h>
@@ -8,21 +9,17 @@
 #include "3rd/json/json.h"
 #include "PropertyPanel.h"
 
-class ToolBars; 
-class CanvasPanel; 
+class ToolBars;
+class CanvasPanel;
 class HandyToolKit;
 
 class MainFrame : public wxFrame
 {
-
-
-
 private:
     wxString m_currentFilePath;
-    bool m_isModified;  
+    bool m_isModified;
 
 private:
-
     bool SaveToFile(const wxString& filePath);
     wxString GenerateFileContent();
 
@@ -40,17 +37,17 @@ public:
 
     void OnUndoStackChanged();
 
-    /* File �˵�ҵ��ӿ� */
+    /* File 菜单业务接口 */
     void DoFileNew();
     void DoFileOpen(const wxString& path = {});
     void DoFileSave();
     void DoFileSaveAs();
-    void DoFileSaveAsNode();  // ����Ϊ.node�ļ�
-    void DoFileSaveAsNet();   // ����Ϊ.net�ļ�
+    void DoFileSaveAsNode();  // 另存为.node文件
+    void DoFileSaveAsNet();   // 另存为.net文件
     void OnQuit(wxCommandEvent&) { Close(true); }
     void OnAbout(wxCommandEvent&);
 
-    /* Edit �˵�ҵ��ӿ� */
+    /* Edit 菜单业务接口 */
     void DoEditUndo();
     void DoEditCut();
     void DoEditCopy();
@@ -65,7 +62,7 @@ public:
     void DoEditAddVertex();
     void DoEditRemoveVertex();
 
-    /* Project �˵�ҵ��ӿ� */
+    /* Project 菜单业务接口 */
     void DoProjectAddCircuit();
     void DoProjectLoadLibrary();
     void DoProjectUnloadLibraries();
@@ -82,7 +79,7 @@ public:
     void DoProjectGetStats();
     void DoProjectOptions();
 
-    /* Simulate �˵�ҵ��ӿ� */
+    /* Simulate 菜单业务接口 */
     void DoSimSetEnabled(bool on);
     void DoSimReset();
     void DoSimStep();
@@ -93,18 +90,18 @@ public:
     void DoSimSetTickFreq(int hz);
     void DoSimLogging();
 
-    /* Window �˵�ҵ��ӿ� */
+    /* Window 菜单业务接口 */
     void DoWindowCombinationalAnalysis();
     void DoWindowPreferences();
     void DoWindowSwitchToDoc(const wxString& title);
 
-    /* Help �˵�ҵ��ӿ� */
+    /* Help 菜单业务接口 */
     void DoHelpTutorial();
     void DoHelpUserGuide();
     void DoHelpLibraryRef();
     void DoHelpAbout();
 
-    // ��������ʽ
+    // 工具栏
     ToolBars* m_toolBars;
     void AddToolBarsToAuiManager();
 
@@ -113,8 +110,13 @@ private:
     PropertyPanel* m_propPanel = nullptr;
     CanvasPanel* m_canvas;
 
-    void UpdateCursor();        // ���� m_pendingTool ����ʮ��/������
+    void UpdateCursor();        // 根据 m_pendingTool 更新十字/箭头
 
     void OnToolboxElement(wxCommandEvent& evt);
+
+    // 事件表声明（不能在这里定义）
     wxDECLARE_EVENT_TABLE();
 };
+
+// 事件表定义放在类外部
+// 注意：不要在类的声明内部定义事件表
