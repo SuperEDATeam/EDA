@@ -6,11 +6,12 @@
 #include <map>
 #include <vector>
 
-// ¶¨ÒåÊôĞÔÏî½á¹¹Ìå£¨´Ó ToolboxPanel Ç¨ÒÆ¹ıÀ´£©
+class CanvasElement;
+
 struct ToolProperty {
-    wxString propName;       // ÊôĞÔÃû
-    wxString propType;       // ÊôĞÔÀàĞÍ
-    wxVariant defaultValue;  // Ä¬ÈÏÖµ
+    wxString propName;
+    wxString propType;
+    wxVariant defaultValue;
 
     ToolProperty(const wxString& name, const wxString& type, const wxVariant& value)
         : propName(name), propType(type), defaultValue(value) {
@@ -21,16 +22,36 @@ class PropertyPanel : public wxPanel
 {
 public:
     PropertyPanel(wxWindow* parent);
-    void ShowElement(const wxString& name, const std::map<wxString, wxVariant>& currentProps = {});    // ÏÔÊ¾ÔªËØÊôĞÔ
+    void ShowElement(const wxString& name, const std::map<wxString, wxVariant>& currentProps = {});
+    
+    // æ˜¾ç¤ºé€‰ä¸­çš„ç”»å¸ƒå…ƒä»¶å±æ€§
+    void ShowCanvasElement(CanvasElement* element);
+    
+    // æ˜¾ç¤ºé€šç”¨é€»è¾‘é—¨å±æ€§
+    void ShowGateProperties(CanvasElement* element);
+    
+    // è·å–å½“å‰ç¼–è¾‘çš„å…ƒä»¶
+    CanvasElement* GetCurrentElement() const { return m_currentElement; }
 
 private:
-    wxStaticText* m_title;                    // ±êÌâ
-    wxPropertyGrid* m_propGrid;               // ÊôĞÔ±í¸ñ£¨ĞÂÔö£©
+    wxStaticText* m_title;
+    wxPropertyGrid* m_propGrid;
+    CanvasElement* m_currentElement = nullptr;
+    
+    // åŠ¨æ€Negateå±æ€§åˆ—è¡¨
+    std::vector<wxBoolProperty*> m_negateProps;
 
-    // ¹¤¾ßÃû ¡ú ÊôĞÔÁĞ±íµÄÓ³Éä£¨´Ó ToolboxPanel Ç¨ÒÆ¹ıÀ´£©
     std::map<wxString, std::vector<ToolProperty>> m_toolPropMap;
 
-    // Ë½ÓĞ·½·¨
-    void InitToolPropertyMap();               // ³õÊ¼»¯ÊôĞÔÓ³Éä±í
-    void UpdateProperties(const wxString& toolName, const std::map<wxString, wxVariant>& currentProps = {});  // ¸üĞÂÊôĞÔÏÔÊ¾
+    void InitToolPropertyMap();
+    void UpdateProperties(const wxString& toolName, const std::map<wxString, wxVariant>& currentProps = {});
+    
+    // ANDé—¨å±æ€§ç¼–è¾‘
+    void ShowAndGateProperties(CanvasElement* element);
+    void OnPropertyChanged(wxPropertyGridEvent& event);
+    
+    // æ›´æ–°Negateé€‰é¡¹æ•°é‡
+    void UpdateNegateOptions(int count, CanvasElement* element);
+    
+    wxDECLARE_EVENT_TABLE();
 };

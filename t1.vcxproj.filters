@@ -72,6 +72,9 @@
     <ClCompile Include="SimulationEngine.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="GatePainter.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="MainMenuBar.h">
@@ -129,6 +132,9 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="SimulationEngine.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="GatePainter.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>

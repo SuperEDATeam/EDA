@@ -399,6 +399,25 @@ void MainFrame::OnToolSelected(wxCommandEvent& evt) {
     }
 }
 
+// 更新属性面板显示选中的元件
+void MainFrame::UpdatePropertyPanel(int elementIndex)
+{
+    if (!m_propPanel) return;
+    
+    if (elementIndex < 0 || elementIndex >= (int)m_canvas->GetElements().size()) {
+        // 没有选中元件，显示默认
+        m_propPanel->ShowElement("Select Tool");
+        return;
+    }
+    
+    // 获取选中的元件
+    const auto& elements = m_canvas->GetElements();
+    if (elementIndex < (int)elements.size()) {
+        CanvasElement* elem = const_cast<CanvasElement*>(&elements[elementIndex]);
+        m_propPanel->ShowCanvasElement(elem);
+    }
+}
+
 
 
 

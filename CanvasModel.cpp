@@ -133,6 +133,18 @@ std::vector<CanvasElement> LoadCanvasElements(const wxString& jsonPath)
                     color
                     });
             }
+            // 三次贝塞尔曲线（4个控制点）
+            else if (type == "CubicBezierShape") {
+                Point p0 = { shape["p0"]["x"].asInt(), shape["p0"]["y"].asInt() };
+                Point p1 = { shape["p1"]["x"].asInt(), shape["p1"]["y"].asInt() };
+                Point p2 = { shape["p2"]["x"].asInt(), shape["p2"]["y"].asInt() };
+                Point p3 = { shape["p3"]["x"].asInt(), shape["p3"]["y"].asInt() };
+
+                ce.AddShape(CubicBezierShape{
+                    p0, p1, p2, p3,
+                    color
+                    });
+            }
 
         }
         out.push_back(ce);

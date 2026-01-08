@@ -271,6 +271,9 @@ private:
 public:
     // 状态栏更新
     void SetStatus(wxString status);
+    
+    // 获取主窗口
+    MainFrame* GetMainFrame() const { return m_mainFrame; }
 
     // 添加获取选中索引的方法
     std::vector<int> GetSelectedElementIndexes() const { return m_selElemIdx; }

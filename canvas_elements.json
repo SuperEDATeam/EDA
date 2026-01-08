@@ -67,21 +67,21 @@
       {"type": "circle", "x": 122, "y": 60, "r": 4, "color": "#333333", "fill": true, "fillColor": "#808080"}
     ]
   },
-  {
-    "id": "OR_Gate",
-    "name": "OR Gate",
-    "anchorPoint": [80, 60],
-    "inputPins": [
-      {"name": "Input A", "x": 40, "y": 40},
-      {"name": "Input B", "x": 40, "y": 80}
-    ],
-    "outputPins": [{"name": "Output", "x": 120, "y": 60}],  
-    "shapes": [
-      {"type": "BezierShape", "p0": {"x": 43, "y": 20}, "p1": {"x": 85, "y": 24}, "p2": {"x": 110, "y": 60}, "color": "#333333"},
-      {"type": "BezierShape", "p0": {"x": 43, "y": 100}, "p1": {"x": 85, "y": 96}, "p2": {"x": 110, "y": 60}, "color": "#333333"},
-      {"type": "BezierShape", "p0": {"x": 43, "y": 20}, "p1": {"x": 60, "y": 60}, "p2": {"x": 43, "y": 100}, "color": "#333333"}  
-    ]
-  },
+ {
+  "id": "OR_Gate",
+  "name": "OR Gate",
+  "anchorPoint": [72, 54],
+  "inputPins": [
+    {"name": "Input A", "x": 55, "y": 14},
+    {"name": "Input B", "x": 55, "y": 94}
+  ],
+  "outputPins": [{"name": "Output", "x": 135, "y": 54}],
+  "shapes": [
+    {"type": "CubicBezierShape", "p0": {"x": 54, "y": 9}, "p1": {"x": 81, "y": 9}, "p2": {"x": 117, "y": 31.5}, "p3": {"x": 135, "y": 54}, "color": "#333333"},
+    {"type": "CubicBezierShape", "p0": {"x": 54, "y": 99}, "p1": {"x": 81, "y": 99}, "p2": {"x": 117, "y": 76.5}, "p3": {"x": 135, "y": 54}, "color": "#333333"},
+    {"type": "CubicBezierShape", "p0": {"x": 54, "y": 9}, "p1": {"x": 67.5, "y": 31.5}, "p2": {"x": 67.5, "y": 76.5}, "p3": {"x": 54, "y": 99}, "color": "#333333"}
+  ]
+},
   {
     "id": "OR_Gate_Rect",
     "name": "OR Gate (Rect)",
@@ -99,20 +99,21 @@
       {"type": "text", "x": 85, "y": 55, "text": "≥1", "fontSize": 16, "color": "#333333"}
     ]
   },
-  {
+  
+   {
     "id": "NOR_Gate",
     "name": "NOR Gate",
     "anchorPoint": [80, 60],
     "inputPins": [
-      {"name": "Input A", "x": 40, "y": 40},
-      {"name": "Input B", "x": 40, "y": 80}
+      {"name": "Input A", "x": 57, "y": 14},
+      {"name": "Input B", "x": 57, "y": 94}
     ],
-    "outputPins": [{"name": "Output", "x": 114, "y": 60}],
+    "outputPins": [{"name": "Output", "x": 140, "y": 54}],
     "shapes": [
-      {"type": "BezierShape", "p0": {"x": 43, "y": 20}, "p1": {"x": 90, "y": 18}, "p2": {"x": 110, "y": 60}, "color": "#333333"},
-      {"type": "BezierShape", "p0": {"x": 43, "y": 100}, "p1": {"x": 90, "y": 102}, "p2": {"x": 110, "y": 60}, "color": "#333333"},
-      {"type": "BezierShape", "p0": {"x": 43, "y": 20}, "p1": {"x": 70, "y": 60}, "p2": {"x": 43, "y": 100}, "color": "#333333"},
-      {"type": "circle", "x": 112, "y": 60, "r": 4, "color": "#333333", "fill": true, "fillColor": "#808080"}
+      {"type": "CubicBezierShape", "p0": {"x": 54, "y": 9}, "p1": {"x": 81, "y": 9}, "p2": {"x": 117, "y": 31.5}, "p3": {"x": 135, "y": 54}, "color": "#333333"},
+      {"type": "CubicBezierShape", "p0": {"x": 54, "y": 99}, "p1": {"x": 81, "y": 99}, "p2": {"x": 117, "y": 76.5}, "p3": {"x": 135, "y": 54}, "color": "#333333"},
+      {"type": "CubicBezierShape", "p0": {"x": 54, "y": 9}, "p1": {"x": 67.5, "y": 31.5}, "p2": {"x": 67.5, "y": 76.5}, "p3": {"x": 54, "y": 99}, "color": "#333333"},
+      {"type": "circle", "x": 140, "y": 54, "r": 4, "color": "#333333", "fill": false, "fillColor": "#808080"}
     ]
   },
   {
@@ -138,15 +139,15 @@
     "name": "XOR Gate",
     "anchorPoint": [80, 60],
     "inputPins": [
-      {"name": "Input A", "x": 40, "y": 40},
-      {"name": "Input B", "x": 40, "y": 80}
+      {"name": "Input A", "x": 35, "y": 14},
+      {"name": "Input B", "x": 35, "y": 94}
     ],
-    "outputPins": [{"name": "Output", "x": 120, "y": 60}],
+    "outputPins": [{"name": "Output", "x": 135, "y": 54}],
     "shapes": [
-      {"type": "BezierShape", "p0": {"x": 43, "y": 20}, "p1": {"x": 90, "y": 18}, "p2": {"x": 110, "y": 60}, "color": "#333333"},
-      {"type": "BezierShape", "p0": {"x": 43, "y": 100}, "p1": {"x": 90, "y": 102}, "p2": {"x": 110, "y": 60}, "color": "#333333"},
-      {"type": "BezierShape", "p0": {"x": 43, "y": 20}, "p1": {"x": 70, "y": 60}, "p2": {"x": 43, "y": 100}, "color": "#333333"},
-      {"type": "BezierShape", "p0": {"x": 30, "y": 20}, "p1": {"x": 52, "y": 60}, "p2": {"x": 30, "y": 100}, "color": "#333333"}
+      {"type": "CubicBezierShape", "p0": {"x": 54, "y": 9}, "p1": {"x": 81, "y": 9}, "p2": {"x": 117, "y": 31.5}, "p3": {"x": 135, "y": 54}, "color": "#333333"},
+      {"type": "CubicBezierShape", "p0": {"x": 54, "y": 99}, "p1": {"x": 81, "y": 99}, "p2": {"x": 117, "y": 76.5}, "p3": {"x": 135, "y": 54}, "color": "#333333"},
+      {"type": "CubicBezierShape", "p0": {"x": 54, "y": 9}, "p1": {"x": 67.5, "y": 31.5}, "p2": {"x": 67.5, "y": 76.5}, "p3": {"x": 54, "y": 99}, "color": "#333333"},
+      {"type": "CubicBezierShape", "p0": {"x": 44, "y": 9}, "p1": {"x": 57.5, "y": 31.5}, "p2": {"x": 57.5, "y": 76.5}, "p3": {"x": 44, "y": 99}, "color": "#333333"}
     ]
   },
   {
@@ -167,21 +168,21 @@
       
     ]
   },
-  {
+   {
     "id": "XNOR_Gate",
     "name": "XNOR Gate",
     "anchorPoint": [80, 60],
     "inputPins": [
-      {"name": "Input A", "x": 40, "y": 40},
-      {"name": "Input B", "x": 40, "y": 80}
+      {"name": "Input A", "x": 40, "y": 14},
+      {"name": "Input B", "x": 40, "y": 94}
     ],
-    "outputPins": [{"name": "Output", "x": 120, "y": 60}],
+    "outputPins": [{"name": "Output", "x": 140, "y": 54}],
     "shapes": [
-      {"type": "BezierShape", "p0": {"x": 43, "y": 20}, "p1": {"x": 90, "y": 18}, "p2": {"x": 110, "y": 60}, "color": "#333333"},
-      {"type": "BezierShape", "p0": {"x": 43, "y": 100}, "p1": {"x": 90, "y": 102}, "p2": {"x": 110, "y": 60}, "color": "#333333"},
-      {"type": "BezierShape", "p0": {"x": 43, "y": 20}, "p1": {"x": 70, "y": 60}, "p2": {"x": 43, "y": 100}, "color": "#333333"},
-      {"type": "BezierShape", "p0": {"x": 30, "y": 20}, "p1": {"x": 52, "y": 60}, "p2": {"x": 30, "y": 100}, "color": "#333333"},
-      {"type": "circle", "x": 120, "y": 60, "r": 4, "color": "#333333", "fill": true, "fillColor": "#808080"}
+      {"type": "CubicBezierShape", "p0": {"x": 54, "y": 9}, "p1": {"x": 81, "y": 9}, "p2": {"x": 117, "y": 31.5}, "p3": {"x": 135, "y": 54}, "color": "#333333"},
+      {"type": "CubicBezierShape", "p0": {"x": 54, "y": 99}, "p1": {"x": 81, "y": 99}, "p2": {"x": 117, "y": 76.5}, "p3": {"x": 135, "y": 54}, "color": "#333333"},
+      {"type": "CubicBezierShape", "p0": {"x": 54, "y": 9}, "p1": {"x": 67.5, "y": 31.5}, "p2": {"x": 67.5, "y": 76.5}, "p3": {"x": 54, "y": 99}, "color": "#333333"},
+      {"type": "CubicBezierShape", "p0": {"x": 44, "y": 9}, "p1": {"x": 57.5, "y": 31.5}, "p2": {"x": 57.5, "y": 76.5}, "p3": {"x": 44, "y": 99}, "color": "#333333"},
+      {"type": "circle", "x": 140, "y": 54, "r": 4, "color": "#333333", "fill": false, "fillColor": "#808080"}
     ]
   },
   {

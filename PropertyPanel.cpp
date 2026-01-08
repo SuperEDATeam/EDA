@@ -1,56 +1,54 @@
 ﻿#include "PropertyPanel.h"
+#include "CanvasElement.h"
+
+wxBEGIN_EVENT_TABLE(PropertyPanel, wxPanel)
+    EVT_PG_CHANGED(wxID_ANY, PropertyPanel::OnPropertyChanged)
+wxEND_EVENT_TABLE()
 
 PropertyPanel::PropertyPanel(wxWindow* parent)
     : wxPanel(parent, wxID_ANY)
 {
-    // ������ֱ����
     wxBoxSizer* sizer = new wxBoxSizer(wxVERTICAL);
 
-    // ��������
     m_title = new wxStaticText(this, wxID_ANY, "No element selected");
     sizer->Add(m_title, 0, wxALL, 5);
 
-    // �������Ա���������
     m_propGrid = new wxPropertyGrid(this, wxID_ANY, wxDefaultPosition, wxDefaultSize,
         wxPG_BOLD_MODIFIED | wxPG_SPLITTER_AUTO_CENTER);
     m_propGrid->SetCaptionBackgroundColour(wxColour(230, 230, 230));
 
-    // ��������
     wxFont font(wxFontInfo(11).FaceName("Segoe UI"));
     m_propGrid->SetFont(font);
 
     sizer->Add(m_propGrid, 1, wxEXPAND | wxALL, 5);
     SetSizer(sizer);
 
-    // ��ʼ������ӳ���
     InitToolPropertyMap();
 }
 
 void PropertyPanel::ShowElement(const wxString& name, const std::map<wxString, wxVariant>& currentProps)
 {
     m_title->SetLabel("Tool: " + name);
-    UpdateProperties(name, currentProps); // currentProps 被正确传递
+    UpdateProperties(name, currentProps);
 }
 
-// �� ToolboxPanel Ǩ�ƹ����� InitToolPropertyMap ʵ��
 void PropertyPanel::InitToolPropertyMap()
 {
-    // -------------------------- AND Gate 及其矩形版本属性 --------------------------
+    // AND Gate 属性
     std::vector<ToolProperty> andGateProps;
-    andGateProps.push_back(ToolProperty("Facing", "facing", "East"));       // 朝向：默认朝东
-    andGateProps.push_back(ToolProperty("Data Bits", "int", 1L));          // 数据位：默认1位
-    andGateProps.push_back(ToolProperty("Gate Size", "string", "Medium"));  // 门大小：默认中等
-    andGateProps.push_back(ToolProperty("Number Of Inputs", "int", 2L));    // 输入数量：默认2个（AND门标准输入）
-    andGateProps.push_back(ToolProperty("Output Value", "string", "0/1"));  // 输出值范围
-    andGateProps.push_back(ToolProperty("Label", "string", ""));            // 标签：默认空
-    andGateProps.push_back(ToolProperty("Label Font", "string", "SansSerif Plain 12")); // 标签字体
-    andGateProps.push_back(ToolProperty("Negate 1 (Top)", "bool", false));  // 顶部输入取反：否
-    andGateProps.push_back(ToolProperty("Negate 2 (Bottom)", "bool", false));// 底部输入取反：否
-    // 为标准型和矩形型AND门绑定同一属性表
+    andGateProps.push_back(ToolProperty("Facing", "facing", "East"));
+    andGateProps.push_back(ToolProperty("Data Bits", "int", 1L));
+    andGateProps.push_back(ToolProperty("Gate Size", "string", "Medium"));
+    andGateProps.push_back(ToolProperty("Number Of Inputs", "int", 2L));
+    andGateProps.push_back(ToolProperty("Output Value", "string", "0/1"));
+    andGateProps.push_back(ToolProperty("Label", "string", ""));
+    andGateProps.push_back(ToolProperty("Label Font", "string", "SansSerif Plain 12"));
+    andGateProps.push_back(ToolProperty("Negate 1 (Top)", "bool", false));
+    andGateProps.push_back(ToolProperty("Negate 2 (Bottom)", "bool", false));
     m_toolPropMap["AND Gate"] = andGateProps;
     m_toolPropMap["AND Gate (Rect)"] = andGateProps;
 
-    // -------------------------- 1. Pin (Input) ���� --------------------------
+    // Pin (Input) 属性
     std::vector<ToolProperty> pinInputProps;
     pinInputProps.push_back(ToolProperty("Facing", "facing", "East"));
     pinInputProps.push_back(ToolProperty("Output?", "bool", false));
@@ -62,7 +60,7 @@ void PropertyPanel::InitToolPropertyMap()
     pinInputProps.push_back(ToolProperty("Label Font", "string", "SansSerif Plain 12"));
     m_toolPropMap["Pin (Input)"] = pinInputProps;
 
-    // -------------------------- 2. OR Gate ���� --------------------------
+    // OR Gate 属性
     std::vector<ToolProperty> orGateProps;
     orGateProps.push_back(ToolProperty("Facing", "facing", "East"));
     orGateProps.push_back(ToolProperty("Data Bits", "int", 1L));
@@ -78,7 +76,7 @@ void PropertyPanel::InitToolPropertyMap()
     orGateProps.push_back(ToolProperty("Negate 5 (Bottom)", "bool", false));
     m_toolPropMap["OR Gate"] = orGateProps;
 
-    // -------------------------- 3. Demultiplexer ���� --------------------------
+    // Demultiplexer 属性
     std::vector<ToolProperty> demuxProps;
     demuxProps.push_back(ToolProperty("Facing", "facing", "East"));
     demuxProps.push_back(ToolProperty("Select Location", "string", "Bottom/Left"));
@@ -89,20 +87,20 @@ void PropertyPanel::InitToolPropertyMap()
     demuxProps.push_back(ToolProperty("Include Enable?", "bool", true));
     m_toolPropMap["Demultiplexer"] = demuxProps;
 
-    // -------------------------- 4. Comparator ���� --------------------------
+    // Comparator 属性
     std::vector<ToolProperty> comparatorProps;
     comparatorProps.push_back(ToolProperty("Data Bits", "int", 8L));
     comparatorProps.push_back(ToolProperty("Numeric Type", "string", "2's Complement"));
     m_toolPropMap["Comparator"] = comparatorProps;
 
-    // -------------------------- 5. S-R Flip-Flop ���� --------------------------
+    // SR Flip-Flop 属性
     std::vector<ToolProperty> srFlipFlopProps;
     srFlipFlopProps.push_back(ToolProperty("Trigger", "facing", "Rising Edge"));
     srFlipFlopProps.push_back(ToolProperty("Label", "string", ""));
     srFlipFlopProps.push_back(ToolProperty("Label Font", "string", "SansSerif Plain 12"));
     m_toolPropMap["SR Flip-Flop"] = srFlipFlopProps;
 
-    // -------------------------- 6. LED ���� --------------------------
+    // LED 属性
     std::vector<ToolProperty> ledProps;
     ledProps.push_back(ToolProperty("Facing", "facing", "West"));
     ledProps.push_back(ToolProperty("On Color", "color", "#F00000"));
@@ -114,7 +112,6 @@ void PropertyPanel::InitToolPropertyMap()
     ledProps.push_back(ToolProperty("Label Color", "color", "#000000"));
     m_toolPropMap["LED"] = ledProps;
 
-    // -------------------------- ������������ --------------------------
     m_toolPropMap["Wire"] = std::vector<ToolProperty>();
 
     std::vector<ToolProperty> buttonProps;
@@ -125,18 +122,14 @@ void PropertyPanel::InitToolPropertyMap()
     m_toolPropMap["Button"] = buttonProps;
 }
 
-// �� ToolboxPanel Ǩ�ƹ����� UpdateProperties ʵ��
-// PropertyPanel.cpp - 修改 UpdateProperties 方法
+
 void PropertyPanel::UpdateProperties(const wxString& toolName, const std::map<wxString, wxVariant>& currentProps)
 {
-    // 1. 清空原有属性
     m_propGrid->Clear();
 
-    // 2. 添加分类
     wxPropertyCategory* category = new wxPropertyCategory(wxString::Format("Tool: %s", toolName));
     m_propGrid->Append(category);
 
-    // 3. 从映射表中获取当前工具的属性列表
     auto it = m_toolPropMap.find(toolName);
     if (it == m_toolPropMap.end()) {
         wxStringProperty* noProps = new wxStringProperty("Info", "Info", "No configurable properties");
@@ -144,12 +137,10 @@ void PropertyPanel::UpdateProperties(const wxString& toolName, const std::map<wx
         return;
     }
 
-    // 4. 创建属性，优先使用 currentProps 中的值
     std::vector<ToolProperty> props = it->second;
     for (auto& prop : props) {
         wxVariant defaultValue = prop.defaultValue;
 
-        // 检查 currentProps 中是否有该属性的当前值
         auto currIt = currentProps.find(prop.propName);
         if (currIt != currentProps.end()) {
             defaultValue = currIt->second;
@@ -180,9 +171,282 @@ void PropertyPanel::UpdateProperties(const wxString& toolName, const std::map<wx
             strProp->SetValue(defaultValue.GetString());
             m_propGrid->Append(strProp);
         }
-        // 可以添加颜色属性等其他类型的处理
     }
 
-    // 5. 刷新属性面板
     m_propGrid->Refresh();
+}
+
+void PropertyPanel::ShowCanvasElement(CanvasElement* element)
+{
+    m_currentElement = element;
+    
+    if (!element) {
+        m_title->SetLabel("No element selected");
+        m_propGrid->Clear();
+        return;
+    }
+    
+    // 只有 AND 门显示属性编辑面板
+    if (element->IsAndGate()) {
+        ShowGateProperties(element);
+    } else {
+        ShowElement(element->GetName());
+    }
+}
+
+void PropertyPanel::ShowAndGateProperties(CanvasElement* element)
+{
+    if (!element) return;
+    
+    m_propGrid->Clear();
+    m_title->SetLabel("AND Gate Properties");
+    
+    const AndGateProperties& props = element->GetAndGateProps();
+    
+    wxPropertyCategory* category = new wxPropertyCategory("AND Gate");
+    m_propGrid->Append(category);
+    
+    // Facing
+    wxArrayString facingOptions;
+    facingOptions.Add("East");
+    facingOptions.Add("West");
+    facingOptions.Add("North");
+    facingOptions.Add("South");
+    wxEnumProperty* facingProp = new wxEnumProperty("Facing", "Facing", facingOptions);
+    int facingIdx = facingOptions.Index(props.facing);
+    if (facingIdx != wxNOT_FOUND) facingProp->SetValue(facingIdx);
+    m_propGrid->Append(facingProp);
+    
+    // Data Bits
+    wxIntProperty* dataBitsProp = new wxIntProperty("Data Bits", "DataBits", props.dataBits);
+    dataBitsProp->SetAttribute(wxPG_ATTR_MIN, 1);
+    dataBitsProp->SetAttribute(wxPG_ATTR_MAX, 32);
+    m_propGrid->Append(dataBitsProp);
+    
+    // Gate Size
+    wxArrayString sizeOptions;
+    sizeOptions.Add("Narrow");
+    sizeOptions.Add("Medium");
+    sizeOptions.Add("Wide");
+    wxEnumProperty* sizeProp = new wxEnumProperty("Gate Size", "GateSize", sizeOptions);
+    int sizeIdx = sizeOptions.Index(props.gateSize);
+    if (sizeIdx != wxNOT_FOUND) sizeProp->SetValue(sizeIdx);
+    m_propGrid->Append(sizeProp);
+    
+    // Number of Inputs
+    wxIntProperty* inputsProp = new wxIntProperty("Number of Inputs", "NumberOfInputs", props.numberOfInputs);
+    inputsProp->SetAttribute(wxPG_ATTR_MIN, 2);
+    inputsProp->SetAttribute(wxPG_ATTR_MAX, 32);
+    m_propGrid->Append(inputsProp);
+    
+    // Label
+    wxStringProperty* labelProp = new wxStringProperty("Label", "Label", props.label);
+    m_propGrid->Append(labelProp);
+    
+    // Label Font
+    wxFont labelFont = props.GetLabelFontAsWxFont();
+    wxFontProperty* fontProp = new wxFontProperty("Label Font", "LabelFont", labelFont);
+    m_propGrid->Append(fontProp);
+    
+    // Negate inputs
+    wxPropertyCategory* negateCategory = new wxPropertyCategory("Negate Inputs");
+    m_propGrid->Append(negateCategory);
+    
+    for (int i = 0; i < props.numberOfInputs && i < 5; i++) {
+        wxString name;
+        if (i == 0) name = "Negate 1 (Top)";
+        else if (i == props.numberOfInputs - 1) name = wxString::Format("Negate %d (Bottom)", i + 1);
+        else name = wxString::Format("Negate %d", i + 1);
+        
+        bool negateValue = (i < (int)props.negateInputs.size()) ? props.negateInputs[i] : false;
+        wxBoolProperty* negateProp = new wxBoolProperty(name, wxString::Format("Negate%d", i), negateValue);
+        negateProp->SetAttribute(wxPG_BOOL_USE_CHECKBOX, true);
+        m_propGrid->Append(negateProp);
+    }
+    
+    m_propGrid->Refresh();
+}
+
+void PropertyPanel::OnPropertyChanged(wxPropertyGridEvent& event)
+{
+    if (!m_currentElement) return;
+    
+    wxPGProperty* prop = event.GetProperty();
+    if (!prop) return;
+    
+    wxString propName = prop->GetName();
+    
+    // 只处理 AND 门的属性修改
+    if (m_currentElement->IsAndGate()) {
+        GateProperties& gateProps = m_currentElement->GetGateProps();
+        
+        if (propName == "Facing") {
+            wxArrayString options;
+            options.Add("East");
+            options.Add("West");
+            options.Add("North");
+            options.Add("South");
+            int idx = prop->GetValue().GetLong();
+            if (idx >= 0 && idx < (int)options.size()) {
+                gateProps.facing = options[idx];
+            }
+        }
+        else if (propName == "DataBits") {
+            gateProps.dataBits = prop->GetValue().GetLong();
+        }
+        else if (propName == "GateSize") {
+            wxArrayString options;
+            options.Add("Narrow");
+            options.Add("Medium");
+            options.Add("Wide");
+            int idx = prop->GetValue().GetLong();
+            if (idx >= 0 && idx < (int)options.size()) {
+                gateProps.gateSize = options[idx];
+            }
+        }
+        else if (propName == "NumberOfInputs") {
+            int newInputs = prop->GetValue().GetLong();
+            if (newInputs != gateProps.numberOfInputs) {
+                gateProps.numberOfInputs = newInputs;
+                gateProps.Validate();
+                
+                // 重新生成 AND 门形状
+                m_currentElement->RegenerateShapes();
+                
+                // 刷新属性面板以更新 Negate 选项
+                CallAfter([this]() {
+                    if (m_currentElement) {
+                        ShowGateProperties(m_currentElement);
+                    }
+                });
+            }
+        }
+        else if (propName == "Label") {
+            gateProps.label = prop->GetValue().GetString();
+        }
+        else if (propName == "LabelFont") {
+            wxFont font;
+            font << prop->GetValue();
+            gateProps.SetLabelFontFromWxFont(font);
+        }
+        else if (propName.StartsWith("Negate")) {
+            wxString idxStr = propName.Mid(6);
+            long idx = 0;
+            if (idxStr.ToLong(&idx) && idx >= 0 && idx < (int)gateProps.negateInputs.size()) {
+                gateProps.negateInputs[idx] = prop->GetValue().GetBool();
+            }
+        }
+        
+        // 重新生成 AND 门形状
+        m_currentElement->RegenerateShapes();
+        
+        // 同步到 AndGateProps
+        AndGateProperties& andProps = m_currentElement->GetAndGateProps();
+        andProps = gateProps;
+    }
+    
+    wxWindow* topWindow = wxTheApp->GetTopWindow();
+    if (topWindow) {
+        wxWindowList& children = topWindow->GetChildren();
+        for (wxWindowList::iterator it = children.begin(); it != children.end(); ++it) {
+            (*it)->Refresh();
+        }
+        topWindow->Refresh();
+        topWindow->Update();
+    }
+}
+
+void PropertyPanel::ShowGateProperties(CanvasElement* element)
+{
+    // 只处理 AND 门
+    if (!element || !element->IsAndGate()) return;
+    
+    m_currentElement = element;
+    m_propGrid->Clear();
+    m_negateProps.clear();
+    
+    wxString gateType = element->GetId();
+    m_title->SetLabel(gateType + " Properties");
+    
+    GateProperties& props = element->GetGateProps();
+    props.Validate();
+    
+    wxPropertyCategory* category = new wxPropertyCategory("AND Gate Properties");
+    m_propGrid->Append(category);
+    
+    // Facing
+    wxArrayString facingOptions;
+    facingOptions.Add("East");
+    facingOptions.Add("West");
+    facingOptions.Add("North");
+    facingOptions.Add("South");
+    wxEnumProperty* facingProp = new wxEnumProperty("Facing", "Facing", facingOptions);
+    int facingIdx = facingOptions.Index(props.facing);
+    if (facingIdx != wxNOT_FOUND) facingProp->SetValue(facingIdx);
+    m_propGrid->Append(facingProp);
+    
+    // Data Bits
+    wxIntProperty* dataBitsProp = new wxIntProperty("Data Bits", "DataBits", props.dataBits);
+    dataBitsProp->SetAttribute(wxPG_ATTR_MIN, 1);
+    dataBitsProp->SetAttribute(wxPG_ATTR_MAX, 32);
+    m_propGrid->Append(dataBitsProp);
+    
+    // Gate Size
+    wxArrayString sizeOptions;
+    sizeOptions.Add("Narrow");
+    sizeOptions.Add("Medium");
+    sizeOptions.Add("Wide");
+    wxEnumProperty* sizeProp = new wxEnumProperty("Gate Size", "GateSize", sizeOptions);
+    int sizeIdx = sizeOptions.Index(props.gateSize);
+    if (sizeIdx != wxNOT_FOUND) sizeProp->SetValue(sizeIdx);
+    m_propGrid->Append(sizeProp);
+    
+    // Number of Inputs
+    wxIntProperty* inputsProp = new wxIntProperty("Number of Inputs", "NumberOfInputs", props.numberOfInputs);
+    inputsProp->SetAttribute(wxPG_ATTR_MIN, 2);
+    inputsProp->SetAttribute(wxPG_ATTR_MAX, 32);
+    m_propGrid->Append(inputsProp);
+    
+    // Label
+    wxStringProperty* labelProp = new wxStringProperty("Label", "Label", props.label);
+    m_propGrid->Append(labelProp);
+    
+    // Label Font
+    wxFont labelFont = props.GetLabelFontAsWxFont();
+    wxFontProperty* fontProp = new wxFontProperty("Label Font", "LabelFont", labelFont);
+    m_propGrid->Append(fontProp);
+    
+    // Negate inputs
+    UpdateNegateOptions(props.numberOfInputs, element);
+    
+    m_propGrid->Refresh();
+}
+
+void PropertyPanel::UpdateNegateOptions(int count, CanvasElement* element)
+{
+    if (!element) return;
+    
+    GateProperties& props = element->GetGateProps();
+    
+    wxPropertyCategory* negateCategory = new wxPropertyCategory("Negate Inputs");
+    m_propGrid->Append(negateCategory);
+    
+    m_negateProps.clear();
+    
+    for (int i = 0; i < count && i < 32; i++) {
+        wxString name;
+        if (i == 0) {
+            name = "Negate 1 (Top)";
+        } else if (i == count - 1) {
+            name = wxString::Format("Negate %d (Bottom)", i + 1);
+        } else {
+            name = wxString::Format("Negate %d", i + 1);
+        }
+        
+        bool negateValue = (i < (int)props.negateInputs.size()) ? props.negateInputs[i] : false;
+        wxBoolProperty* negateProp = new wxBoolProperty(name, wxString::Format("Negate%d", i), negateValue);
+        negateProp->SetAttribute(wxPG_BOOL_USE_CHECKBOX, true);
+        m_propGrid->Append(negateProp);
+        m_negateProps.push_back(negateProp);
+    }
 }

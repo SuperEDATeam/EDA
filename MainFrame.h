@@ -113,8 +113,13 @@ private:
     void UpdateCursor();        // 根据 m_pendingTool 更新十字/箭头
 
     void OnToolboxElement(wxCommandEvent& evt);
+    
+public:
+    // 更新属性面板显示选中元件
+    void UpdatePropertyPanel(int elementIndex);
+    PropertyPanel* GetPropertyPanel() const { return m_propPanel; }
 
-    // 事件表声明（不能在这里定义）
+    // 事件表声明
     wxDECLARE_EVENT_TABLE();
 };
 

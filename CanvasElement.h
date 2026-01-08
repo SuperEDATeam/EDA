@@ -2,7 +2,8 @@
 
 #include <wx/wx.h>
 #include <wx/dcgraph.h>  
-#include <wx/graphics.h>  
+#include <wx/graphics.h>
+#include <wx/tokenzr.h>
 #include <vector>
 #include <variant>
 
@@ -32,8 +33,8 @@ struct Circle {
     int radius;
     wxColour color;
 
-    bool fill;          // ĞÂÔö£ºÊÇ·ñÌî³ä
-    wxColour fillColor; // ĞÂÔö£ºÌî³äÑÕÉ«
+    bool fill;
+    wxColour fillColor;
     Circle(Point c = Point(), int r = 0, wxColour col = wxColour(0, 0, 0),
         bool f = false, wxColour fc = wxColour(128, 128, 128))
         : center(c), radius(r), color(col), fill(f), fillColor(fc) {
@@ -60,7 +61,6 @@ struct Pin {
     }
 };
 
-// ÖØÃüÃû Arc Îª ArcShape ±ÜÃâ¿ÉÄÜµÄÃüÃû³åÍ»
 struct ArcShape {
     Point center;
     int radius;
@@ -80,6 +80,15 @@ struct BezierShape {
     }
 };
 
+// ä¸‰æ¬¡è´å¡å°”æ›²çº¿ï¼ˆ4ä¸ªæ§åˆ¶ç‚¹ï¼‰
+struct CubicBezierShape {
+    Point p0, p1, p2, p3;
+    wxColour color;
+    CubicBezierShape(Point p0 = Point(), Point p1 = Point(), Point p2 = Point(), Point p3 = Point(), wxColour c = wxColour(0, 0, 0))
+        : p0(p0), p1(p1), p2(p2), p3(p3), color(c) {
+    }
+};
+
 struct Path {
     std::string d;
     wxColour stroke;
@@ -90,23 +99,142 @@ struct Path {
     }
 };
 
-// Ê¹ÓÃÖØÃüÃûºóµÄÀàĞÍ
-using Shape = std::variant<Line, PolyShape, Circle, Text, Path, ArcShape, BezierShape>;
+using Shape = std::variant<Line, PolyShape, Circle, Text, Path, ArcShape, BezierShape, CubicBezierShape>;
+
+// é—¨å°ºå¯¸å‚æ•°ç»“æ„ä½“
+struct GateSizeParams {
+    int width;
+    int height;
+    int pinSpacing;
+    
+    GateSizeParams(int w = 80, int h = 80, int ps = 40) 
+        : width(w), height(h), pinSpacing(ps) {}
+};
+
+// é€šç”¨é—¨å±æ€§ç»“æ„ä½“
+struct GateProperties {
+    wxString facing = "East";
+    int dataBits = 1;
+    wxString gateSize = "Medium";
+    int numberOfInputs = 2;
+    wxString label = "";
+    wxString labelFont = "SansSerif Plain 12";
+    std::vector<bool> negateInputs;
+    
+    GateProperties() {
+        negateInputs.resize(32, false);
+    }
+    
+    GateSizeParams GetSizeParams() const {
+        if (gateSize == "Narrow") {
+            return GateSizeParams(60, 60, 30);
+        } else if (gateSize == "Wide") {
+            return GateSizeParams(100, 100, 50);
+        } else {
+            return GateSizeParams(80, 80, 40);
+        }
+    }
+    
+    // é—¨çš„é«˜åº¦æ ¹æ®è¾“å…¥æ•°é‡åŠ¨æ€è®¡ç®—
+    int GetActualHeight() const {
+        GateSizeParams params = GetSizeParams();
+        int extraInputs = numberOfInputs - 2;
+        if (extraInputs < 0) extraInputs = 0;
+        return params.height + extraInputs * params.pinSpacing;
+    }
+    
+    // å¼•è„šé—´è·ä¿æŒå›ºå®š
+    int GetActualPinSpacing() const {
+        GateSizeParams params = GetSizeParams();
+        return params.pinSpacing;
+    }
+    
+    void Validate() {
+        if (numberOfInputs < 2) numberOfInputs = 2;
+        if (numberOfInputs > 32) numberOfInputs = 32;
+        
+        if (dataBits < 1) dataBits = 1;
+        if (dataBits > 32) dataBits = 32;
+        
+        if (facing != "East" && facing != "West" && 
+            facing != "North" && facing != "South") {
+            facing = "East";
+        }
+        
+        if (gateSize != "Narrow" && gateSize != "Medium" && gateSize != "Wide") {
+            gateSize = "Medium";
+        }
+        
+        if ((int)negateInputs.size() < numberOfInputs) {
+            negateInputs.resize(numberOfInputs, false);
+        }
+    }
+    
+    wxFont GetLabelFontAsWxFont() const {
+        wxString fontStr = labelFont;
+        wxString family = "SansSerif";
+        wxString style = "Plain";
+        int size = 12;
+        
+        wxStringTokenizer tokenizer(fontStr, " ");
+        if (tokenizer.HasMoreTokens()) family = tokenizer.GetNextToken();
+        if (tokenizer.HasMoreTokens()) style = tokenizer.GetNextToken();
+        if (tokenizer.HasMoreTokens()) {
+            long sz;
+            if (tokenizer.GetNextToken().ToLong(&sz)) size = (int)sz;
+        }
+        
+        wxFontFamily wxFamily = wxFONTFAMILY_SWISS;
+        if (family == "Serif" || family == "Times") wxFamily = wxFONTFAMILY_ROMAN;
+        else if (family == "Monospaced" || family == "Courier") wxFamily = wxFONTFAMILY_TELETYPE;
+        
+        wxFontStyle wxStyle = wxFONTSTYLE_NORMAL;
+        wxFontWeight wxWeight = wxFONTWEIGHT_NORMAL;
+        if (style == "Bold") wxWeight = wxFONTWEIGHT_BOLD;
+        else if (style == "Italic") wxStyle = wxFONTSTYLE_ITALIC;
+        else if (style == "BoldItalic") { wxWeight = wxFONTWEIGHT_BOLD; wxStyle = wxFONTSTYLE_ITALIC; }
+        
+        return wxFont(size, wxFamily, wxStyle, wxWeight);
+    }
+    
+    void SetLabelFontFromWxFont(const wxFont& font) {
+        wxString family;
+        switch (font.GetFamily()) {
+            case wxFONTFAMILY_ROMAN: family = "Serif"; break;
+            case wxFONTFAMILY_TELETYPE: family = "Monospaced"; break;
+            default: family = "SansSerif"; break;
+        }
+        
+        wxString style = "Plain";
+        bool isBold = (font.GetWeight() == wxFONTWEIGHT_BOLD);
+        bool isItalic = (font.GetStyle() == wxFONTSTYLE_ITALIC);
+        if (isBold && isItalic) style = "BoldItalic";
+        else if (isBold) style = "Bold";
+        else if (isItalic) style = "Italic";
+        
+        labelFont = wxString::Format("%s %s %d", family, style, font.GetPointSize());
+    }
+};
+
+using AndGateProperties = GateProperties;
+
 
 class CanvasElement
 {
-    // Ôª¼ş»ù±¾ĞÅÏ¢£¬ĞÎ×´ºÍÎ»ÖÃ¹ÜÀí
 private:
-    wxString m_id;        // Ôª¼şID
+    wxString m_id;
     wxString m_name;
     wxPoint m_pos;
-    wxPoint m_anchorPoint; // Ğı×ªÃªµã
-    int m_rotation = 0;     // Ğı×ª½Ç¶È£¨Ä¬ÈÏ0¡ã=East£©
+    wxPoint m_anchorPoint;
+    int m_rotation = 0;
     std::vector<Shape> m_shapes;
     
+    AndGateProperties m_andGateProps;
+    GateProperties m_gateProps;
     
     void DrawVector(wxGCDC& gcdc) const;
     std::vector<wxPoint> CalculateBezier(const Point& p0, const Point& p1, const Point& p2, int segments = 16) const;
+    std::vector<wxPoint> CalculateCubicBezier(const Point& p0, const Point& p1, const Point& p2, const Point& p3, int segments = 32) const;
     void DrawFallback(wxDC& dc) const;
     void DrawPathFallback(wxGCDC& gcdc, const Path& arg, std::function<wxPoint(const Point&)> off) const;
     void DrawPathFallback(wxDC& dc, const Path& arg, std::function<wxPoint(const Point&)> off) const;
@@ -128,55 +256,59 @@ public:
     void AddInputPin(const Point& p, const wxString& name) { m_inputPins.push_back(Pin(p, name, true)); }
     void AddOutputPin(const Point& p, const wxString& name) { m_outputPins.push_back(Pin(p, name, false)); }
 
-
-    // Ôª¼şµÄÒı½ÅÓë×´Ì¬¹ÜÀí£¬·ÂÕæÏà¹Ø
 public:
     CanvasElement() = default;
     CanvasElement(const wxString& name, const wxPoint& pos);
 
-
-
-
-    
     const std::vector<Pin>& GetInputPins() const { return m_inputPins; }
     const std::vector<Pin>& GetOutputPins() const { return m_outputPins; }
 
-    
-
-    // Ìí¼Ó×´Ì¬¹ÜÀí·½·¨
     void ToggleState() { m_state = !m_state; }
     bool GetState() const { return m_state; }
     void SetState(bool state) { m_state = state; }
 
-    // ÉèÖÃÔª¼şIDÓÃÓÚÊ¶±ğPin_Input
-
-    
-
-    // ×´Ì¬¿ØÖÆ·½·¨
-    void SetOutputState(int state);  // 0:X, 1:0, 2:1
+    void SetOutputState(int state);
     int GetOutputState() const { return m_outputState; }
 
-
-
+    // ANDé—¨å±æ€§è®¿é—®æ–¹æ³• - åªæœ‰ AND_Gate éœ€è¦å±æ€§ç¼–è¾‘
+    bool IsAndGate() const { return m_id == "AND_Gate"; }
+    AndGateProperties& GetAndGateProps() { return m_andGateProps; }
+    const AndGateProperties& GetAndGateProps() const { return m_andGateProps; }
+    void SetAndGateProps(const AndGateProperties& props) { m_andGateProps = props; }
+    
+    // é€šç”¨é€»è¾‘é—¨åˆ¤æ–­å’Œå±æ€§è®¿é—®æ–¹æ³•
+    bool IsLogicGate() const { 
+        return m_id == "AND_Gate" || m_id == "AND_Gate_Rect" ||
+               m_id == "OR_Gate" || m_id == "OR_Gate_Rect" ||
+               m_id == "NAND_Gate" || m_id == "NAND_Gate_Rect" ||
+               m_id == "NOR_Gate" || m_id == "NOR_Gate_Rect" ||
+               m_id == "XOR_Gate" || m_id == "XOR_Gate_Rect" ||
+               m_id == "XNOR_Gate" || m_id == "XNOR_Gate_Rect";
+    }
+    bool IsOrGate() const { return m_id == "OR_Gate" || m_id == "OR_Gate_Rect"; }
+    GateProperties& GetGateProps() { return m_gateProps; }
+    const GateProperties& GetGateProps() const { return m_gateProps; }
+    void SetGateProps(const GateProperties& props) { m_gateProps = props; }
+    
+    // æ ¹æ®å±æ€§é‡æ–°ç”Ÿæˆå½¢çŠ¶
+    void RegenerateShapes();
+    
+    // ä¸ºANDé—¨åº”ç”¨æ–¹å‘å˜æ¢
+    void ApplyFacingTransform(const wxString& oldFacing, const wxString& newFacing);
+    
+    // æ¸…é™¤ç°æœ‰å½¢çŠ¶
+    void ClearShapes() { m_shapes.clear(); }
+    
+    // æ¸…é™¤å¼•è„š
+    void ClearPins() { m_inputPins.clear(); m_outputPins.clear(); }
+    
+    // åºåˆ—åŒ–/ååºåˆ—åŒ–é—¨å±æ€§
+    wxString SerializeGatePropsToJson() const;
+    void DeserializeGatePropsFromJson(const wxString& json);
 
     std::vector<Pin> m_inputPins;
     std::vector<Pin> m_outputPins;
 
-    // Ìí¼Ó×´Ì¬ºÍID³ÉÔ±
-    bool m_state = false; // Ä¬ÈÏ×´Ì¬Îª0/false
-
-    int m_outputState = 0; // Pin_Output×´Ì¬£º0=X, 1=0, 2=1
-
+    bool m_state = false;
+    int m_outputState = 0;
 };
-
-
-
-
-
-
-
-
-
-
-
-

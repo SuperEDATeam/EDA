@@ -3,6 +3,7 @@
 #endif
 
 #include "CanvasElement.h"
+#include "GatePainter.h"
 #include <variant>
 #include <cmath>
 #include <algorithm>
@@ -17,6 +18,20 @@ std::vector<wxPoint> CanvasElement::CalculateBezier(const Point& p0, const Point
         double t = double(i) / segments;
         double x = (1 - t) * (1 - t) * p0.x + 2 * (1 - t) * t * p1.x + t * t * p2.x;
         double y = (1 - t) * (1 - t) * p0.y + 2 * (1 - t) * t * p1.y + t * t * p2.y;
+        pts.emplace_back(static_cast<int>(x), static_cast<int>(y));
+    }
+    return pts;
+}
+
+// 三次贝塞尔曲线计算（4个控制点）
+std::vector<wxPoint> CanvasElement::CalculateCubicBezier(const Point& p0, const Point& p1, const Point& p2, const Point& p3, int segments) const
+{
+    std::vector<wxPoint> pts;
+    for (int i = 0; i <= segments; ++i) {
+        double t = double(i) / segments;
+        double u = 1 - t;
+        double x = u*u*u * p0.x + 3*u*u*t * p1.x + 3*u*t*t * p2.x + t*t*t * p3.x;
+        double y = u*u*u * p0.y + 3*u*u*t * p1.y + 3*u*t*t * p2.y + t*t*t * p3.y;
         pts.emplace_back(static_cast<int>(x), static_cast<int>(y));
     }
     return pts;
@@ -193,7 +208,15 @@ void CanvasElement::DrawVector(wxGCDC& gcdc) const
                 path.AddCurveToPoint(s.p1.x, s.p1.y, s.p1.x, s.p1.y, s.p2.x, s.p2.y);
                 gc->StrokePath(path);
             }
-            // 分支7：Path（补充完整，避免覆盖不全）
+            // 分支7：CubicBezierShape（三次贝塞尔曲线）
+            else if constexpr (std::is_same_v<T, CubicBezierShape>) {
+                gc->SetPen(wxPen(s.color, 3.0));
+                wxGraphicsPath path = gc->CreatePath();
+                path.MoveToPoint(s.p0.x, s.p0.y);
+                path.AddCurveToPoint(s.p1.x, s.p1.y, s.p2.x, s.p2.y, s.p3.x, s.p3.y);
+                gc->StrokePath(path);
+            }
+            // 分支8：Path（补充完整，避免覆盖不全）
             else if constexpr (std::is_same_v<T, Path>) {
                 gc->SetPen(wxPen(s.stroke, s.strokeWidth));
                 gc->SetBrush(s.fill ? wxBrush(s.stroke) : *wxTRANSPARENT_BRUSH);
@@ -385,6 +408,20 @@ void CanvasElement::DrawFallback(wxDC& dc) const
                     dc.DrawLines(static_cast<int>(screenPoints.size()), screenPoints.data());
                 }
             }
+            else if constexpr (std::is_same_v<T, CubicBezierShape>) {
+                dc.SetPen(wxPen(arg.color, 1));
+                auto bezierPoints = CalculateCubicBezier(arg.p0, arg.p1, arg.p2, arg.p3, 32);
+
+                std::vector<wxPoint> screenPoints;
+                for (const auto& wp : bezierPoints) {
+                    Point p{ wp.x, wp.y };
+                    screenPoints.push_back(off(p));
+                }
+
+                if (!screenPoints.empty()) {
+                    dc.DrawLines(static_cast<int>(screenPoints.size()), screenPoints.data());
+                }
+            }
             else if constexpr (std::is_same_v<T, Path>) {
                 // 路径回退绘制
                 DrawPathFallback(dc, arg, off);
@@ -509,6 +546,13 @@ wxRect CanvasElement::GetBounds() const
                     update(p);
                 }
             }
+            else if constexpr (std::is_same_v<T, CubicBezierShape>) {
+                auto pts = CalculateCubicBezier(arg.p0, arg.p1, arg.p2, arg.p3, 32);
+                for (const auto& wp : pts) {
+                    Point p{ wp.x, wp.y };
+                    update(p);
+                }
+            }
             else if constexpr (std::is_same_v<T, Path>) {
                 if (arg.d.find("A 16 28") != std::string::npos) {
                     update(Point(10, 12));
@@ -550,4 +594,265 @@ void SetPinOutputState(CanvasElement& pinOutput, int state) {
 // 获取Pin_Output状态的示例代码：
 int GetPinOutputState(const CanvasElement& pinOutput) {
     return pinOutput.GetOutputState();
+}
+
+
+// 根据门属性重新生成形状 - 只对 AND 门生效
+void CanvasElement::RegenerateShapes()
+{
+    // 只处理 AND 门
+    if (!IsAndGate()) return;
+    
+    // 验证属性
+    m_gateProps.Validate();
+    
+    // 清除现有形状和引脚
+    ClearShapes();
+    ClearPins();
+    
+    // 创建 AND 门绘制器
+    auto painter = GatePainterFactory::CreatePainter(m_id);
+    if (!painter) return;
+    
+    // 生成形状
+    std::vector<Shape> shapes = painter->GenerateShapes(m_gateProps);
+    for (const auto& shape : shapes) {
+        AddShape(shape);
+    }
+    
+    // 生成引脚
+    std::vector<Pin> inputPins = painter->GenerateInputPins(m_gateProps);
+    for (const auto& pin : inputPins) {
+        AddInputPin(pin.pos, pin.name);
+    }
+    
+    std::vector<Pin> outputPins = painter->GenerateOutputPins(m_gateProps);
+    for (const auto& pin : outputPins) {
+        AddOutputPin(pin.pos, pin.name);
+    }
+}
+
+
+// 序列化门属性为JSON字符串
+wxString CanvasElement::SerializeGatePropsToJson() const
+{
+    if (!IsLogicGate()) return "{}";
+    
+    const GateProperties& props = m_gateProps;
+    
+    wxString json = "{\n";
+    json += wxString::Format("  \"facing\": \"%s\",\n", props.facing);
+    json += wxString::Format("  \"dataBits\": %d,\n", props.dataBits);
+    json += wxString::Format("  \"gateSize\": \"%s\",\n", props.gateSize);
+    json += wxString::Format("  \"numberOfInputs\": %d,\n", props.numberOfInputs);
+    
+    // 转义标签中的特殊字符
+    wxString escapedLabel = props.label;
+    escapedLabel.Replace("\\", "\\\\");
+    escapedLabel.Replace("\"", "\\\"");
+    escapedLabel.Replace("\n", "\\n");
+    json += wxString::Format("  \"label\": \"%s\",\n", escapedLabel);
+    
+    json += wxString::Format("  \"labelFont\": \"%s\",\n", props.labelFont);
+    
+    // 序列化negateInputs数组
+    json += "  \"negateInputs\": [";
+    for (int i = 0; i < props.numberOfInputs && i < (int)props.negateInputs.size(); i++) {
+        if (i > 0) json += ", ";
+        json += props.negateInputs[i] ? "true" : "false";
+    }
+    json += "]\n";
+    
+    json += "}";
+    
+    return json;
+}
+
+// 从JSON字符串反序列化门属性
+void CanvasElement::DeserializeGatePropsFromJson(const wxString& json)
+{
+    if (!IsLogicGate() || json.IsEmpty()) return;
+    
+    GateProperties& props = m_gateProps;
+    
+    // 简单的JSON解析
+    auto extractString = [&json](const wxString& key) -> wxString {
+        wxString searchKey = "\"" + key + "\": \"";
+        int start = json.Find(searchKey);
+        if (start == wxNOT_FOUND) return "";
+        start += searchKey.Length();
+        int end = json.find("\"", start);
+        if (end == wxNOT_FOUND) return "";
+        return json.Mid(start, end - start);
+    };
+    
+    auto extractInt = [&json](const wxString& key) -> int {
+        wxString searchKey = "\"" + key + "\": ";
+        int start = json.Find(searchKey);
+        if (start == wxNOT_FOUND) return 0;
+        start += searchKey.Length();
+        wxString numStr;
+        for (size_t i = start; i < json.Length(); i++) {
+            wxChar c = json[i];
+            if (c >= '0' && c <= '9') {
+                numStr += c;
+            } else {
+                break;
+            }
+        }
+        long val = 0;
+        numStr.ToLong(&val);
+        return (int)val;
+    };
+    
+    // 解析各字段
+    wxString facing = extractString("facing");
+    if (!facing.IsEmpty()) props.facing = facing;
+    
+    int dataBits = extractInt("dataBits");
+    if (dataBits > 0) props.dataBits = dataBits;
+    
+    wxString gateSize = extractString("gateSize");
+    if (!gateSize.IsEmpty()) props.gateSize = gateSize;
+    
+    int numberOfInputs = extractInt("numberOfInputs");
+    if (numberOfInputs >= 2) props.numberOfInputs = numberOfInputs;
+    
+    wxString label = extractString("label");
+    label.Replace("\\n", "\n");
+    label.Replace("\\\"", "\"");
+    label.Replace("\\\\", "\\");
+    props.label = label;
+    
+    wxString labelFont = extractString("labelFont");
+    if (!labelFont.IsEmpty()) props.labelFont = labelFont;
+    
+    // 解析negateInputs数组
+    int arrayStart = json.Find("\"negateInputs\": [");
+    if (arrayStart != wxNOT_FOUND) {
+        arrayStart = json.find("[", arrayStart);
+        int arrayEnd = json.find("]", arrayStart);
+        if (arrayStart != wxNOT_FOUND && arrayEnd != wxNOT_FOUND) {
+            wxString arrayStr = json.Mid(arrayStart + 1, arrayEnd - arrayStart - 1);
+            props.negateInputs.clear();
+            props.negateInputs.resize(32, false);
+            
+            int idx = 0;
+            int pos = 0;
+            while (pos < (int)arrayStr.Length() && idx < 32) {
+                if (arrayStr.Mid(pos, 4) == "true") {
+                    props.negateInputs[idx] = true;
+                    pos += 4;
+                    idx++;
+                } else if (arrayStr.Mid(pos, 5) == "false") {
+                    props.negateInputs[idx] = false;
+                    pos += 5;
+                    idx++;
+                } else {
+                    pos++;
+                }
+            }
+        }
+    }
+    
+    props.Validate();
+}
+
+// 为AND门应用方向变换 - 只对 AND_Gate 生效
+void CanvasElement::ApplyFacingTransform(const wxString& oldFacing, const wxString& newFacing)
+{
+    // 只对 AND_Gate 使用此方法
+    if (m_id != "AND_Gate") {
+        return;
+    }
+    
+    if (oldFacing == newFacing) return;
+    
+    auto facingToAngle = [](const wxString& f) -> int {
+        if (f == "East") return 0;
+        if (f == "South") return 90;
+        if (f == "West") return 180;
+        if (f == "North") return 270;
+        return 0;
+    };
+    
+    int oldAngle = facingToAngle(oldFacing);
+    int newAngle = facingToAngle(newFacing);
+    int deltaAngle = (newAngle - oldAngle + 360) % 360;
+    
+    if (deltaAngle == 0) return;
+    
+    Point center(80, 60);
+    
+    auto transformPoint = [&](Point& p) {
+        int rx = p.x - center.x;
+        int ry = p.y - center.y;
+        int newX, newY;
+        
+        if (deltaAngle == 90) {
+            newX = -ry;
+            newY = rx;
+        } else if (deltaAngle == 180) {
+            newX = -rx;
+            newY = -ry;
+        } else if (deltaAngle == 270) {
+            newX = ry;
+            newY = -rx;
+        } else {
+            newX = rx;
+            newY = ry;
+        }
+        
+        p.x = center.x + newX;
+        p.y = center.y + newY;
+    };
+    
+    for (auto& shape : m_shapes) {
+        std::visit([&](auto& s) {
+            using T = std::decay_t<decltype(s)>;
+            
+            if constexpr (std::is_same_v<T, Line>) {
+                transformPoint(s.start);
+                transformPoint(s.end);
+            }
+            else if constexpr (std::is_same_v<T, Circle>) {
+                transformPoint(s.center);
+            }
+            else if constexpr (std::is_same_v<T, ArcShape>) {
+                transformPoint(s.center);
+                s.startAngle += deltaAngle;
+                s.endAngle += deltaAngle;
+            }
+            else if constexpr (std::is_same_v<T, Text>) {
+                transformPoint(s.pos);
+            }
+            else if constexpr (std::is_same_v<T, PolyShape>) {
+                for (auto& pt : s.pts) {
+                    transformPoint(pt);
+                }
+            }
+            else if constexpr (std::is_same_v<T, BezierShape>) {
+                transformPoint(s.p0);
+                transformPoint(s.p1);
+                transformPoint(s.p2);
+            }
+            else if constexpr (std::is_same_v<T, CubicBezierShape>) {
+                transformPoint(s.p0);
+                transformPoint(s.p1);
+                transformPoint(s.p2);
+                transformPoint(s.p3);
+            }
+        }, shape);
+    }
+    
+    for (auto& pin : m_inputPins) {
+        transformPoint(pin.pos);
+    }
+    
+    for (auto& pin : m_outputPins) {
+        transformPoint(pin.pos);
+    }
+    
+    m_gateProps.facing = newFacing;
+    m_andGateProps.facing = newFacing;
 }

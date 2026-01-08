@@ -4,6 +4,7 @@
 #include "CanvasTextElement.h"
 #include "HandyToolKit.h"
 #include "ToolBars.h"
+#include "MainFrame.h"
 
 CanvasEventHandler::CanvasEventHandler(CanvasPanel* canvas, ToolStateMachine* toolstate)
     : m_canvas(canvas), m_toolStateMachine(toolstate), m_isTemporaryAction(false), m_eventHandled(false),
@@ -992,6 +993,16 @@ void CanvasEventHandler::UpdateRectangleSelect(wxMouseEvent& evt) {
 void CanvasEventHandler::FinishRectangleSelect() {
     m_toolStateMachine->SetSelectState(SelectToolState::IDLE);
     m_canvas->ClearSelectionRect();
+    
+    // 更新属性面板显示选中的元件
+    MainFrame* mainFrame = m_canvas->GetMainFrame();
+    if (mainFrame) {
+        if (m_compntIdx.size() == 1) {
+            mainFrame->UpdatePropertyPanel(m_compntIdx[0]);
+        } else {
+            mainFrame->UpdatePropertyPanel(-1);
+        }
+    }
 }
 
 void CanvasEventHandler::FinishClickSelect(wxMouseEvent& evt) {
@@ -1034,6 +1045,18 @@ void CanvasEventHandler::FinishClickSelect(wxMouseEvent& evt) {
         //}
     }
     m_toolStateMachine->SetSelectState(SelectToolState::IDLE);
+    
+    // 更新属性面板显示选中的元件
+    MainFrame* mainFrame = m_canvas->GetMainFrame();
+    if (mainFrame) {
+        if (m_compntIdx.size() == 1) {
+            // 只选中了一个元件，显示其属性
+            mainFrame->UpdatePropertyPanel(m_compntIdx[0]);
+        } else {
+            // 没有选中或选中多个，显示默认
+            mainFrame->UpdatePropertyPanel(-1);
+        }
+    }
 }
 
 void CanvasEventHandler::DeleteSelected() {

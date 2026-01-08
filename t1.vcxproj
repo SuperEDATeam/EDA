@@ -25,6 +25,7 @@
     <ClCompile Include="CanvasPanel.cpp" />
     <ClCompile Include="CanvasTextElement.cpp" />
     <ClCompile Include="cMain.cpp" />
+    <ClCompile Include="GatePainter.cpp" />
     <ClCompile Include="MainFrame.cpp" />
     <ClCompile Include="MainMenuBar.cpp" />
     <ClCompile Include="PropertyPanel.cpp" />
@@ -45,6 +46,7 @@
     <ClInclude Include="CanvasModel.h" />
     <ClInclude Include="CanvasPanel.h" />
     <ClInclude Include="CanvasTextElement.h" />
+    <ClInclude Include="GatePainter.h" />
     <ClInclude Include="MainFrame.h" />
     <ClInclude Include="MainMenuBar.h" />
     <ClInclude Include="my_log.h" />
